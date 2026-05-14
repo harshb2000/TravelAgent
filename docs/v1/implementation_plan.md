@@ -354,19 +354,20 @@ class WeatherSpecialist:
 - [ ] Each specialist class created with `run()` returning a hardcoded empty output model (e.g., `WeatherSpecialist.run()` returns `WeatherForecast(city="", days=[], mode="forecast")`)
 - [ ] Prompt files created as empty strings in `agent/prompts/`
 
-**Tests (`tests/test_specialists.py`):**
-- [ ] Each specialist: stub `LLMClient` returns plausible structured response; assert output parses to the correct model
-- [ ] DestinationResearchAgent `depth="light"`: exactly 1 `web_search` call made
-- [ ] DestinationResearchAgent `depth="full"`: 3–4 `web_search` calls made
-- [ ] TransportationAgent: IATA resolution call made before flight search call
-- [ ] WeatherAgent: dates within 16 days → `weather_forecast` tool called; month-only input → `climate_summary` tool called
-- [ ] BudgetAgent: `budget_delta` is negative when trip costs exceed user budget, positive otherwise
-- [ ] ItineraryPlannerAgent: day 1 has arrival-only activities, last day has morning slot only
+**Tests (`tests/test_specialists.py`) — stub `LLMClient`, fast, always run:**
+- [ ] Each specialist: stub returns a plausible response string; assert `run()` output parses to the correct output model
+- [ ] Each specialist: stub returns a `tool_calls` response followed by a final answer; assert the correct tool was dispatched and the result appears in the next LLM call
+- [ ] WeatherSpecialist: stub triggers `weather_forecast` tool call; output parses to `WeatherOutput` with `mode="forecast"`
+- [ ] WeatherSpecialist: stub triggers `climate_summary` tool call; output parses to `WeatherOutput` with `mode="climate"`
+- [ ] BudgetSpecialist: stub triggers `calculate` tool call; `budget_delta` sign is correct relative to user budget
+- [ ] ArtifactSpecialist: stub triggers `file_write` tool call; `run()` returns the written file path
+
+Note: prompt efficacy (e.g. how many tool calls the LLM chooses to make, scheduling rules) is not tested here — that belongs in prompt evaluation and refinement, not the test suite.
 
 **Verify red:** `pytest tests/test_specialists.py` — all tests fail
 
 **Implement (in order of increasing complexity):**
-- [ ] `agent/prompts/weather.py` + `specialists/weather.py` → `WeatherForecast | ClimateSummary`
+- [ ] `agent/prompts/weather.py` + `specialists/weather.py` → `WeatherOutput`
 - [ ] `agent/prompts/budget.py` + `specialists/budget.py` → `BudgetBreakdown`
 - [ ] `agent/prompts/explorer.py` + `specialists/explorer.py` → `list[DestinationCandidate]`
 - [ ] `agent/prompts/destination_research.py` + `specialists/destination_research.py` → `DestinationResearch`
@@ -396,14 +397,15 @@ class WeatherSpecialist:
 - [ ] `KnowledgeState` created with all `update_*()` methods as no-ops and `summary()` returning `""`
 - [ ] `agent/prompts/orchestrator.py` — empty string
 
-**Tests (`tests/test_orchestrator.py`):**
-- [ ] "Is Morocco safe?" → no specialist calls if `DestinationResearch` already in KnowledgeState; specialists called if not
-- [ ] "I want to travel somewhere nice" → LLM returns clarifying question, no tool calls
-- [ ] "Mumbai to Tokyo, late June, ₹2.5L" → LLM returns multiple tool_calls (parallel) in first iteration
-- [ ] Optional specialist failure: orchestrator continues, gap noted in KnowledgeState
-- [ ] Synthesis uses KnowledgeState summaries passed as context, not raw specialist tool outputs
-- [ ] UserContext accumulates across turns; never reset
-- [ ] Clarification cap: at most one clarification round per message; second vague answer proceeds with stated assumption
+**Tests (`tests/test_orchestrator.py`) — stub `LLMClient`, fast, always run:**
+- [ ] Stub returns a specialist tool call; assert wrapper `execute()` calls `specialist.run()` and updates KnowledgeState
+- [ ] Stub returns multiple tool_calls in one response; assert all specialists are called (parallel dispatch already proven by harness tests — this confirms wiring)
+- [ ] Specialist raises an exception; assert orchestrator continues and gap is recorded in KnowledgeState
+- [ ] Synthesis step receives KnowledgeState summary in context, not raw specialist outputs
+- [ ] UserContext string accumulates across `turn()` calls; never reset between turns
+- [ ] Second `turn()` call on same instance includes prior exchange in the agent's history
+
+Note: clarification logic, query routing decisions, and parallel call selection depend on the orchestrator prompt and are tested during prompt evaluation, not here.
 
 **Verify red:** `pytest tests/test_orchestrator.py` — all tests fail
 
