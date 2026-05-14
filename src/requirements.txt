@@ -1,0 +1,8 @@
+httpx
+pydantic
+pydantic-settings
+python-dotenv
+tavily-python
+rich
+pytest
+pytest-mock

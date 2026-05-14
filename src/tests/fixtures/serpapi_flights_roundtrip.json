@@ -1,0 +1,805 @@
+{
+  "search_metadata": {
+    "id": "6a056f59b13aa7c66d321273",
+    "status": "Success",
+    "json_endpoint": "https://serpapi.com/searches/zD94LGYoK8DkzZbWua_egQ/6a056f59b13aa7c66d321273.json",
+    "created_at": "2026-05-14 06:44:41 UTC",
+    "processed_at": "2026-05-14 06:44:41 UTC",
+    "google_flights_url": "https://www.google.com/travel/flights?hl=en&gl=us&curr=USD&tfs=CBwQAhowEgoyMDI2LTA3LTEzagcIARIDQk9NagcIARIDTk1JcgcIARIDTlJUcgcIARIDSE5EGjASCjIwMjYtMDctMjNqBwgBEgNOUlRqBwgBEgNITkRyBwgBEgNCT01yBwgBEgNOTUlAAUgBcAGYAQE&tfu=EgIIAQ",
+    "raw_html_file": "https://serpapi.com/searches/zD94LGYoK8DkzZbWua_egQ/6a056f59b13aa7c66d321273.html",
+    "prettify_html_file": "https://serpapi.com/searches/zD94LGYoK8DkzZbWua_egQ/6a056f59b13aa7c66d321273.prettify",
+    "total_time_taken": 9.78
+  },
+  "search_parameters": {
+    "engine": "google_flights",
+    "hl": "en",
+    "gl": "us",
+    "type": "1",
+    "departure_id": "BOM,NMI",
+    "arrival_id": "NRT,HND",
+    "outbound_date": "2026-07-13",
+    "return_date": "2026-07-23",
+    "adults": 1,
+    "currency": "USD"
+  },
+  "best_flights": [
+    {
+      "flights": [
+        {
+          "departure_airport": {
+            "name": "Chhatrapati Shivaji Maharaj International Airport Mumbai",
+            "id": "BOM",
+            "time": "2026-07-13 16:50"
+          },
+          "arrival_airport": {
+            "name": "Haneda Airport",
+            "id": "HND",
+            "time": "2026-07-14 04:55"
+          },
+          "duration": 515,
+          "airplane": "Boeing 787",
+          "airline": "Air India",
+          "airline_logo": "https://www.gstatic.com/flights/airline_logos/70px/AI.png",
+          "travel_class": "Economy",
+          "flight_number": "AI 356",
+          "legroom": "33 in",
+          "extensions": [
+            "Above average legroom (33 in)",
+            "In-seat power & USB outlets",
+            "Stream media to your device",
+            "Carbon emissions estimate: 464 kg"
+          ],
+          "overnight": true
+        }
+      ],
+      "total_duration": 515,
+      "carbon_emissions": {
+        "this_flight": 465000,
+        "typical_for_this_route": 520000,
+        "difference_percent": -11
+      },
+      "price": 552,
+      "type": "Round trip",
+      "airline_logo": "https://www.gstatic.com/flights/airline_logos/70px/AI.png",
+      "departure_token": "WyJDalJJT0ZocWRrVlVZa3BqZG10QlFqZ3hkRUZDUnkwdExTMHRMUzB0ZVdsaVkya3hNMEZCUVVGQlIyOUdZakpGUjBObll6QkJFZ1ZCU1RNMU5ob0xDTkt1QXhBQ0dnTlZVMFE0SEhEU3JnTT0iLFtbIkJPTSIsIjIwMjYtMDctMTMiLCJITkQiLG51bGwsIkFJIiwiMzU2Il1dXQ=="
+    },
+    {
+      "flights": [
+        {
+          "departure_airport": {
+            "name": "Chhatrapati Shivaji Maharaj International Airport Mumbai",
+            "id": "BOM",
+            "time": "2026-07-13 01:40"
+          },
+          "arrival_airport": {
+            "name": "Hong Kong International Airport",
+            "id": "HKG",
+            "time": "2026-07-13 10:10"
+          },
+          "duration": 360,
+          "airplane": "Boeing 777",
+          "airline": "Cathay Pacific",
+          "airline_logo": "https://www.gstatic.com/flights/airline_logos/70px/CX.png",
+          "travel_class": "Economy",
+          "flight_number": "CX 660",
+          "legroom": "32 in",
+          "extensions": [
+            "Above average legroom (32 in)",
+            "Wi-Fi for a fee",
+            "In-seat power & USB outlets",
+            "On-demand video",
+            "Carbon emissions estimate: 334 kg"
+          ],
+          "overnight": true,
+          "often_delayed_by_over_30_min": true
+        },
+        {
+          "departure_airport": {
+            "name": "Hong Kong International Airport",
+            "id": "HKG",
+            "time": "2026-07-13 15:20"
+          },
+          "arrival_airport": {
+            "name": "Narita International Airport",
+            "id": "NRT",
+            "time": "2026-07-13 20:50"
+          },
+          "duration": 270,
+          "airplane": "Airbus A330",
+          "airline": "Cathay Pacific",
+          "airline_logo": "https://www.gstatic.com/flights/airline_logos/70px/CX.png",
+          "travel_class": "Economy",
+          "flight_number": "CX 500",
+          "legroom": "31 in",
+          "extensions": [
+            "Average legroom (31 in)",
+            "In-seat power & USB outlets",
+            "On-demand video",
+            "Carbon emissions estimate: 184 kg"
+          ]
+        }
+      ],
+      "layovers": [
+        {
+          "duration": 310,
+          "name": "Hong Kong International Airport",
+          "id": "HKG"
+        }
+      ],
+      "total_duration": 940,
+      "carbon_emissions": {
+        "this_flight": 519000,
+        "typical_for_this_route": 520000,
+        "difference_percent": 0
+      },
+      "price": 662,
+      "type": "Round trip",
+      "airline_logo": "https://www.gstatic.com/flights/airline_logos/70px/CX.png",
+      "departure_token": "WyJDalJJT0ZocWRrVlVZa3BqZG10QlFqZ3hkRUZDUnkwdExTMHRMUzB0ZVdsaVkya3hNMEZCUVVGQlIyOUdZakpGUjBObll6QkJFZ3REV0RZMk1IeERXRFV3TUJvTENPaUVCQkFDR2dOVlUwUTRISERvaEFRPSIsW1siQk9NIiwiMjAyNi0wNy0xMyIsIkhLRyIsbnVsbCwiQ1giLCI2NjAiXSxbIkhLRyIsIjIwMjYtMDctMTMiLCJOUlQiLG51bGwsIkNYIiwiNTAwIl1dXQ=="
+    }
+  ],
+  "other_flights": [
+    {
+      "flights": [
+        {
+          "departure_airport": {
+            "name": "Chhatrapati Shivaji Maharaj International Airport Mumbai",
+            "id": "BOM",
+            "time": "2026-07-13 00:40"
+          },
+          "arrival_airport": {
+            "name": "Tan Son Nhat International Airport",
+            "id": "SGN",
+            "time": "2026-07-13 07:40"
+          },
+          "duration": 330,
+          "airplane": "Airbus A321",
+          "airline": "Vietjet",
+          "airline_logo": "https://www.gstatic.com/flights/airline_logos/70px/VJ.png",
+          "travel_class": "Economy",
+          "flight_number": "VJ 884",
+          "legroom": "28 in",
+          "extensions": [
+            "Below average legroom (28 in)",
+            "Carbon emissions estimate: 289 kg"
+          ],
+          "overnight": true
+        },
+        {
+          "departure_airport": {
+            "name": "Tan Son Nhat International Airport",
+            "id": "SGN",
+            "time": "2026-07-13 23:35"
+          },
+          "arrival_airport": {
+            "name": "Narita International Airport",
+            "id": "NRT",
+            "time": "2026-07-14 07:55"
+          },
+          "duration": 380,
+          "airplane": "Airbus A321",
+          "airline": "Vietjet",
+          "airline_logo": "https://www.gstatic.com/flights/airline_logos/70px/VJ.png",
+          "travel_class": "Economy",
+          "flight_number": "VJ 822",
+          "legroom": "28 in",
+          "extensions": [
+            "Below average legroom (28 in)",
+            "Carbon emissions estimate: 337 kg"
+          ],
+          "overnight": true
+        }
+      ],
+      "layovers": [
+        {
+          "duration": 955,
+          "name": "Tan Son Nhat International Airport",
+          "id": "SGN"
+        }
+      ],
+      "total_duration": 1665,
+      "carbon_emissions": {
+        "this_flight": 627000,
+        "typical_for_this_route": 520000,
+        "difference_percent": 21
+      },
+      "price": 492,
+      "type": "Round trip",
+      "airline_logo": "https://www.gstatic.com/flights/airline_logos/70px/VJ.png",
+      "departure_token": "WyJDalJJT0ZocWRrVlVZa3BqZG10QlFqZ3hkRUZDUnkwdExTMHRMUzB0ZVdsaVkya3hNMEZCUVVGQlIyOUdZakpGUjBObll6QkJFZ3RXU2pnNE5IeFdTamd5TWhvTENJaUFBeEFDR2dOVlUwUTRISENJZ0FNPSIsW1siQk9NIiwiMjAyNi0wNy0xMyIsIlNHTiIsbnVsbCwiVkoiLCI4ODQiXSxbIlNHTiIsIjIwMjYtMDctMTMiLCJOUlQiLG51bGwsIlZKIiwiODIyIl1dXQ=="
+    },
+    {
+      "flights": [
+        {
+          "departure_airport": {
+            "name": "Chhatrapati Shivaji Maharaj International Airport Mumbai",
+            "id": "BOM",
+            "time": "2026-07-13 00:40"
+          },
+          "arrival_airport": {
+            "name": "Tan Son Nhat International Airport",
+            "id": "SGN",
+            "time": "2026-07-13 07:40"
+          },
+          "duration": 330,
+          "airplane": "Airbus A321",
+          "airline": "Vietjet",
+          "airline_logo": "https://www.gstatic.com/flights/airline_logos/70px/VJ.png",
+          "travel_class": "Economy",
+          "flight_number": "VJ 884",
+          "legroom": "28 in",
+          "extensions": [
+            "Below average legroom (28 in)",
+            "Carbon emissions estimate: 289 kg"
+          ],
+          "overnight": true
+        },
+        {
+          "departure_airport": {
+            "name": "Tan Son Nhat International Airport",
+            "id": "SGN",
+            "time": "2026-07-13 16:30"
+          },
+          "arrival_airport": {
+            "name": "Haneda Airport",
+            "id": "HND",
+            "time": "2026-07-14 01:00"
+          },
+          "duration": 390,
+          "airplane": "Airbus A321",
+          "airline": "Vietjet",
+          "airline_logo": "https://www.gstatic.com/flights/airline_logos/70px/VJ.png",
+          "travel_class": "Economy",
+          "flight_number": "VJ 820",
+          "legroom": "28 in",
+          "extensions": [
+            "Below average legroom (28 in)",
+            "Carbon emissions estimate: 328 kg"
+          ]
+        }
+      ],
+      "layovers": [
+        {
+          "duration": 530,
+          "name": "Tan Son Nhat International Airport",
+          "id": "SGN"
+        }
+      ],
+      "total_duration": 1250,
+      "carbon_emissions": {
+        "this_flight": 618000,
+        "typical_for_this_route": 520000,
+        "difference_percent": 19
+      },
+      "price": 538,
+      "type": "Round trip",
+      "airline_logo": "https://www.gstatic.com/flights/airline_logos/70px/VJ.png",
+      "departure_token": "WyJDalJJT0ZocWRrVlVZa3BqZG10QlFqZ3hkRUZDUnkwdExTMHRMUzB0ZVdsaVkya3hNMEZCUVVGQlIyOUdZakpGUjBObll6QkJFZ3RXU2pnNE5IeFdTamd5TUJvTENLaWtBeEFDR2dOVlUwUTRISENvcEFNPSIsW1siQk9NIiwiMjAyNi0wNy0xMyIsIlNHTiIsbnVsbCwiVkoiLCI4ODQiXSxbIlNHTiIsIjIwMjYtMDctMTMiLCJITkQiLG51bGwsIlZKIiwiODIwIl1dXQ=="
+    },
+    {
+      "flights": [
+        {
+          "departure_airport": {
+            "name": "Chhatrapati Shivaji Maharaj International Airport Mumbai",
+            "id": "BOM",
+            "time": "2026-07-13 01:40"
+          },
+          "arrival_airport": {
+            "name": "Hong Kong International Airport",
+            "id": "HKG",
+            "time": "2026-07-13 10:10"
+          },
+          "duration": 360,
+          "airplane": "Boeing 777",
+          "airline": "Cathay Pacific",
+          "airline_logo": "https://www.gstatic.com/flights/airline_logos/70px/CX.png",
+          "travel_class": "Economy",
+          "flight_number": "CX 660",
+          "legroom": "32 in",
+          "extensions": [
+            "Above average legroom (32 in)",
+            "Wi-Fi for a fee",
+            "In-seat power & USB outlets",
+            "On-demand video",
+            "Carbon emissions estimate: 334 kg"
+          ],
+          "overnight": true,
+          "often_delayed_by_over_30_min": true
+        },
+        {
+          "departure_airport": {
+            "name": "Hong Kong International Airport",
+            "id": "HKG",
+            "time": "2026-07-13 13:00"
+          },
+          "arrival_airport": {
+            "name": "Narita International Airport",
+            "id": "NRT",
+            "time": "2026-07-13 18:25"
+          },
+          "duration": 265,
+          "airplane": "Airbus A321neo",
+          "airline": "Hong Kong Express",
+          "airline_logo": "https://www.gstatic.com/flights/airline_logos/70px/UO.png",
+          "travel_class": "Economy",
+          "flight_number": "UO 646",
+          "ticket_also_sold_by": [
+            "Cathay Pacific"
+          ],
+          "legroom": "28 in",
+          "extensions": [
+            "Below average legroom (28 in)",
+            "Carbon emissions estimate: 192 kg"
+          ]
+        }
+      ],
+      "layovers": [
+        {
+          "duration": 170,
+          "name": "Hong Kong International Airport",
+          "id": "HKG"
+        }
+      ],
+      "total_duration": 795,
+      "carbon_emissions": {
+        "this_flight": 527000,
+        "typical_for_this_route": 520000,
+        "difference_percent": 1
+      },
+      "price": 792,
+      "type": "Round trip",
+      "airline_logo": "https://www.gstatic.com/flights/airline_logos/70px/multi.png",
+      "departure_token": "WyJDalJJT0ZocWRrVlVZa3BqZG10QlFqZ3hkRUZDUnkwdExTMHRMUzB0ZVdsaVkya3hNMEZCUVVGQlIyOUdZakpGUjBObll6QkJFZ3REV0RZMk1IeFZUelkwTmhvTENQN3BCQkFDR2dOVlUwUTRISEQrNlFRPSIsW1siQk9NIiwiMjAyNi0wNy0xMyIsIkhLRyIsbnVsbCwiQ1giLCI2NjAiXSxbIkhLRyIsIjIwMjYtMDctMTMiLCJOUlQiLG51bGwsIlVPIiwiNjQ2Il1dXQ=="
+    },
+    {
+      "flights": [
+        {
+          "departure_airport": {
+            "name": "Chhatrapati Shivaji Maharaj International Airport Mumbai",
+            "id": "BOM",
+            "time": "2026-07-13 01:40"
+          },
+          "arrival_airport": {
+            "name": "Hong Kong International Airport",
+            "id": "HKG",
+            "time": "2026-07-13 10:10"
+          },
+          "duration": 360,
+          "airplane": "Boeing 777",
+          "airline": "Cathay Pacific",
+          "airline_logo": "https://www.gstatic.com/flights/airline_logos/70px/CX.png",
+          "travel_class": "Economy",
+          "flight_number": "CX 660",
+          "legroom": "32 in",
+          "extensions": [
+            "Above average legroom (32 in)",
+            "Wi-Fi for a fee",
+            "In-seat power & USB outlets",
+            "On-demand video",
+            "Carbon emissions estimate: 334 kg"
+          ],
+          "overnight": true,
+          "often_delayed_by_over_30_min": true
+        },
+        {
+          "departure_airport": {
+            "name": "Hong Kong International Airport",
+            "id": "HKG",
+            "time": "2026-07-13 15:15"
+          },
+          "arrival_airport": {
+            "name": "Haneda Airport",
+            "id": "HND",
+            "time": "2026-07-13 20:25"
+          },
+          "duration": 250,
+          "airplane": "Boeing 787",
+          "airline": "JAL",
+          "airline_logo": "https://www.gstatic.com/flights/airline_logos/70px/JL.png",
+          "travel_class": "Economy",
+          "flight_number": "JL 26",
+          "ticket_also_sold_by": [
+            "Cathay Pacific"
+          ],
+          "legroom": "33 in",
+          "extensions": [
+            "Above average legroom (33 in)",
+            "Wi-Fi for a fee",
+            "In-seat power & USB outlets",
+            "On-demand video",
+            "Carbon emissions estimate: 203 kg"
+          ]
+        }
+      ],
+      "layovers": [
+        {
+          "duration": 305,
+          "name": "Hong Kong International Airport",
+          "id": "HKG"
+        }
+      ],
+      "total_duration": 915,
+      "carbon_emissions": {
+        "this_flight": 538000,
+        "typical_for_this_route": 520000,
+        "difference_percent": 3
+      },
+      "price": 792,
+      "type": "Round trip",
+      "airline_logo": "https://www.gstatic.com/flights/airline_logos/70px/multi.png",
+      "departure_token": "WyJDalJJT0ZocWRrVlVZa3BqZG10QlFqZ3hkRUZDUnkwdExTMHRMUzB0ZVdsaVkya3hNMEZCUVVGQlIyOUdZakpGUjBObll6QkJFZ3BEV0RZMk1IeEtUREkyR2dzSWt1b0VFQUlhQTFWVFJEZ2NjSkxxQkE9PSIsW1siQk9NIiwiMjAyNi0wNy0xMyIsIkhLRyIsbnVsbCwiQ1giLCI2NjAiXSxbIkhLRyIsIjIwMjYtMDctMTMiLCJITkQiLG51bGwsIkpMIiwiMjYiXV1d"
+    },
+    {
+      "flights": [
+        {
+          "departure_airport": {
+            "name": "Chhatrapati Shivaji Maharaj International Airport Mumbai",
+            "id": "BOM",
+            "time": "2026-07-13 23:25"
+          },
+          "arrival_airport": {
+            "name": "Kuala Lumpur International Airport",
+            "id": "KUL",
+            "time": "2026-07-14 07:25"
+          },
+          "duration": 330,
+          "airplane": "Airbus A330",
+          "airline": "Malaysia Airlines",
+          "airline_logo": "https://www.gstatic.com/flights/airline_logos/70px/MH.png",
+          "travel_class": "Economy",
+          "flight_number": "MH 195",
+          "legroom": "32 in",
+          "extensions": [
+            "Above average legroom (32 in)",
+            "In-seat power & USB outlets",
+            "On-demand video",
+            "Carbon emissions estimate: 257 kg"
+          ],
+          "overnight": true
+        },
+        {
+          "departure_airport": {
+            "name": "Kuala Lumpur International Airport",
+            "id": "KUL",
+            "time": "2026-07-14 09:50"
+          },
+          "arrival_airport": {
+            "name": "Narita International Airport",
+            "id": "NRT",
+            "time": "2026-07-14 18:05"
+          },
+          "duration": 435,
+          "airplane": "Airbus A330",
+          "airline": "Malaysia Airlines",
+          "airline_logo": "https://www.gstatic.com/flights/airline_logos/70px/MH.png",
+          "travel_class": "Economy",
+          "flight_number": "MH 70",
+          "legroom": "32 in",
+          "extensions": [
+            "Above average legroom (32 in)",
+            "In-seat power & USB outlets",
+            "On-demand video",
+            "Carbon emissions estimate: 348 kg"
+          ]
+        }
+      ],
+      "layovers": [
+        {
+          "duration": 145,
+          "name": "Kuala Lumpur International Airport",
+          "id": "KUL"
+        }
+      ],
+      "total_duration": 910,
+      "carbon_emissions": {
+        "this_flight": 607000,
+        "typical_for_this_route": 520000,
+        "difference_percent": 17
+      },
+      "price": 907,
+      "type": "Round trip",
+      "airline_logo": "https://www.gstatic.com/flights/airline_logos/70px/MH.png",
+      "departure_token": "WyJDalJJT0ZocWRrVlVZa3BqZG10QlFqZ3hkRUZDUnkwdExTMHRMUzB0ZVdsaVkya3hNMEZCUVVGQlIyOUdZakpGUjBObll6QkJFZ3BOU0RFNU5YeE5TRGN3R2dzSXNjUUZFQUlhQTFWVFJEZ2NjTEhFQlE9PSIsW1siQk9NIiwiMjAyNi0wNy0xMyIsIktVTCIsbnVsbCwiTUgiLCIxOTUiXSxbIktVTCIsIjIwMjYtMDctMTQiLCJOUlQiLG51bGwsIk1IIiwiNzAiXV1d"
+    },
+    {
+      "flights": [
+        {
+          "departure_airport": {
+            "name": "Chhatrapati Shivaji Maharaj International Airport Mumbai",
+            "id": "BOM",
+            "time": "2026-07-13 23:35"
+          },
+          "arrival_airport": {
+            "name": "Suvarnabhumi Airport",
+            "id": "BKK",
+            "time": "2026-07-14 05:35"
+          },
+          "duration": 270,
+          "airplane": "Boeing 777",
+          "airline": "THAI",
+          "airline_logo": "https://www.gstatic.com/flights/airline_logos/70px/TG.png",
+          "travel_class": "Economy",
+          "flight_number": "TG 318",
+          "legroom": "34 in",
+          "extensions": [
+            "Above average legroom (34 in)",
+            "In-seat power outlet",
+            "On-demand video",
+            "Carbon emissions estimate: 266 kg"
+          ],
+          "overnight": true
+        },
+        {
+          "departure_airport": {
+            "name": "Suvarnabhumi Airport",
+            "id": "BKK",
+            "time": "2026-07-14 07:45"
+          },
+          "arrival_airport": {
+            "name": "Narita International Airport",
+            "id": "NRT",
+            "time": "2026-07-14 15:55"
+          },
+          "duration": 370,
+          "airplane": "Boeing 777",
+          "airline": "THAI",
+          "airline_logo": "https://www.gstatic.com/flights/airline_logos/70px/TG.png",
+          "travel_class": "Economy",
+          "flight_number": "TG 676",
+          "legroom": "32 in",
+          "extensions": [
+            "Above average legroom (32 in)",
+            "Wi-Fi for a fee",
+            "In-seat power & USB outlets",
+            "On-demand video",
+            "Carbon emissions estimate: 451 kg"
+          ]
+        }
+      ],
+      "layovers": [
+        {
+          "duration": 130,
+          "name": "Suvarnabhumi Airport",
+          "id": "BKK"
+        }
+      ],
+      "total_duration": 770,
+      "carbon_emissions": {
+        "this_flight": 718000,
+        "typical_for_this_route": 520000,
+        "difference_percent": 38
+      },
+      "price": 1087,
+      "type": "Round trip",
+      "airline_logo": "https://www.gstatic.com/flights/airline_logos/70px/TG.png",
+      "departure_token": "WyJDalJJT0ZocWRrVlVZa3BqZG10QlFqZ3hkRUZDUnkwdExTMHRMUzB0ZVdsaVkya3hNMEZCUVVGQlIyOUdZakpGUjBObll6QkJFZ3RVUnpNeE9IeFVSelkzTmhvTENJRFJCaEFDR2dOVlUwUTRISENBMFFZPSIsW1siQk9NIiwiMjAyNi0wNy0xMyIsIkJLSyIsbnVsbCwiVEciLCIzMTgiXSxbIkJLSyIsIjIwMjYtMDctMTQiLCJOUlQiLG51bGwsIlRHIiwiNjc2Il1dXQ=="
+    },
+    {
+      "flights": [
+        {
+          "departure_airport": {
+            "name": "Chhatrapati Shivaji Maharaj International Airport Mumbai",
+            "id": "BOM",
+            "time": "2026-07-13 19:30"
+          },
+          "arrival_airport": {
+            "name": "Narita International Airport",
+            "id": "NRT",
+            "time": "2026-07-14 08:15"
+          },
+          "duration": 555,
+          "airplane": "Boeing 787",
+          "airline": "ANA",
+          "airline_logo": "https://www.gstatic.com/flights/airline_logos/70px/NH.png",
+          "travel_class": "Economy",
+          "flight_number": "NH 830",
+          "ticket_also_sold_by": [
+            "Air India"
+          ],
+          "legroom": "34 in",
+          "extensions": [
+            "Above average legroom (34 in)",
+            "Wi-Fi for a fee",
+            "In-seat power & USB outlets",
+            "On-demand video",
+            "Carbon emissions estimate: 451 kg"
+          ],
+          "overnight": true
+        }
+      ],
+      "total_duration": 555,
+      "carbon_emissions": {
+        "this_flight": 452000,
+        "typical_for_this_route": 520000,
+        "difference_percent": -13
+      },
+      "price": 1692,
+      "type": "Round trip",
+      "airline_logo": "https://www.gstatic.com/flights/airline_logos/70px/NH.png",
+      "departure_token": "WyJDalJJT0ZocWRrVlVZa3BqZG10QlFqZ3hkRUZDUnkwdExTMHRMUzB0ZVdsaVkya3hNMEZCUVVGQlIyOUdZakpGUjBObll6QkJFZ1ZPU0Rnek1Cb0xDS0twQ2hBQ0dnTlZVMFE0SEhDaXFRbz0iLFtbIkJPTSIsIjIwMjYtMDctMTMiLCJOUlQiLG51bGwsIk5IIiwiODMwIl1dXQ=="
+    },
+    {
+      "flights": [
+        {
+          "departure_airport": {
+            "name": "Chhatrapati Shivaji Maharaj International Airport Mumbai",
+            "id": "BOM",
+            "time": "2026-07-13 23:10"
+          },
+          "arrival_airport": {
+            "name": "Tan Son Nhat International Airport",
+            "id": "SGN",
+            "time": "2026-07-14 06:00"
+          },
+          "duration": 320,
+          "airplane": "Airbus A350",
+          "airline": "Vietnam Airlines",
+          "airline_logo": "https://www.gstatic.com/flights/airline_logos/70px/VN.png",
+          "travel_class": "Economy",
+          "flight_number": "VN 978",
+          "legroom": "32 in",
+          "extensions": [
+            "Above average legroom (32 in)",
+            "In-seat power & USB outlets",
+            "On-demand video",
+            "Carbon emissions estimate: 269 kg"
+          ],
+          "overnight": true
+        },
+        {
+          "departure_airport": {
+            "name": "Tan Son Nhat International Airport",
+            "id": "SGN",
+            "time": "2026-07-14 07:00"
+          },
+          "arrival_airport": {
+            "name": "Narita International Airport",
+            "id": "NRT",
+            "time": "2026-07-14 15:10"
+          },
+          "duration": 370,
+          "airplane": "Boeing 787",
+          "airline": "ANA",
+          "airline_logo": "https://www.gstatic.com/flights/airline_logos/70px/NH.png",
+          "travel_class": "Economy",
+          "flight_number": "NH 834",
+          "ticket_also_sold_by": [
+            "Vietnam Airlines"
+          ],
+          "legroom": "31 in",
+          "extensions": [
+            "Average legroom (31 in)",
+            "Wi-Fi for a fee",
+            "In-seat power & USB outlets",
+            "On-demand video",
+            "Carbon emissions estimate: 306 kg"
+          ]
+        }
+      ],
+      "layovers": [
+        {
+          "duration": 60,
+          "name": "Tan Son Nhat International Airport",
+          "id": "SGN"
+        }
+      ],
+      "total_duration": 750,
+      "carbon_emissions": {
+        "this_flight": 577000,
+        "typical_for_this_route": 520000,
+        "difference_percent": 11
+      },
+      "type": "Round trip",
+      "airline_logo": "https://www.gstatic.com/flights/airline_logos/70px/multi.png",
+      "departure_token": "WyJDalJJT0ZocWRrVlVZa3BqZG10QlFqZ3hkRUZDUnkwdExTMHRMUzB0ZVdsaVkya3hNMEZCUVVGQlIyOUdZakpGUjBObll6QkJFZ3RXVGprM09IeE9TRGd6TkRnYyIsW1siQk9NIiwiMjAyNi0wNy0xMyIsIlNHTiIsbnVsbCwiVk4iLCI5NzgiXSxbIlNHTiIsIjIwMjYtMDctMTQiLCJOUlQiLG51bGwsIk5IIiwiODM0Il1dXQ=="
+    }
+  ],
+  "airports": [
+    {
+      "departure": [
+        {
+          "airport": {
+            "id": "BOM",
+            "name": "Chhatrapati Shivaji Maharaj International Airport Mumbai"
+          },
+          "city": "Mumbai",
+          "country": "India",
+          "country_code": "IN",
+          "image": "https://encrypted-tbn1.gstatic.com/images?q=tbn:ANd9GcTJ5Q0R5IIxjWsuWKt6lnlBIOlNfNwTqC8yBtOP_uMdzFrluYmn3jZ-6dyEWo6AbIH3x57scrUgF3gvWA",
+          "thumbnail": "https://encrypted-tbn1.gstatic.com/images?q=tbn:ANd9GcRMqVWevN4qkQ8u4HrxtHbv2Oy7UigPckL8bgZUJQWQgjvmJxG7oggYxd2Rw5MwjiBYzZFpr939opSbON9CxkwdD-7DK9it3TPq1ea8pxU"
+        },
+        {
+          "airport": {
+            "id": "NMI",
+            "name": "Navi Mumbai International Airport"
+          },
+          "city": "Navi Mumbai",
+          "country": "India",
+          "country_code": "IN",
+          "image": "https://encrypted-tbn1.gstatic.com/images?q=tbn:ANd9GcRQ695en3mXrx60ooVq0PM9aqpawT-BRUcnwoq3wvVIvSayB6QNOfKeMjpDc69CRiZ5NJ3zfQ9PEm4N5Q",
+          "thumbnail": "https://encrypted-tbn1.gstatic.com/images?q=tbn:ANd9GcTwDqGQYc_r3b2x_H4KJ1RgXnwIcd9YHCkrkdfzL9dz80QF9hZwWvWNcl7b1ZHmAju_zCj2OgoUaOrfLVsTzOUV__YmMPtNiuU7NvrqJyk"
+        }
+      ],
+      "arrival": [
+        {
+          "airport": {
+            "id": "NRT",
+            "name": "Narita International Airport"
+          },
+          "city": "Tokyo",
+          "country": "Japan",
+          "country_code": "JP",
+          "image": "https://encrypted-tbn3.gstatic.com/images?q=tbn:ANd9GcTqHkzEeI2bSglPzmSGZL7bxXmn0wJgOn2ZtEN8I47uBnzY1CnHzGtD-YseJXqyexcAcw_uJp-D5HTkCg",
+          "thumbnail": "https://encrypted-tbn3.gstatic.com/images?q=tbn:ANd9GcRLnIToEgwiM_jV3cbw5eQZoUAIg6XqdrJAiClDyyg0w-JBSRN5ZeOT-iFb3SvwkwP1uoBCmT-gKE5VcyCYf-xq4guL4NAFICSaNyOnYOA"
+        },
+        {
+          "airport": {
+            "id": "HND",
+            "name": "Haneda Airport"
+          },
+          "city": "Tokyo",
+          "country": "Japan",
+          "country_code": "JP",
+          "image": "https://encrypted-tbn3.gstatic.com/images?q=tbn:ANd9GcTqHkzEeI2bSglPzmSGZL7bxXmn0wJgOn2ZtEN8I47uBnzY1CnHzGtD-YseJXqyexcAcw_uJp-D5HTkCg",
+          "thumbnail": "https://encrypted-tbn3.gstatic.com/images?q=tbn:ANd9GcRLnIToEgwiM_jV3cbw5eQZoUAIg6XqdrJAiClDyyg0w-JBSRN5ZeOT-iFb3SvwkwP1uoBCmT-gKE5VcyCYf-xq4guL4NAFICSaNyOnYOA"
+        }
+      ]
+    },
+    {
+      "departure": [
+        {
+          "airport": {
+            "id": "NRT",
+            "name": "Narita International Airport"
+          },
+          "city": "Tokyo",
+          "country": "Japan",
+          "country_code": "JP",
+          "image": "https://encrypted-tbn3.gstatic.com/images?q=tbn:ANd9GcTqHkzEeI2bSglPzmSGZL7bxXmn0wJgOn2ZtEN8I47uBnzY1CnHzGtD-YseJXqyexcAcw_uJp-D5HTkCg",
+          "thumbnail": "https://encrypted-tbn3.gstatic.com/images?q=tbn:ANd9GcRLnIToEgwiM_jV3cbw5eQZoUAIg6XqdrJAiClDyyg0w-JBSRN5ZeOT-iFb3SvwkwP1uoBCmT-gKE5VcyCYf-xq4guL4NAFICSaNyOnYOA"
+        },
+        {
+          "airport": {
+            "id": "HND",
+            "name": "Haneda Airport"
+          },
+          "city": "Tokyo",
+          "country": "Japan",
+          "country_code": "JP",
+          "image": "https://encrypted-tbn3.gstatic.com/images?q=tbn:ANd9GcTqHkzEeI2bSglPzmSGZL7bxXmn0wJgOn2ZtEN8I47uBnzY1CnHzGtD-YseJXqyexcAcw_uJp-D5HTkCg",
+          "thumbnail": "https://encrypted-tbn3.gstatic.com/images?q=tbn:ANd9GcRLnIToEgwiM_jV3cbw5eQZoUAIg6XqdrJAiClDyyg0w-JBSRN5ZeOT-iFb3SvwkwP1uoBCmT-gKE5VcyCYf-xq4guL4NAFICSaNyOnYOA"
+        }
+      ],
+      "arrival": [
+        {
+          "airport": {
+            "id": "BOM",
+            "name": "Chhatrapati Shivaji Maharaj International Airport Mumbai"
+          },
+          "city": "Mumbai",
+          "country": "India",
+          "country_code": "IN",
+          "image": "https://encrypted-tbn1.gstatic.com/images?q=tbn:ANd9GcTJ5Q0R5IIxjWsuWKt6lnlBIOlNfNwTqC8yBtOP_uMdzFrluYmn3jZ-6dyEWo6AbIH3x57scrUgF3gvWA",
+          "thumbnail": "https://encrypted-tbn1.gstatic.com/images?q=tbn:ANd9GcRMqVWevN4qkQ8u4HrxtHbv2Oy7UigPckL8bgZUJQWQgjvmJxG7oggYxd2Rw5MwjiBYzZFpr939opSbON9CxkwdD-7DK9it3TPq1ea8pxU"
+        },
+        {
+          "airport": {
+            "id": "NMI",
+            "name": "Navi Mumbai International Airport"
+          },
+          "city": "Navi Mumbai",
+          "country": "India",
+          "country_code": "IN",
+          "image": "https://encrypted-tbn1.gstatic.com/images?q=tbn:ANd9GcRQ695en3mXrx60ooVq0PM9aqpawT-BRUcnwoq3wvVIvSayB6QNOfKeMjpDc69CRiZ5NJ3zfQ9PEm4N5Q",
+          "thumbnail": "https://encrypted-tbn1.gstatic.com/images?q=tbn:ANd9GcTwDqGQYc_r3b2x_H4KJ1RgXnwIcd9YHCkrkdfzL9dz80QF9hZwWvWNcl7b1ZHmAju_zCj2OgoUaOrfLVsTzOUV__YmMPtNiuU7NvrqJyk"
+        }
+      ]
+    }
+  ],
+  "_fixture_meta": {
+    "note": "RT outbound BOM/NMI\u2192NRT/HND",
+    "outbound_date": "2026-07-13",
+    "return_date": "2026-07-23",
+    "captured_on": "2026-05-14"
+  }
+}

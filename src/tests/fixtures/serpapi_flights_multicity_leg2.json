@@ -1,0 +1,204 @@
+{
+  "search_metadata": {
+    "id": "6a056f57ac1765e95b0a00c5",
+    "status": "Success",
+    "json_endpoint": "https://serpapi.com/searches/nIN-z4Y5U9z7FOpwyHujsQ/6a056f57ac1765e95b0a00c5.json",
+    "created_at": "2026-05-14 06:44:39 UTC",
+    "processed_at": "2026-05-14 06:44:39 UTC",
+    "google_flights_url": "https://www.google.com/travel/flights?hl=en&gl=us&curr=USD&tfs=CBwQAhpREgoyMDI2LTA3LTEzIh8KA0JPTRIKMjAyNi0wNy0xMxoDSE5EKgJBSTIDMzU2agcIARIDQk9NagcIARIDTk1JcgcIARIDTlJUcgcIARIDSE5EGicSCjIwMjYtMDctMjBqBwgBEgNOUlRqBwgBEgNITkRyBwgBEgNERUxAAUgBcAGYAQM&tfu=EgIIAQ",
+    "raw_html_file": "https://serpapi.com/searches/nIN-z4Y5U9z7FOpwyHujsQ/6a056f57ac1765e95b0a00c5.html",
+    "prettify_html_file": "https://serpapi.com/searches/nIN-z4Y5U9z7FOpwyHujsQ/6a056f57ac1765e95b0a00c5.prettify",
+    "total_time_taken": 1.22
+  },
+  "search_parameters": {
+    "engine": "google_flights",
+    "hl": "en",
+    "gl": "us",
+    "type": "3",
+    "adults": 1,
+    "departure_token": "WyJDalJJWmtNM2FrNURkRVZvTWxGQlEycGpMVkZDUnkwdExTMHRMWFozYUdReE5pMXVNVUZCUVVGQlIyOUdZakJ2U1ROeVlUaEJFZ1ZCU1RNMU5ob0xDTW1yQXhBQ0dnTlZVMFE0SEhESnF3TT0iLFtbIkJPTSIsIjIwMjYtMDctMTMiLCJITkQiLG51bGwsIkFJIiwiMzU2Il1dXQ==",
+    "currency": "USD",
+    "multi_city_json": "[{\"departure_id\": \"BOM,NMI\", \"arrival_id\": \"NRT,HND\", \"date\": \"2026-07-13\"}, {\"departure_id\": \"NRT,HND\", \"arrival_id\": \"DEL\", \"date\": \"2026-07-20\"}]"
+  },
+  "other_flights": [
+    {
+      "flights": [
+        {
+          "departure_airport": {
+            "name": "Haneda Airport",
+            "id": "HND",
+            "time": "2026-07-20 11:50"
+          },
+          "arrival_airport": {
+            "name": "Indira Gandhi International Airport",
+            "id": "DEL",
+            "time": "2026-07-20 17:30"
+          },
+          "duration": 550,
+          "airplane": "Boeing 787",
+          "airline": "Air India",
+          "airline_logo": "https://www.gstatic.com/flights/airline_logos/70px/AI.png",
+          "travel_class": "Economy",
+          "flight_number": "AI 357",
+          "legroom": "32 in",
+          "extensions": [
+            "Above average legroom (32 in)",
+            "Free Wi-Fi",
+            "In-seat USB outlet",
+            "On-demand video",
+            "Carbon emissions estimate: 397 kg"
+          ],
+          "often_delayed_by_over_30_min": true
+        }
+      ],
+      "total_duration": 550,
+      "carbon_emissions": {
+        "this_flight": 397000,
+        "typical_for_this_route": 556000,
+        "difference_percent": -29
+      },
+      "price": 548,
+      "type": "Multi-city",
+      "airline_logo": "https://www.gstatic.com/flights/airline_logos/70px/AI.png",
+      "booking_token": "WyJDalJJZEV4WVVVSm5lV0ozVVdkQlFuWnRUVUZDUnkwdExTMHRMUzB0TFhaMFozUXhNa0ZCUVVGQlIyOUdZakZuUzNOaFZIRkJFZ1ZCU1RNMU54b0xDTW1yQXhBQ0dnTlZVMFE0SEhESnF3TT0iLFtbIkJPTSIsIjIwMjYtMDctMTMiLCJITkQiLG51bGwsIkFJIiwiMzU2Il1dLFtbIkhORCIsIjIwMjYtMDctMjAiLCJERUwiLG51bGwsIkFJIiwiMzU3Il1dXQ=="
+    },
+    {
+      "flights": [
+        {
+          "departure_airport": {
+            "name": "Haneda Airport",
+            "id": "HND",
+            "time": "2026-07-20 11:10"
+          },
+          "arrival_airport": {
+            "name": "Indira Gandhi International Airport",
+            "id": "DEL",
+            "time": "2026-07-20 16:30"
+          },
+          "duration": 530,
+          "airplane": "Boeing 787",
+          "airline": "ANA",
+          "airline_logo": "https://www.gstatic.com/flights/airline_logos/70px/NH.png",
+          "travel_class": "Economy",
+          "flight_number": "NH 837",
+          "ticket_also_sold_by": [
+            "Air India"
+          ],
+          "legroom": "34 in",
+          "extensions": [
+            "Above average legroom (34 in)",
+            "Wi-Fi for a fee",
+            "In-seat power & USB outlets",
+            "On-demand video",
+            "Carbon emissions estimate: 405 kg"
+          ]
+        }
+      ],
+      "total_duration": 530,
+      "carbon_emissions": {
+        "this_flight": 406000,
+        "typical_for_this_route": 556000,
+        "difference_percent": -27
+      },
+      "price": 746,
+      "type": "Multi-city",
+      "airline_logo": "https://www.gstatic.com/flights/airline_logos/70px/NH.png",
+      "booking_token": "WyJDalJJZEV4WVVVSm5lV0ozVVdkQlFuWnRUVUZDUnkwdExTMHRMUzB0TFhaMFozUXhNa0ZCUVVGQlIyOUdZakZuUzNOaFZIRkJFZ1ZPU0Rnek54b0xDTURHQkJBQ0dnTlZVMFE0SEhEQXhnUT0iLFtbIkJPTSIsIjIwMjYtMDctMTMiLCJITkQiLG51bGwsIkFJIiwiMzU2Il1dLFtbIkhORCIsIjIwMjYtMDctMjAiLCJERUwiLG51bGwsIk5IIiwiODM3Il1dXQ=="
+    }
+  ],
+  "airports": [
+    {
+      "departure": [
+        {
+          "airport": {
+            "id": "BOM",
+            "name": "Chhatrapati Shivaji Maharaj International Airport Mumbai"
+          },
+          "city": "Mumbai",
+          "country": "India",
+          "country_code": "IN",
+          "image": "https://encrypted-tbn1.gstatic.com/images?q=tbn:ANd9GcTJ5Q0R5IIxjWsuWKt6lnlBIOlNfNwTqC8yBtOP_uMdzFrluYmn3jZ-6dyEWo6AbIH3x57scrUgF3gvWA",
+          "thumbnail": "https://encrypted-tbn1.gstatic.com/images?q=tbn:ANd9GcRMqVWevN4qkQ8u4HrxtHbv2Oy7UigPckL8bgZUJQWQgjvmJxG7oggYxd2Rw5MwjiBYzZFpr939opSbON9CxkwdD-7DK9it3TPq1ea8pxU"
+        },
+        {
+          "airport": {
+            "id": "NMI",
+            "name": "Navi Mumbai International Airport"
+          },
+          "city": "Navi Mumbai",
+          "country": "India",
+          "country_code": "IN",
+          "image": "https://encrypted-tbn1.gstatic.com/images?q=tbn:ANd9GcRQ695en3mXrx60ooVq0PM9aqpawT-BRUcnwoq3wvVIvSayB6QNOfKeMjpDc69CRiZ5NJ3zfQ9PEm4N5Q",
+          "thumbnail": "https://encrypted-tbn1.gstatic.com/images?q=tbn:ANd9GcTwDqGQYc_r3b2x_H4KJ1RgXnwIcd9YHCkrkdfzL9dz80QF9hZwWvWNcl7b1ZHmAju_zCj2OgoUaOrfLVsTzOUV__YmMPtNiuU7NvrqJyk"
+        }
+      ],
+      "arrival": [
+        {
+          "airport": {
+            "id": "NRT",
+            "name": "Narita International Airport"
+          },
+          "city": "Tokyo",
+          "country": "Japan",
+          "country_code": "JP",
+          "image": "https://encrypted-tbn3.gstatic.com/images?q=tbn:ANd9GcTqHkzEeI2bSglPzmSGZL7bxXmn0wJgOn2ZtEN8I47uBnzY1CnHzGtD-YseJXqyexcAcw_uJp-D5HTkCg",
+          "thumbnail": "https://encrypted-tbn3.gstatic.com/images?q=tbn:ANd9GcRLnIToEgwiM_jV3cbw5eQZoUAIg6XqdrJAiClDyyg0w-JBSRN5ZeOT-iFb3SvwkwP1uoBCmT-gKE5VcyCYf-xq4guL4NAFICSaNyOnYOA"
+        },
+        {
+          "airport": {
+            "id": "HND",
+            "name": "Haneda Airport"
+          },
+          "city": "Tokyo",
+          "country": "Japan",
+          "country_code": "JP",
+          "image": "https://encrypted-tbn3.gstatic.com/images?q=tbn:ANd9GcTqHkzEeI2bSglPzmSGZL7bxXmn0wJgOn2ZtEN8I47uBnzY1CnHzGtD-YseJXqyexcAcw_uJp-D5HTkCg",
+          "thumbnail": "https://encrypted-tbn3.gstatic.com/images?q=tbn:ANd9GcRLnIToEgwiM_jV3cbw5eQZoUAIg6XqdrJAiClDyyg0w-JBSRN5ZeOT-iFb3SvwkwP1uoBCmT-gKE5VcyCYf-xq4guL4NAFICSaNyOnYOA"
+        }
+      ]
+    },
+    {
+      "departure": [
+        {
+          "airport": {
+            "id": "NRT",
+            "name": "Narita International Airport"
+          },
+          "city": "Tokyo",
+          "country": "Japan",
+          "country_code": "JP",
+          "image": "https://encrypted-tbn3.gstatic.com/images?q=tbn:ANd9GcTqHkzEeI2bSglPzmSGZL7bxXmn0wJgOn2ZtEN8I47uBnzY1CnHzGtD-YseJXqyexcAcw_uJp-D5HTkCg",
+          "thumbnail": "https://encrypted-tbn3.gstatic.com/images?q=tbn:ANd9GcRLnIToEgwiM_jV3cbw5eQZoUAIg6XqdrJAiClDyyg0w-JBSRN5ZeOT-iFb3SvwkwP1uoBCmT-gKE5VcyCYf-xq4guL4NAFICSaNyOnYOA"
+        },
+        {
+          "airport": {
+            "id": "HND",
+            "name": "Haneda Airport"
+          },
+          "city": "Tokyo",
+          "country": "Japan",
+          "country_code": "JP",
+          "image": "https://encrypted-tbn3.gstatic.com/images?q=tbn:ANd9GcTqHkzEeI2bSglPzmSGZL7bxXmn0wJgOn2ZtEN8I47uBnzY1CnHzGtD-YseJXqyexcAcw_uJp-D5HTkCg",
+          "thumbnail": "https://encrypted-tbn3.gstatic.com/images?q=tbn:ANd9GcRLnIToEgwiM_jV3cbw5eQZoUAIg6XqdrJAiClDyyg0w-JBSRN5ZeOT-iFb3SvwkwP1uoBCmT-gKE5VcyCYf-xq4guL4NAFICSaNyOnYOA"
+        }
+      ],
+      "arrival": [
+        {
+          "airport": {
+            "id": "DEL",
+            "name": "Indira Gandhi International Airport"
+          },
+          "city": "New Delhi",
+          "country": "India",
+          "country_code": "IN",
+          "image": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRkRqzwP-0z4pH29-KifVzfrxM5wwXx56g3Hoo_ebldH9Fy8a8EjGqPzd3fZqJSKoE5tSIRC2iGJxgqzQ",
+          "thumbnail": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSY7HqndXM-ihFCu1qUKosYR--X_yXSd-0mkQHeSUaG5rkpq5Y6uxD8CMmYUCdngZE7mV0onuN2zv_aVxGGO8xv4FMcpMlWvbXdvJFcemY"
+        }
+      ]
+    }
+  ],
+  "_fixture_meta": {
+    "note": "MC leg 2 via departure_token from cheapest leg-1",
+    "captured_on": "2026-05-14"
+  }
+}

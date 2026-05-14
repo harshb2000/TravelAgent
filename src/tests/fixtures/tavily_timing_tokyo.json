@@ -1,0 +1,45 @@
+{
+  "query": "best time to visit Tokyo weather seasons",
+  "follow_up_questions": null,
+  "answer": "The best times to visit Tokyo are spring (March to May) and autumn (October to November) for pleasant weather. Avoid peak tourist periods during Golden Week and Obon.",
+  "images": [],
+  "results": [
+    {
+      "title": "Weather in Tokyo, Japan",
+      "url": "https://www.weatherapi.com/",
+      "content": "{'location': {'name': 'Tokyo', 'region': 'Tokyo', 'country': 'Japan', 'lat': 35.6895, 'lon': 139.6917, 'tz_id': 'Asia/Tokyo', 'localtime_epoch': 1778736507, 'localtime': '2026-05-14 14:28'}, 'current': {'last_updated_epoch': 1778735700, 'last_updated': '2026-05-14 14:15', 'temp_c': 26.3, 'temp_f': 79.3, 'is_day': 1, 'condition': {'text': 'Partly cloudy', 'icon': '//cdn.weatherapi.com/weather/64x64/day/116.png', 'code': 1003}, 'wind_mph': 13.9, 'wind_kph': 22.3, 'wind_degree': 103, 'wind_dir': 'ESE', 'pressure_mb': 1012.0, 'pressure_in': 29.88, 'precip_mm': 0.09, 'precip_in': 0.0, 'humidity': 45, 'cloud': 75, 'feelslike_c': 26.7, 'feelslike_f': 80.1, 'windchill_c': 23.3, 'windchill_f': 74.0, 'heatindex_c': 24.8, 'heatindex_f': 76.6, 'dewpoint_c': 11.3, 'dewpoint_f': 52.4, 'vis_km': 10.0, 'vis_miles': 6.0, 'uv': 4.1, 'gust_mph': 17.1, 'gust_kph': 27.5, 'will_it_rain': 1, 'chance_of_rain': 100, 'will_it_snow': 0, 'chance_of_snow': 0}}",
+      "score": 0.9174568,
+      "raw_content": null
+    },
+    {
+      "url": "https://www.machupicchu.org/best-time-visit-tokyo-2026-seasonal-planning-guide.htm",
+      "title": "Best Time Visit Tokyo 2026: Seasonal Planning Guide - Machu Picchu",
+      "content": "October and November represent Tokyo's optimal months combining comfortable temperatures 15-22\u00b0C (59-72\u00b0F), minimal rainfall averaging just 4-5",
+      "score": 0.8958969,
+      "raw_content": null
+    },
+    {
+      "url": "https://selfguidejapan.com/blog/best-time-to-visit-japan-2026",
+      "title": "Best Time to Visit Japan 2026: Monthly Guide | BluePlanet",
+      "content": "Best Time to Visit Japan 2026: Best Months + Dates to Avoid. What is the best month to visit Japan in 2026? For most travelers, May, October, and November offer the best balance of weather, crowds, and value. Cherry blossom travelers should target late March to early April. From cherry blossoms in spring to snow monkeys in winter, every time to visit Japan brings something special. Whether you want to view cherry blossoms, enjoy pleasant weather, or avoid huge crowds, we'll help you choose your ideal travel dates. ### \ud83d\udcc5 Quick Answer: Best Time to Visit Japan 2026. **Best overall months:** May, October, and November. **Cherry blossoms:** Late March to mid-April. **Avoid:** Golden Week (Apr 29-May 6), Obon (mid-August), and New Year. Understanding these distinct seasons helps you choose the best time to visit for your interests. Snow, hot springs, and a winter wonderland in the mountains. Cherry blossom season is Japan's most famous time to visit.",
+      "score": 0.8815438,
+      "raw_content": null
+    },
+    {
+      "url": "https://www.facebook.com/groups/tokyodisneyresort/posts/1344651857128610/",
+      "title": "We're planning a trip to Japan for 2026 and in the beginning stages ...",
+      "content": "\"Best time for weather is spring in March-April and fall in October-November. Avoids the summer heat and typhoon season while not being as cold",
+      "score": 0.8533396,
+      "raw_content": null
+    },
+    {
+      "url": "https://www.japanhighlights.com/japan/best-time-to-visit",
+      "title": "Best & Worst Time to Visit Japan 2026/2027 (First-Timer Guide)",
+      "content": "When it comes to the best time to visit Japan, the common answer is March and May for the cherry blossoms and pleasant temperatures. Considering these factors and different travel needs, we'll recommend the best times to visit Japan for you to help you make the most out of the trip. ## Best Time to Visit Japan for Pleasant Weather. Most people vote that the best times to visit Japan are spring and autumn. During these seasons, the weather is clear and pleasant, and the scenery is at its best\u2014cherry blossoms in spring and vibrant autumn leaves in fall. ### Spring: Best Time to Visit Japan for Warm Days and Cherry Blossoms. Spring is one of the most pleasant seasons in Japan, with high temperatures around **20\u00b0C (70\u00b0F) and lows around 5\u00b0C (40\u00b0F)**. ### Best Time to Visit Japan for Cherry Blossoms. March to May is the best season to visit Japan for cherry blossoms.",
+      "score": 0.8138313,
+      "raw_content": null
+    }
+  ],
+  "response_time": 1.65,
+  "request_id": "5fc63ee2-d84f-4679-a738-328eafb8a725"
+}

@@ -1,0 +1,173 @@
+{
+  "search_metadata": {
+    "id": "6a056f63fbe53b559df8f65d",
+    "status": "Success",
+    "json_endpoint": "https://serpapi.com/searches/0HCRq7vD3wCwvDF38j18Fg/6a056f63fbe53b559df8f65d.json",
+    "created_at": "2026-05-14 06:44:51 UTC",
+    "processed_at": "2026-05-14 06:44:51 UTC",
+    "google_flights_url": "https://www.google.com/travel/flights?hl=en&gl=us&curr=USD&tfs=CBwQAhpREgoyMDI2LTA3LTEzIh8KA0JPTRIKMjAyNi0wNy0xMxoDSE5EKgJBSTIDMzU2agcIARIDQk9NagcIARIDTk1JcgcIARIDTlJUcgcIARIDSE5EGjASCjIwMjYtMDctMjNqBwgBEgNOUlRqBwgBEgNITkRyBwgBEgNCT01yBwgBEgNOTUlAAUgBcAGYAQE&tfu=EgIIAQ",
+    "raw_html_file": "https://serpapi.com/searches/0HCRq7vD3wCwvDF38j18Fg/6a056f63fbe53b559df8f65d.html",
+    "prettify_html_file": "https://serpapi.com/searches/0HCRq7vD3wCwvDF38j18Fg/6a056f63fbe53b559df8f65d.prettify",
+    "total_time_taken": 3.77
+  },
+  "search_parameters": {
+    "engine": "google_flights",
+    "hl": "en",
+    "gl": "us",
+    "type": "1",
+    "departure_id": "BOM,NMI",
+    "arrival_id": "NRT,HND",
+    "outbound_date": "2026-07-13",
+    "return_date": "2026-07-23",
+    "adults": 1,
+    "departure_token": "WyJDalJJT0ZocWRrVlVZa3BqZG10QlFqZ3hkRUZDUnkwdExTMHRMUzB0ZVdsaVkya3hNMEZCUVVGQlIyOUdZakpGUjBObll6QkJFZ1ZCU1RNMU5ob0xDTkt1QXhBQ0dnTlZVMFE0SEhEU3JnTT0iLFtbIkJPTSIsIjIwMjYtMDctMTMiLCJITkQiLG51bGwsIkFJIiwiMzU2Il1dXQ==",
+    "currency": "USD"
+  },
+  "other_flights": [
+    {
+      "flights": [
+        {
+          "departure_airport": {
+            "name": "Haneda Airport",
+            "id": "HND",
+            "time": "2026-07-23 08:50"
+          },
+          "arrival_airport": {
+            "name": "Chhatrapati Shivaji Maharaj International Airport Mumbai",
+            "id": "BOM",
+            "time": "2026-07-23 14:20"
+          },
+          "duration": 540,
+          "airplane": "Boeing 787",
+          "airline": "Air India",
+          "airline_logo": "https://www.gstatic.com/flights/airline_logos/70px/AI.png",
+          "travel_class": "Economy",
+          "flight_number": "AI 355",
+          "legroom": "33 in",
+          "extensions": [
+            "Above average legroom (33 in)",
+            "In-seat power & USB outlets",
+            "Stream media to your device",
+            "Carbon emissions estimate: 453 kg"
+          ]
+        }
+      ],
+      "total_duration": 540,
+      "carbon_emissions": {
+        "this_flight": 453000,
+        "typical_for_this_route": 531000,
+        "difference_percent": -15
+      },
+      "price": 552,
+      "type": "Round trip",
+      "airline_logo": "https://www.gstatic.com/flights/airline_logos/70px/AI.png",
+      "booking_token": "WyJDalJJWlc1cmJtWjZSMFI2WjBGQlEwMXhRVkZDUnkwdExTMHRMUzB0Y0daaWJHUXhOa0ZCUVVGQlIyOUdZakpSU1hKNlpVOUJFZ2RCU1RNMU5TTXhHZ3NJMGE0REVBSWFBMVZUUkRnY2NOR3VBdz09IixbWyJCT00iLCIyMDI2LTA3LTEzIiwiSE5EIixudWxsLCJBSSIsIjM1NiJdXSxbWyJITkQiLCIyMDI2LTA3LTIzIiwiQk9NIixudWxsLCJBSSIsIjM1NSJdXV0="
+    }
+  ],
+  "airports": [
+    {
+      "departure": [
+        {
+          "airport": {
+            "id": "BOM",
+            "name": "Chhatrapati Shivaji Maharaj International Airport Mumbai"
+          },
+          "city": "Mumbai",
+          "country": "India",
+          "country_code": "IN",
+          "image": "https://encrypted-tbn1.gstatic.com/images?q=tbn:ANd9GcTJ5Q0R5IIxjWsuWKt6lnlBIOlNfNwTqC8yBtOP_uMdzFrluYmn3jZ-6dyEWo6AbIH3x57scrUgF3gvWA",
+          "thumbnail": "https://encrypted-tbn1.gstatic.com/images?q=tbn:ANd9GcRMqVWevN4qkQ8u4HrxtHbv2Oy7UigPckL8bgZUJQWQgjvmJxG7oggYxd2Rw5MwjiBYzZFpr939opSbON9CxkwdD-7DK9it3TPq1ea8pxU"
+        },
+        {
+          "airport": {
+            "id": "NMI",
+            "name": "Navi Mumbai International Airport"
+          },
+          "city": "Navi Mumbai",
+          "country": "India",
+          "country_code": "IN",
+          "image": "https://encrypted-tbn1.gstatic.com/images?q=tbn:ANd9GcRQ695en3mXrx60ooVq0PM9aqpawT-BRUcnwoq3wvVIvSayB6QNOfKeMjpDc69CRiZ5NJ3zfQ9PEm4N5Q",
+          "thumbnail": "https://encrypted-tbn1.gstatic.com/images?q=tbn:ANd9GcTwDqGQYc_r3b2x_H4KJ1RgXnwIcd9YHCkrkdfzL9dz80QF9hZwWvWNcl7b1ZHmAju_zCj2OgoUaOrfLVsTzOUV__YmMPtNiuU7NvrqJyk"
+        }
+      ],
+      "arrival": [
+        {
+          "airport": {
+            "id": "NRT",
+            "name": "Narita International Airport"
+          },
+          "city": "Tokyo",
+          "country": "Japan",
+          "country_code": "JP",
+          "image": "https://encrypted-tbn3.gstatic.com/images?q=tbn:ANd9GcTqHkzEeI2bSglPzmSGZL7bxXmn0wJgOn2ZtEN8I47uBnzY1CnHzGtD-YseJXqyexcAcw_uJp-D5HTkCg",
+          "thumbnail": "https://encrypted-tbn3.gstatic.com/images?q=tbn:ANd9GcRLnIToEgwiM_jV3cbw5eQZoUAIg6XqdrJAiClDyyg0w-JBSRN5ZeOT-iFb3SvwkwP1uoBCmT-gKE5VcyCYf-xq4guL4NAFICSaNyOnYOA"
+        },
+        {
+          "airport": {
+            "id": "HND",
+            "name": "Haneda Airport"
+          },
+          "city": "Tokyo",
+          "country": "Japan",
+          "country_code": "JP",
+          "image": "https://encrypted-tbn3.gstatic.com/images?q=tbn:ANd9GcTqHkzEeI2bSglPzmSGZL7bxXmn0wJgOn2ZtEN8I47uBnzY1CnHzGtD-YseJXqyexcAcw_uJp-D5HTkCg",
+          "thumbnail": "https://encrypted-tbn3.gstatic.com/images?q=tbn:ANd9GcRLnIToEgwiM_jV3cbw5eQZoUAIg6XqdrJAiClDyyg0w-JBSRN5ZeOT-iFb3SvwkwP1uoBCmT-gKE5VcyCYf-xq4guL4NAFICSaNyOnYOA"
+        }
+      ]
+    },
+    {
+      "departure": [
+        {
+          "airport": {
+            "id": "NRT",
+            "name": "Narita International Airport"
+          },
+          "city": "Tokyo",
+          "country": "Japan",
+          "country_code": "JP",
+          "image": "https://encrypted-tbn3.gstatic.com/images?q=tbn:ANd9GcTqHkzEeI2bSglPzmSGZL7bxXmn0wJgOn2ZtEN8I47uBnzY1CnHzGtD-YseJXqyexcAcw_uJp-D5HTkCg",
+          "thumbnail": "https://encrypted-tbn3.gstatic.com/images?q=tbn:ANd9GcRLnIToEgwiM_jV3cbw5eQZoUAIg6XqdrJAiClDyyg0w-JBSRN5ZeOT-iFb3SvwkwP1uoBCmT-gKE5VcyCYf-xq4guL4NAFICSaNyOnYOA"
+        },
+        {
+          "airport": {
+            "id": "HND",
+            "name": "Haneda Airport"
+          },
+          "city": "Tokyo",
+          "country": "Japan",
+          "country_code": "JP",
+          "image": "https://encrypted-tbn3.gstatic.com/images?q=tbn:ANd9GcTqHkzEeI2bSglPzmSGZL7bxXmn0wJgOn2ZtEN8I47uBnzY1CnHzGtD-YseJXqyexcAcw_uJp-D5HTkCg",
+          "thumbnail": "https://encrypted-tbn3.gstatic.com/images?q=tbn:ANd9GcRLnIToEgwiM_jV3cbw5eQZoUAIg6XqdrJAiClDyyg0w-JBSRN5ZeOT-iFb3SvwkwP1uoBCmT-gKE5VcyCYf-xq4guL4NAFICSaNyOnYOA"
+        }
+      ],
+      "arrival": [
+        {
+          "airport": {
+            "id": "BOM",
+            "name": "Chhatrapati Shivaji Maharaj International Airport Mumbai"
+          },
+          "city": "Mumbai",
+          "country": "India",
+          "country_code": "IN",
+          "image": "https://encrypted-tbn1.gstatic.com/images?q=tbn:ANd9GcTJ5Q0R5IIxjWsuWKt6lnlBIOlNfNwTqC8yBtOP_uMdzFrluYmn3jZ-6dyEWo6AbIH3x57scrUgF3gvWA",
+          "thumbnail": "https://encrypted-tbn1.gstatic.com/images?q=tbn:ANd9GcRMqVWevN4qkQ8u4HrxtHbv2Oy7UigPckL8bgZUJQWQgjvmJxG7oggYxd2Rw5MwjiBYzZFpr939opSbON9CxkwdD-7DK9it3TPq1ea8pxU"
+        },
+        {
+          "airport": {
+            "id": "NMI",
+            "name": "Navi Mumbai International Airport"
+          },
+          "city": "Navi Mumbai",
+          "country": "India",
+          "country_code": "IN",
+          "image": "https://encrypted-tbn1.gstatic.com/images?q=tbn:ANd9GcRQ695en3mXrx60ooVq0PM9aqpawT-BRUcnwoq3wvVIvSayB6QNOfKeMjpDc69CRiZ5NJ3zfQ9PEm4N5Q",
+          "thumbnail": "https://encrypted-tbn1.gstatic.com/images?q=tbn:ANd9GcTwDqGQYc_r3b2x_H4KJ1RgXnwIcd9YHCkrkdfzL9dz80QF9hZwWvWNcl7b1ZHmAju_zCj2OgoUaOrfLVsTzOUV__YmMPtNiuU7NvrqJyk"
+        }
+      ]
+    }
+  ],
+  "_fixture_meta": {
+    "note": "RT return leg via departure_token from cheapest outbound",
+    "captured_on": "2026-05-14"
+  }
+}
