@@ -6,3 +6,4 @@ tavily-python
 rich
 pytest
 pytest-mock
+nltk

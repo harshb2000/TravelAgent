@@ -75,7 +75,7 @@ src/
 **Goal:** Runnable skeleton, all imports resolve, no business logic.
 
 - [x] Create all directories with `__init__.py`: `src/`, `src/agent/`, `src/agent/prompts/`, `src/clients/`, `src/tools/`, `src/specialists/`, `src/config/`, `src/tests/`, `src/tests/fixtures/`
-- [x] Write `src/requirements.txt`: `httpx`, `pydantic`, `pydantic-settings`, `python-dotenv`, `tavily-python`, `rich`, `pytest`, `pytest-mock`
+- [x] Write `src/requirements.txt`: `httpx`, `pydantic`, `pydantic-settings`, `python-dotenv`, `tavily-python`, `rich`, `pytest`, `pytest-mock`, `nltk` (for candidate scoring: stop words, lemmatisation)
 - [x] Write `src/.env.example`:
   ```
   LLM_BASE_URL=https://api.anthropic.com/v1
@@ -262,9 +262,10 @@ Each tool has its own client and is independently testable. Unit tests mock HTTP
 ### 4d: Flight Search (SerpApi Google Flights)
 
 **Models:**
-- `DateRange`: `label: str`, `start_date: str | None`, `end_date: str | None`; `from_string(s) -> DateRange` classmethod
-- `TripLeg`: `origin: str`, `destination: str`, `date: str`
-- `FlightDetails`: `airline: str`, `price_usd: float`, `stops: int`, `duration_min: int`, `departure: str`, `arrival: str`, `flight_number: str`
+- `DateRange`: `label: str`, `start_date: str | None`, `end_date: str | None`; `from_string(s) -> DateRange` classmethod; `DateRange("any")` sentinel for time-insensitive KnowledgeState entries
+- `FlightOption`: `airline`, `flight_number`, `price_usd` (round-trip total for rt searches), `stops`, `duration_min`, `departure`, `arrival`, `origin_iata`, `destination_iata`
+- `FlightLegSummary`: `options: list[FlightOption]` (top-3 covering min-cost, min-duration, min-stops), `total_found: int`
+- `FlightSearchOutput`: `trip_type: "one_way"|"round_trip"`, `outbound: FlightLegSummary`, `return_leg: FlightLegSummary | None`, `status: "ok"|"partial"`, `note: str`
 
 **Capture fixtures first:**
 - [x] Flight search: `BOM,NMI → NRT,HND`, one-way, departure 2026-07-13 → saved to `tests/fixtures/serpapi_flights_bom_nrt.json`
@@ -275,7 +276,7 @@ Each tool has its own client and is independently testable. Unit tests mock HTTP
 - [x] `tools/flight_search.py` — `FlightSearchTool.execute()` returns `{"flights": []}`
 
 **Tests:**
-- [x] `FlightSearchTool.execute()` with mocked SerpApi response (from fixture) returns list of `FlightDetails`-shaped dicts
+- [x] `FlightSearchTool.execute()` with mocked SerpApi response (from fixture) returns `FlightSearchOutput` with `outbound.options` containing `FlightOption`-shaped dicts
 - [x] Stops derived correctly as `len(flights) - 1` per result
 - [x] 429 response returns `{"status": "error", "fallback": "Flight search quota exceeded..."}`
 - [x] Empty `best_flights` and `other_flights` returns `{"status": "error", "fallback": "No flights found..."}`
@@ -287,6 +288,9 @@ Each tool has its own client and is independently testable. Unit tests mock HTTP
 - [x] `tools/flight_search.py` — accepts `origin_airports: list[str]`, `destination_airports: list[str]`; joins with `","` before calling client
 
 **Verify green:** flight tests pass
+
+**Cleanup (deferred):**
+- [ ] Simplify `FlightSearchTool` to `trip_type: "one_way" | "round_trip"` only — remove `"multi_city"` from the enum, validation, and execute path; remove `search_multi_city` from `SerpApiClient`; delete `serpapi_flights_multicity*.json` fixtures and all multi-city tests from `test_tools.py`
 
 ### 4f: Calculator
 
@@ -329,98 +333,303 @@ Each tool has its own client and is independently testable. Unit tests mock HTTP
 
 Each specialist is a **class** that owns one `SimpleReActAgent` instance (initialised with its system prompt and domain tools at construction) and exposes a `run(inputs) -> OutputModel` method. The agent's internal history persists across all calls to the specialist within the session. Raw API payloads never leave the specialist — only the structured output model is returned to the orchestrator wrapper.
 
-```python
-class WeatherSpecialist:
-    def __init__(self, llm_client: LLMClient, tools: list[BaseTool]):
-        self._agent = SimpleReActAgent(llm_client, tools,
-                                       system_prompt=WEATHER_PROMPT, max_iterations=1)
+Each specialist has a corresponding **wrapper tool** registered on the Orchestrator. The wrapper runs a pre-firing check against KnowledgeState, adjusts inputs on a partial cache hit, invokes the specialist, updates KnowledgeState, and returns a template-based summary to the Orchestrator LLM. See architecture.md L360–385 for the full wrapper pattern.
 
-    def run(self, city: str, date_range: str) -> WeatherForecast | ClimateSummary:
-        task = f"Get weather for {city} in {date_range}"
-        result_str = self._agent.run(task)
-        return parse_weather_result(result_str)
-```
+---
 
-**Models introduced (per specialist):**
-- Explorer: `DestinationCandidate(name, country, vibe_tags, budget_fit, rationale, source_url)`
-- DestinationResearch: `DestinationResearch(name, country, depth, vibe, budget_tier, top_attractions, daily_cost_usd, visa_summary, safety_summary, festivals, neighbourhoods)`
-- Transportation: uses `FlightDetails` from Phase 4
-- Weather: uses `WeatherForecast | ClimateSummary` from Phase 4
-- Budget: `CostEstimate(low, high, currency)`, `BudgetBreakdown(destination, flights, accommodation, daily_expenses, total, budget_delta)`; uses `calculate` tool for all arithmetic — no LLM mental math
-- ItineraryPlanner: `ItinerarySlot(time, activity, duration_min, notes)`, `ItineraryDay(date, weather_note, slots)`, `Itinerary(destination, days)`
-- Artifact: `str` (file path written)
+### Phase 5a: KnowledgeState Data Models
+
+**Goal:** All data models for KnowledgeState defined and importable. No specialist logic yet.
+
+**Models to implement** (see architecture.md for full field specs at given line numbers):
+- [ ] `UserContext(context, wordset, blocklist)` — see architecture.md L53–68; both `wordset` (positive-intent terms, blocklist excluded) and `blocklist` (negated entities) recomputed on each `context` update via NLTK pipeline + lightweight negation parser (regex on "not X", "avoid X", "no X", "skip X", "except X", "don't want X")
+- [ ] `DateRange` — L103–112; `from_string()` classmethod
+- [ ] `RouteKey(origin, destination)` — L114–116; frozen dataclass
+- [ ] `DestinationCandidate` — L118–131; `wordset` computed at creation via NLTK pipeline; `score` not stored
+- [ ] `Activity(name, tags, indoor, duration_min)` — see architecture.md Activity model
+- [ ] `DestinationResearch` — L138–154; includes `depth: Literal["light","full"]`
+- [ ] `StringWithAttribution(text, source_url)` — for factual claims with per-field source tracking
+- [ ] `CostWithAttribution(amount, source_url)` — wraps all cost fields in DestinationBudget
+- [ ] `DestinationBudget` — all USD, `dict[str, CostWithAttribution]` per category, `summary: str`
+- [ ] `TravelOption` — see architecture.md TravelOption model; `mode` discriminates flight vs. ground transport; `flight: FlightOption | None` for flight-specific detail
+- [ ] `DestinationKnowledge` — research, weather, budget
+- [ ] `RouteKnowledge(options: dict[DateRange, list[TravelOption]])` — `DateRange("any")` sentinel for time-insensitive options
+- [ ] `TimeSlot`, `ItineraryDay`, `Itinerary` — see architecture.md Itinerary models
+- [ ] `KnowledgeState` — all `update_*()` / `add_candidates()` methods including `update_route()`, `update_activities()`, `update_itinerary()`; `itineraries: dict[frozenset[str], Itinerary]`; `to_prompt_context(user_context, top_n)` implementing NLTK-based Jaccard scoring, destination budget range computation, and BFS-composed routes section (see architecture.md)
+
+**Tests (`tests/test_knowledge_state.py`):**
+- [ ] `DateRange.from_string()` handles ISO range, single date, and natural language label
+- [ ] `KnowledgeState.add_candidates()` appends and never replaces
+- [ ] `KnowledgeState.to_prompt_context()` returns top-N candidates by recency + Jaccard score; normalises both components before combining
+- [ ] `KnowledgeState.to_prompt_context()` shows `(showing N of M)` when candidates exceed top_n
+- [ ] `KnowledgeState.update_*()` methods populate correct nested entries; re-calling with same key overwrites
+- [ ] `UserContext.wordset` updates when `context` changes; does not update otherwise
+- [ ] `UserContext.blocklist` populated from negation patterns — "not Thailand" → `{"thailand"}` in blocklist, "thailand" absent from `wordset`
+- [ ] `UserContext.blocklist` and `wordset` recomputed together on each `context` update; blocklist terms excluded from `wordset`
+
+**Verify red → implement → verify green**
+
+---
+
+### Phase 5b: ExplorerSpecialist
+
+**Contract:** see architecture.md L384–417
 
 **Scaffold:**
-- [ ] Each specialist class created with `run()` returning a hardcoded empty output model (e.g., `WeatherSpecialist.run()` returns `WeatherForecast(city="", days=[], mode="forecast")`)
-- [ ] Prompt files created as empty strings in `agent/prompts/`
+- [ ] `specialists/explorer.py` — `ExplorerSpecialist.run()` returns `[]`
+- [ ] `agent/prompts/explorer.py` — empty string
 
-**Tests (`tests/test_specialists.py`) — stub `LLMClient`, fast, always run:**
-- [ ] Each specialist: stub returns a plausible response string; assert `run()` output parses to the correct output model
-- [ ] Each specialist: stub returns a `tool_calls` response followed by a final answer; assert the correct tool was dispatched and the result appears in the next LLM call
-- [ ] WeatherSpecialist: stub triggers `weather_forecast` tool call; output parses to `WeatherOutput` with `mode="forecast"`
-- [ ] WeatherSpecialist: stub triggers `climate_summary` tool call; output parses to `WeatherOutput` with `mode="climate"`
-- [ ] BudgetSpecialist: stub triggers `calculate` tool call; `budget_delta` sign is correct relative to user budget
-- [ ] ArtifactSpecialist: stub triggers `file_write` tool call; `run()` returns the written file path
+**Tests (`tests/test_specialists.py`):**
+- [ ] Stub LLM returns a valid candidate list; `run()` output parses to `list[DestinationCandidate]` with all fields populated including `wordset`
+- [ ] Stub LLM returns a `web_search` tool call then a final answer; assert `web_search` was dispatched
+- [ ] Wrapper pre-firing check: blocklisted candidate (name in `user_context.blocklist`) is excluded before Jaccard runs and never appears in cache hit counts or results
+- [ ] Wrapper pre-firing check: all K surviving candidates score above threshold → specialist not called; template summary returned
+- [ ] Wrapper pre-firing check: K < max_results surviving candidates match → specialist called with `max_results = max_results − K`; surviving candidates passed in prompt
+- [ ] Negative constraints from UserContext appear in the task string passed to the specialist
+- [ ] `specialist.run()` raises an exception → wrapper catches it, returns error string as tool result, `knowledge.add_candidates()` not called
 
-Note: prompt efficacy (e.g. how many tool calls the LLM chooses to make, scheduling rules) is not tested here — that belongs in prompt evaluation and refinement, not the test suite.
+Note: wrapper exception handling is tested here as the canonical example; the same pattern applies to every specialist wrapper — each Phase 5x adds this test.
 
-**Verify red:** `pytest tests/test_specialists.py` — all tests fail
+**Verify red:** `pytest tests/test_specialists.py -k explorer` — all fail
 
-**Implement (in order of increasing complexity):**
-- [ ] `agent/prompts/weather.py` + `specialists/weather.py` → `WeatherOutput`
-- [ ] `agent/prompts/budget.py` + `specialists/budget.py` → `BudgetBreakdown`
-- [ ] `agent/prompts/explorer.py` + `specialists/explorer.py` → `list[DestinationCandidate]`
-- [ ] `agent/prompts/destination_research.py` + `specialists/destination_research.py` → `DestinationResearch`
-- [ ] `agent/prompts/transportation.py` + `specialists/transportation.py` → `list[FlightDetails]`
-- [ ] `agent/prompts/itinerary_planner.py` + `specialists/itinerary_planner.py` → `Itinerary`
-- [ ] `agent/prompts/artifact.py` + `specialists/artifact.py` → `str`
+**Implement:**
+- [ ] `agent/prompts/explorer.py` — instructs agent to use `web_search`, not repeat candidates already in the current list, respect negative constraints, return structured `DestinationCandidate` list
+- [ ] `specialists/explorer.py` — `ExplorerSpecialist(llm_client, tools)`; `run(query, max_results, existing_candidates) -> list[DestinationCandidate]`
+- [ ] Wrapper tool for ExplorerSpecialist — pre-firing check using `EXPLORER_CACHE_THRESHOLD = 0.6`; calls `knowledge.add_candidates()`; returns template summary
 
-**Verify green:** `pytest tests/test_specialists.py` — all tests pass
+**Verify green:** `pytest tests/test_specialists.py -k explorer` — all pass
+
+---
+
+### Phase 5c: WeatherSpecialist
+
+**Contract:** see architecture.md L474–523
+
+**Scaffold:**
+- [ ] `specialists/weather.py` — `WeatherSpecialist.run()` returns empty `WeatherOutput`
+- [ ] `agent/prompts/weather.py` — empty string
+- [ ] `tools/slice_weather_range.py` — `SliceWeatherRangeTool.execute()` returns `{"status": "ok", "days": []}`
+
+**Tests (`tests/test_specialists.py`):**
+- [ ] Stub returns `slice_weather_range` tool call (subset case); tool correctly slices existing `WeatherOutput` days and calls `update_weather()` with new entry; no `weather_forecast`/`climate_summary` dispatched
+- [ ] Stub returns `slice_weather_range` + `weather_forecast` as parallel tool calls (augment case); wrapper merges the two `WeatherOutput.days` arrays in Python and calls `update_weather()` with combined entry; no extra LLM call
+- [ ] Wrapper pre-firing check: exact key exists → specialist not called; template summary returned with correct avg stats and "historical avg" label for climate mode
+- [ ] Wrapper template: forecast summary includes avg high/low and precipitation probability; climate summary includes "historical avg" label and precipitation sum
+
+Note: which tool the LLM selects (mode selection, when to use `slice_weather_range`) depends on the prompt and belongs in evaluation, not the test suite.
+
+**Verify red → implement → verify green**
+
+**Implement:**
+- [ ] `tools/slice_weather_range.py` — reads existing `WeatherOutput` from KnowledgeState, slices or merges days, calls `update_weather()` with new entry
+- [ ] `agent/prompts/weather.py` — instructs specialist to check existing date ranges before fetching, use `slice_weather_range` for subsets/augmentation, select mode from date range
+- [ ] `specialists/weather.py` — `WeatherSpecialist(llm_client, tools)`; `run(destination, date_range) -> WeatherOutput`
+- [ ] Wrapper tool for WeatherSpecialist — exact key pre-firing check; calls `update_weather()`; template summary with mode-appropriate stats
+
+---
+
+### Phase 5d: DestinationResearchSpecialist
+
+**Contract:** see architecture.md — DestinationResearchSpecialist section
+
+**Scaffold:**
+- [ ] `specialists/destination_research.py` — `DestinationResearchSpecialist.run()` returns empty `DestinationResearch`
+- [ ] `agent/prompts/destination_research.py` — empty string
+
+**Tests (`tests/test_specialists.py`):**
+- [ ] Stub LLM returns a valid `DestinationResearch`; `run()` output has `summary` populated alongside all depth-appropriate fields
+- [ ] Stub LLM returns a `web_search` tool call then a final answer; assert `web_search` was dispatched
+- [ ] Wrapper pre-firing check: light cache exists + `depth="light"` → specialist not called; `research.summary` returned verbatim
+- [ ] Wrapper pre-firing check: full cache exists + `depth="light"` → specialist not called; `research.summary` returned verbatim (full is superset)
+- [ ] Wrapper pre-firing check: light cache exists + `depth="full"` → specialist called with `max_iterations=3` (upgrade)
+- [ ] Wrapper pre-firing check: full cache exists + `depth="full"` → specialist called with `max_iterations=4` (pass-through; specialist self-directs)
+- [ ] Wrapper calls `knowledge.update_research()` with typed `DestinationResearch` result after specialist returns
+
+Note: how many searches the specialist conducts per depth mode, context drift refresh decisions, and summary content quality depend on the prompt — these belong in evaluation, not the test suite.
+
+**Verify red:** `pytest tests/test_specialists.py -k destination_research` — all fail
+
+**Implement:**
+- [ ] `agent/prompts/destination_research.py` — instructs specialist to conduct light vs. full searches per depth instruction, generate `summary` alongside structured fields in one response, use UserContext for nationality (visa profiles) and interest tailoring
+- [ ] `specialists/destination_research.py` — `DestinationResearchSpecialist(llm_client, tools)`; `run(destination, depth, user_context) -> DestinationResearch`
+- [ ] Wrapper tool for DestinationResearchSpecialist — pre-firing check per five-case table; sets `max_iterations` accordingly; calls `knowledge.update_research()`; returns `research.summary` verbatim as orchestrator summary
+
+**Verify green:** `pytest tests/test_specialists.py -k destination_research` — all pass
+
+---
+
+### Phase 5e: TransportationSpecialist
+
+**Contract:** see architecture.md — TransportationSpecialist section
+
+**Prerequisite cleanup from Phase 4d:**
+- [ ] Revise `FlightSearchOutput` to `FlightLegSummary` + revised `FlightSearchOutput` structure (see Phase 4d models above); update `FlightSearchTool` top-3 selection logic; update tests accordingly
+
+**Scaffold:**
+- [ ] `specialists/transportation.py` — `TransportationSpecialist.run()` returns `[]`
+- [ ] `agent/prompts/transportation.py` — empty string
+
+**Tests (`tests/test_specialists.py`):**
+- [ ] Stub LLM returns a valid `list[TravelOption]`; `run()` output parses with flight and transfer options present
+- [ ] Stub LLM returns parallel `flight_search` calls for two routes; assert parallel dispatch
+- [ ] Stub LLM returns `web_search` for transfer options after `flight_search`; assert both dispatched
+- [ ] Wrapper pre-firing check: BFS finds complete path for all routes → specialist not called; composed template returned
+- [ ] Wrapper pre-firing check: BFS finds partial path for one route → specialist called with partial edges in task context
+- [ ] Wrapper groups TravelOptions by `(origin, destination)`; calls `update_route()` per group with correct `DateRange` — `DateRange("any")` for non-flight modes
+- [ ] Round-trip: `mode="flight/return"` options stored under reversed RouteKey
+- [ ] `max_iterations` set to `min(2 + len(missing_routes), 5)`
+
+Note: IATA resolution strategy, round-trip vs. one-way decision, and ground transport identification depend on the prompt — these belong in evaluation, not the test suite.
+
+**Verify red:** `pytest tests/test_specialists.py -k transportation` — all fail
+
+**Implement:**
+- [ ] `models/transportation.py` — `TravelOption` (with `flight: FlightOption | None`)
+- [ ] `agent/prompts/transportation.py` — instructs specialist to resolve city names to IATA codes via `web_search`, ensure composed path starts and ends at Orchestrator city names, store departure and arrival transfers, use `trip_type="round_trip"` when applicable, fall back to ground transport search when flights unavailable or unnatural (short overland corridors)
+- [ ] `specialists/transportation.py` — `TransportationSpecialist(llm_client, tools)`; `run(routes, user_context) -> list[TravelOption]`
+- [ ] Wrapper tool for TransportationSpecialist — BFS pre-firing check; sets `max_iterations`; groups output by RouteKey; calls `update_route()` per group; BFS compose for template summary
+
+**Verify green:** `pytest tests/test_specialists.py -k transportation` — all pass
+
+---
+
+### Phase 5f: BudgetSpecialist
+
+**Contract:** see architecture.md — BudgetSpecialist section
+
+**Scaffold:**
+- [ ] `specialists/budget.py` — `BudgetSpecialist.run()` returns empty `BudgetSpecialistOutput`
+- [ ] `agent/prompts/budget.py` — empty string
+
+**Tests (`tests/test_specialists.py`):**
+- [ ] Stub LLM returns valid `BudgetSpecialistOutput` with `breakdown` populated; `run()` output parses correctly
+- [ ] Stub LLM returns parallel `web_search` calls for accommodation and food costs in one iteration; assert parallel dispatch
+- [ ] Stub LLM returns `currency_convert` then `calculate` calls in sequence; assert both dispatched
+- [ ] Wrapper calls `update_destination_budget()` when `result.destination_budget` is not `None`; skips call when `None`
+- [ ] Wrapper passes existing `DestinationBudget` snapshot + TravelOption costs (excluding `mode="flight/return"`) in task context
+
+Note: whether the specialist skips `web_search` when `DestinationBudget` is already present depends on the prompt — belongs in evaluation, not the test suite.
+
+Note: cost estimation quality, currency selection, and arithmetic expression construction depend on the prompt — these belong in evaluation, not the test suite.
+
+**Verify red:** `pytest tests/test_specialists.py -k budget` — all fail
+
+**Implement:**
+- [ ] `models/budget.py` — `BudgetSpecialistOutput(destination_budget: DestinationBudget | None, breakdown: str)`
+- [ ] `agent/prompts/budget.py` — instructs specialist to use parallel `web_search` for missing cost categories, route all arithmetic through `calculate`, skip `mode="flight/return"` TravelOptions when summing route costs, output ranges (low/high) rather than point estimates
+- [ ] `specialists/budget.py` — `BudgetSpecialist(llm_client, tools)`; `run(query, context) -> BudgetSpecialistOutput`
+- [ ] Wrapper tool for BudgetSpecialist — no pre-firing check; extracts DestinationBudget + TravelOptions from KnowledgeState for context; calls `update_destination_budget()` if new data returned; returns `result.breakdown` verbatim
+
+**Verify green:** `pytest tests/test_specialists.py -k budget` — all pass
+
+---
+
+### Phase 5g: ItineraryPlannerSpecialist
+
+**Contract:** see architecture.md — ItineraryPlannerSpecialist section
+
+**Scaffold:**
+- [ ] `specialists/itinerary_planner.py` — `ItineraryPlannerSpecialist.run()` returns empty `ItineraryPlannerOutput`
+- [ ] `agent/prompts/itinerary_planner.py` — empty string
+
+**Tests (`tests/test_specialists.py`):**
+- [ ] Stub LLM returns valid `ItineraryPlannerOutput`; `run()` output parses with `itinerary.days` populated and `day_num` sequential from 1
+- [ ] Stub LLM returns parallel `web_search` calls for multiple venues in one iteration; assert parallel dispatch
+- [ ] Wrapper calls `update_itinerary()` with `frozenset(destinations)` key
+- [ ] Wrapper calls `update_activities(destination, activities)` for each non-empty entry in `result.activity_updates`; skips call when list is empty
+- [ ] Second `run()` call on same instance includes prior itinerary in history (refinement path)
+- [ ] `TimeSlot.is_alternative=True` slots in a day's list all follow a non-alternative slot; no two consecutive `is_alternative=True` slots without a primary between them (structural validity, not prompt behavior)
+
+Note: scheduling rule application (arrival/departure/transit day structure, weather-aware slot selection, festival incorporation) depends on the prompt — these belong in evaluation, not the test suite.
+
+**Verify red:** `pytest tests/test_specialists.py -k itinerary` — all fail
+
+**Implement:**
+- [ ] `models/itinerary.py` — `TimeSlot`, `ItineraryDay`, `Itinerary`, `ItineraryPlannerOutput`
+- [ ] `agent/prompts/itinerary_planner.py` — instructs specialist to use parallel `web_search` per destination block for venues/hours, apply scheduling rules (arrival/departure/transit days, weather-aware primary/alternative slots via `is_alternative` flag, ≤2 alternatives per primary slot, ≤3 alternative slots per day), assume reasonable intra-city transit constants, enrich `Activity` objects with `duration_min` and `indoor` when researching venues, incorporate festivals and closures from DestinationResearch
+- [ ] `specialists/itinerary_planner.py` — `ItineraryPlannerSpecialist(llm_client, tools)`; `run(query, context) -> ItineraryPlannerOutput`
+- [ ] Wrapper tool for ItineraryPlannerSpecialist — no pre-firing check; passes UserContext + DestinationResearch + WeatherOutput from KnowledgeState as appended context; calls `update_itinerary()` and `update_activities()` per result; returns template summary
+
+**Verify green:** `pytest tests/test_specialists.py -k itinerary` — all pass
+
+---
+
+### Phase 5h: ArtifactSpecialist
+
+**Contract:** see architecture.md — ArtifactSpecialist section
+
+**Scaffold:**
+- [ ] `specialists/artifact.py` — `ArtifactSpecialist.run()` returns empty `ArtifactOutput`
+- [ ] `agent/prompts/artifact.py` — empty string
+- [ ] `tools/get_compiled.py` — one file; all `Get*CompiledTool` classes return `""` stubs
+- [ ] `tools/get_itinerary.py` — `GetItineraryTool.execute()` returns `""`
+- [ ] `tools/self_critique.py` — `SelfCritiqueTool.execute()` returns `""`
+
+**Tests (`tests/test_specialists.py`):**
+- [ ] Stub LLM calls parallel compiled tools then `self_critique` then `file_write`; assert all dispatched
+- [ ] `GetResearchCompiledTool("Tokyo")` returns structured Markdown including vibe, attractions, safety with `[source](url)`, neighbourhoods with `[source](url)`, activities with `[source](url)`, summary; returns informative error string when absent
+- [ ] `GetBudgetCompiledTool("Tokyo")` returns all cost categories with `[source](url)` and summary; returns error string when absent
+- [ ] `GetWeatherCompiledTool("Tokyo", "June 2026")` returns serialised `WeatherOutput.days`; returns error string when absent
+- [ ] `GetRouteCompiledTool("Mumbai", "Tokyo", "Jul 2026")` returns BFS-composed TravelOptions with source links; returns error string when absent
+- [ ] `GetCandidatesCompiledTool()` returns all candidates with rationale and `[source](url)`
+- [ ] `GetItineraryTool(["Tokyo"])` returns day-by-day with `is_alternative` slots marked; returns error string when absent
+- [ ] `SelfCritiqueTool` makes one LLM call with `content` + `query` only (no skeleton); returns non-empty critique string
+- [ ] Draft is passed as argument to `self_critique`, not returned as standalone message content
+- [ ] `ArtifactOutput.file_path` matches actual path returned by `file_write`
+- [ ] Wrapper injects `to_prompt_context()` skeleton in task context; no KnowledgeState write after run
+
+Note: draft quality, critique usefulness, and source link density depend on the prompt — these belong in evaluation, not the test suite.
+
+**Verify red:** `pytest tests/test_specialists.py -k artifact` — all fail
+
+**Implement:**
+- [ ] `models/artifact.py` — `ArtifactOutput(file_path: str)`
+- [ ] `tools/get_compiled.py` — `GetResearchCompiledTool(knowledge_state)`, `GetBudgetCompiledTool(knowledge_state)`, `GetWeatherCompiledTool(knowledge_state)`, `GetRouteCompiledTool(knowledge_state)`, `GetCandidatesCompiledTool(knowledge_state)`; each serialises the relevant model to structured data (JSON or plain text) with source URLs co-located next to attributed fields; returns informative error string on miss (never raises)
+- [ ] `tools/get_itinerary.py` — `GetItineraryTool(knowledge_state)`; looks up `itineraries[frozenset(destinations)]`; serialises `Itinerary` to structured day-by-day string with `is_alternative` slots clearly marked
+- [ ] `tools/self_critique.py` — `SelfCritiqueTool(llm_client)`; focused LLM call with `content` + `query`; no KnowledgeState access; returns structured critique
+- [ ] `agent/prompts/artifact.py` — instructs specialist to: read skeleton to determine available data, call compiled tools in parallel for needed sections, embed draft as `content` arg to `self_critique` (never output draft as standalone message), apply critique then call `file_write`, weave inline `[source](url)` links from attributed fields, append standard footer
+- [ ] `specialists/artifact.py` — `ArtifactSpecialist(llm_client, tools)`; `run(query, context) -> ArtifactOutput`
+- [ ] Wrapper tool for ArtifactSpecialist — no pre-firing check; injects `knowledge.to_prompt_context()` in task context; constructs all compiled tools and `GetItineraryTool` with `knowledge_state` reference; no KnowledgeState write; returns file path as summary
+
+**Verify green:** `pytest tests/test_specialists.py -k artifact` — all pass
 
 ---
 
 ## Phase 6: Orchestrator
 
-**Goal:** TravelAgent orchestrator. Uses `SimpleReActAgent` where the registered tools are specialist wrapper tools. Owns session state (UserContext, KnowledgeState). Parallel specialist calls happen naturally when the LLM returns multiple tool_calls in one response.
+**Goal:** TravelAgent orchestrator. Uses `SimpleReActAgent` where the registered tools are specialist wrapper tools plus `update_user_context`. Owns session state (`UserContext`, `KnowledgeState`). Parallel specialist calls happen naturally when the LLM returns multiple tool_calls in one response.
 
-**Models introduced:**
-- `DateRange` already defined in Phase 4d — imported here
-- `DestinationKnowledge(name, country, research, weather: dict[DateRange, WeatherSummary], flights: dict[DateRange, list[FlightDetails]], budget, depth: "light"|"full")`
-- `KnowledgeState(destinations: dict[str, DestinationKnowledge])` with typed update methods:
-  - `update_research(destination, result: DestinationResearch)`
-  - `update_weather(destination, date_range: DateRange, result: WeatherSummary)`
-  - `update_flights(destination, date_range: DateRange, results: list[FlightDetails])`
-  - `update_budget(destination, result: BudgetBreakdown)`
+**Models:** All KnowledgeState models and `UserContext` are defined and tested in Phase 5a — imported here, not redefined.
 
 **Scaffold:**
 - [ ] `agent/orchestrator.py` — `Orchestrator.turn()` returns `"stub"` immediately
-- [ ] `KnowledgeState` created with all `update_*()` methods as no-ops and `summary()` returning `""`
 - [ ] `agent/prompts/orchestrator.py` — empty string
 
 **Tests (`tests/test_orchestrator.py`) — stub `LLMClient`, fast, always run:**
-- [ ] Stub returns a specialist tool call; assert wrapper `execute()` calls `specialist.run()` and updates KnowledgeState
-- [ ] Stub returns multiple tool_calls in one response; assert all specialists are called (parallel dispatch already proven by harness tests — this confirms wiring)
-- [ ] Specialist raises an exception; assert orchestrator continues and gap is recorded in KnowledgeState
-- [ ] Synthesis step receives KnowledgeState summary in context, not raw specialist outputs
-- [ ] UserContext string accumulates across `turn()` calls; never reset between turns
-- [ ] Second `turn()` call on same instance includes prior exchange in the agent's history
+- [ ] Stub returns `update_user_context` tool call; assert `UserContext.context` updated and `wordset`/`blocklist` recomputed via NLTK
+- [ ] Stub returns a specialist tool call; assert wrapper `execute()` calls `specialist.run()` and calls the matching `knowledge.update_*()` method
+- [ ] Stub returns multiple tool_calls in one response; assert all specialists dispatched in parallel (confirms wiring — parallel dispatch proven in harness tests)
+- [ ] Each `turn()` call builds task with current `UserContext.context` + `knowledge.to_prompt_context()` + user input
+- [ ] Second `turn()` on same instance includes prior exchange in agent's internal history
 
-Note: clarification logic, query routing decisions, and parallel call selection depend on the orchestrator prompt and are tested during prompt evaluation, not here.
+Note: exception handling in wrappers (catching `specialist.run()` failures, returning error string, leaving KnowledgeState unchanged) is tested per specialist in Phase 5x tests, not here. Clarification logic, `update_user_context` call timing, query routing, and parallel call selection depend on the orchestrator prompt — tested during prompt evaluation.
+
+Note: clarification logic, `update_user_context` call timing, query routing, and parallel call selection depend on the orchestrator prompt — tested during prompt evaluation, not here.
 
 **Verify red:** `pytest tests/test_orchestrator.py` — all tests fail
 
 **Implement:**
-- [ ] `agent/prompts/orchestrator.py` — covers: query type recognition, when to clarify vs. act, which specialists to call and when to call them in parallel, depth escalation rules
+- [ ] `tools/update_user_context.py` — `UpdateUserContextTool(user_context: UserContext)`; sets `user_context.context = new_context`; triggers NLTK recomputation of `wordset` and `blocklist`; returns `{"status": "ok"}`
+- [ ] `agent/prompts/orchestrator.py` — covers: call `update_user_context` first when user provides new trip information; query type recognition; when to clarify vs. act; which specialists to call and when in parallel; depth escalation rules
 - [ ] `agent/orchestrator.py`
-  - `Orchestrator(llm_client: LLMClient, specialists: dict[str, <SpecialistClass>])`
-  - State: `user_context: str`, `knowledge: KnowledgeState`
-  - Owns one `SimpleReActAgent(llm_client, wrapper_tools, ORCHESTRATOR_PROMPT, max_iterations=8)` instance; its internal history IS the full session log
-  - Wrapper tool pattern: for each specialist, construct a `BaseTool` whose `execute()` calls `specialist.run()`, then calls the matching `knowledge.update_*()`, then returns a plain-text summary — these wrapper tools are the `tools` list passed to the orchestrator's `SimpleReActAgent`
+  - `Orchestrator(llm_client: LLMClient, specialists: dict[str, SpecialistClass])`
+  - State: `user_context: UserContext`, `knowledge: KnowledgeState`
+  - Builds wrapper tools at construction: for each specialist, a `BaseTool` whose `execute()` runs the pre-firing check, calls `specialist.run()`, calls `knowledge.update_*()`, catches exceptions and returns error string on failure, returns plain-text summary. ArtifactSpecialist wrapper additionally constructs `Get*CompiledTool(knowledge)` and `GetItineraryTool(knowledge)` instances.
+  - Also registers `UpdateUserContextTool(user_context)` in the tool list
+  - Owns one `SimpleReActAgent(llm_client, wrapper_tools + [update_user_context_tool], ORCHESTRATOR_PROMPT, max_iterations=8)` instance
   - `turn(user_input: str) -> str`
-    1. Update `user_context` string (small focused LLM call or string append)
-    2. Build task: `f"Context: {user_context}\n\nKnowledge summary:\n{knowledge.summary()}\n\nUser: {user_input}"`
-    3. `response = self._agent.run(task)` — specialist wrapper tools update KnowledgeState as side-effects during execution
-    4. Return `response`
+    1. Build task: `f"UserContext:\n{user_context.context}\n\nKnowledgeState:\n{knowledge.to_prompt_context()}\n\nUser: {user_input}"`
+    2. Return `self._agent.run(task)` — all updates (context, KnowledgeState) happen as tool side-effects during execution
 
 **Verify green:** `pytest tests/test_orchestrator.py` — all tests pass
 
@@ -428,11 +637,32 @@ Note: clarification logic, query routing decisions, and parallel call selection 
 
 ## Phase 7: CLI + Polish
 
-- [ ] Wire `src/main.py`: initialize all clients and specialists, create `Orchestrator`, `input()` → `turn()` → `print()` loop, graceful Ctrl-C exit
-- [ ] `rich` output: spinner during specialist calls, budget as `rich.Table`, flights in a panel, errors in red
-- [ ] `--debug` flag: print specialist tool calls and results to stderr
-- [ ] Update `README.md`: setup instructions, first-run walkthrough, example session transcript
-- [ ] Manual end-to-end test: "Mumbai → Tokyo, late June, ₹2.5L" → full response including saved itinerary file
+### 7a: Wiring
+
+- [ ] **NLTK data** — add `ensure_nltk_data()` in `main.py` that calls `nltk.download()` for `stopwords`, `wordnet`, `punkt_tab` on first run (idempotent; skips if already present)
+- [ ] **Startup validation** — check all required env vars before entering the loop; print a clear error and exit if any are missing (fail fast, not mid-conversation)
+- [ ] **Construction order in `main.py`:**
+  1. `Settings` from `.env`
+  2. Clients: `LLMClient`, `SerpApiClient`, `WeatherClient`, `CurrencyClient`, `SearchClient`
+  3. Session state: `KnowledgeState()`, `UserContext()`
+  4. Shared tools: `WebSearchTool`, `FlightSearchTool`, `WeatherForecastTool`, `ClimateSummaryTool`, `CurrencyConvertTool`, `CalculateTool`, `FileWriteTool`
+  5. KnowledgeState-aware tools: `SliceWeatherRangeTool(knowledge)`, `GetResearchCompiledTool(knowledge)`, `GetBudgetCompiledTool(knowledge)`, `GetWeatherCompiledTool(knowledge)`, `GetRouteCompiledTool(knowledge)`, `GetCandidatesCompiledTool(knowledge)`, `GetItineraryTool(knowledge)`, `SelfCritiqueTool(llm_client)`
+  6. Specialists: each with the tool set defined in their Phase 5x contract
+  7. `Orchestrator(llm_client, user_context, knowledge, specialists)`
+- [ ] **REPL loop:** `input("You: ")` → `orchestrator.turn()` → print response; graceful `KeyboardInterrupt` exit with goodbye message; skip empty input
+
+### 7b: Output
+
+- [ ] **Spinner** — `rich` status indicator during `orchestrator.turn()` so the user knows the agent is working
+- [ ] **Markdown rendering** — Orchestrator responses are LLM-generated Markdown; render with `rich.Markdown` so headers, tables, lists, and code blocks display correctly
+- [ ] **Errors in red** — if `orchestrator.turn()` raises an uncaught exception, print the error in red and continue the loop rather than crashing
+- [ ] **Artifact save confirmation** — when a file is written, print the full path in a distinct style so the user can find it
+- [ ] **`--debug` flag** — when set, print each tool call (name + truncated args) and result (first 200 chars) to stderr as the session progresses; useful for prompt iteration without cluttering normal output
+
+### 7c: Finish line
+
+- [ ] Update `README.md`: reflect current setup instructions (SerpApi not Amadeus), full list of env vars, first-run walkthrough
+- [ ] Manual end-to-end test: "Mumbai → Tokyo, late June, ₹2.5L" → verify full response including weather, flights, budget, itinerary, and saved artifact file
 
 ---
 

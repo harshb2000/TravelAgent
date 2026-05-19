@@ -93,7 +93,6 @@
 | Multi-passenger cost breakdown | 2 | Group planning support (v2) |
 | Cross-session memory | 2 | Session persistence layer (v2) |
 | Allergen/accessibility real-time verification | 2 | Specialised APIs; may stay out of scope |
-| Open-jaw flight search | 1 | Amadeus multi-city endpoint (already supported, routing logic needed) |
 
 ### FAIL causes (across all files)
 All 4 FAIL queries require cross-session memory — the only hard blocker in v1.

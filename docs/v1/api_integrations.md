@@ -99,7 +99,7 @@ GET https://serpapi.com/search
 | `departure_id` | yes | IATA code | `"BOM"` | 3-letter uppercase; comma-separate for multi-airport cities |
 | `arrival_id` | yes | IATA code | `"NRT"` | Same format |
 | `outbound_date` | yes | YYYY-MM-DD | `"2026-06-20"` | |
-| `type` | no | integer | `2` | `1`=round-trip (default), `2`=one-way, `3`=multi-city |
+| `type` | no | integer | `2` | `1`=round-trip (default), `2`=one-way |
 | `return_date` | if round-trip | YYYY-MM-DD | `"2026-06-30"` | Required when `type=1` |
 | `adults` | no | integer | `1` | Default 1 |
 | `travel_class` | no | integer | `1` | `1`=Economy, `2`=Premium Economy, `3`=Business, `4`=First |
