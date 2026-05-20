@@ -158,7 +158,9 @@ class TravelOption(BaseModel):
 
 
 # ---------------------------------------------------------------------------
-# Knowledge containers (plain dataclasses — use DateRange as dict key)
+# Knowledge containers (plain dataclasses — DateRange used as dict key;
+# Pydantic gives no benefit here: no external input to validate, no LLM schema
+# needed, and the DateRange keys are not JSON-serialisable regardless)
 # ---------------------------------------------------------------------------
 
 from models.weather import WeatherOutput  # noqa: E402
@@ -167,13 +169,13 @@ from models.weather import WeatherOutput  # noqa: E402
 @dataclass
 class DestinationKnowledge:
     research: DestinationResearch | None = None
-    weather: dict = dc_field(default_factory=dict)   # DateRange -> WeatherOutput
+    weather: dict[DateRange, WeatherOutput] = dc_field(default_factory=dict)
     budget: DestinationBudget | None = None
 
 
 @dataclass
 class RouteKnowledge:
-    options: dict = dc_field(default_factory=dict)   # DateRange -> list[TravelOption]
+    options: dict[DateRange, list[TravelOption]] = dc_field(default_factory=dict)
 
 
 # ---------------------------------------------------------------------------

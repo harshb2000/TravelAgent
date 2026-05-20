@@ -406,25 +406,25 @@ Note: wrapper exception handling is tested here as the canonical example; the sa
 **Contract:** see architecture.md L474–523
 
 **Scaffold:**
-- [ ] `specialists/weather.py` — `WeatherSpecialist.run()` returns empty `WeatherOutput`
-- [ ] `agent/prompts/weather.py` — empty string
-- [ ] `tools/slice_weather_range.py` — `SliceWeatherRangeTool.execute()` returns `{"status": "ok", "days": []}`
+- [x] `specialists/weather.py` — `WeatherSpecialist.run()` returns empty `WeatherOutput`
+- [x] `agent/prompts/weather.py` — empty string
+- [x] `tools/slice_weather_range.py` — `SliceWeatherRangeTool.execute()` returns `{"status": "ok", "days": []}`
 
 **Tests (`tests/test_specialists.py`):**
-- [ ] Stub returns `slice_weather_range` tool call (subset case); tool correctly slices existing `WeatherOutput` days and calls `update_weather()` with new entry; no `weather_forecast`/`climate_summary` dispatched
-- [ ] Stub returns `slice_weather_range` + `weather_forecast` as parallel tool calls (augment case); wrapper merges the two `WeatherOutput.days` arrays in Python and calls `update_weather()` with combined entry; no extra LLM call
-- [ ] Wrapper pre-firing check: exact key exists → specialist not called; template summary returned with correct avg stats and "historical avg" label for climate mode
-- [ ] Wrapper template: forecast summary includes avg high/low and precipitation probability; climate summary includes "historical avg" label and precipitation sum
+- [x] Stub returns `slice_weather_range` tool call (subset case); tool correctly slices existing `WeatherOutput` days and calls `update_weather()` with new entry; no `weather_forecast`/`climate_summary` dispatched
+- [x] Stub returns `slice_weather_range` + `weather_forecast` as parallel tool calls (augment case); wrapper merges the two `WeatherOutput.days` arrays in Python and calls `update_weather()` with combined entry; no extra LLM call
+- [x] Wrapper pre-firing check: exact key exists → specialist not called; template summary returned with correct avg stats and "historical avg" label for climate mode
+- [x] Wrapper template: forecast summary includes avg high/low and precipitation probability; climate summary includes "historical avg" label and precipitation sum
 
 Note: which tool the LLM selects (mode selection, when to use `slice_weather_range`) depends on the prompt and belongs in evaluation, not the test suite.
 
 **Verify red → implement → verify green**
 
 **Implement:**
-- [ ] `tools/slice_weather_range.py` — reads existing `WeatherOutput` from KnowledgeState, slices or merges days, calls `update_weather()` with new entry
-- [ ] `agent/prompts/weather.py` — instructs specialist to check existing date ranges before fetching, use `slice_weather_range` for subsets/augmentation, select mode from date range
-- [ ] `specialists/weather.py` — `WeatherSpecialist(llm_client, tools)`; `run(destination, date_range) -> WeatherOutput`
-- [ ] Wrapper tool for WeatherSpecialist — exact key pre-firing check; calls `update_weather()`; template summary with mode-appropriate stats
+- [x] `tools/slice_weather_range.py` — reads existing `WeatherOutput` from KnowledgeState, slices or merges days, calls `update_weather()` with new entry
+- [x] `agent/prompts/weather.py` — instructs specialist to check existing date ranges before fetching, use `slice_weather_range` for subsets/augmentation, select mode from date range
+- [x] `specialists/weather.py` — `WeatherSpecialist(llm_client, tools)`; `run(destination, date_range) -> WeatherOutput`
+- [x] Wrapper tool for WeatherSpecialist — exact key pre-firing check; calls `update_weather()`; template summary with mode-appropriate stats
 
 ---
 
