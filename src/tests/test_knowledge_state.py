@@ -23,15 +23,16 @@ from models.weather import WeatherOutput, DailyWeather
 # ---------------------------------------------------------------------------
 
 def _candidate(name: str, turn: int = 0, query: str = "beach trip") -> DestinationCandidate:
-    return DestinationCandidate(
+    c = DestinationCandidate(
         name=name,
         country="TestCountry",
         vibe_tags=["beach"],
         rationale=f"Beautiful {name}",
         source_url="http://example.com",
         query=query,
-        added_at=turn,
     )
+    c.added_at = turn
+    return c
 
 
 def _weather(mode="forecast") -> WeatherOutput:
@@ -123,18 +124,19 @@ def test_to_prompt_context_jaccard_winner_shown_with_top_n_1():
     """With top_n=1 and equal recency, only the Jaccard-winning candidate appears."""
     ks = KnowledgeState()
     # Both candidates added at the same turn → recency is equal, Jaccard alone decides.
-    ks.add_candidates([
-        DestinationCandidate(
-            name="BeachIsland", country="A", vibe_tags=["beach", "relaxation"],
-            rationale="beach resort paradise", source_url="http://ex.com",
-            query="beach relaxation holiday", added_at=1,
-        ),
-        DestinationCandidate(
-            name="CityHub", country="B", vibe_tags=["city", "culture"],
-            rationale="vibrant city culture scene", source_url="http://ex.com",
-            query="city culture exploration", added_at=1,
-        ),
-    ])
+    beach = DestinationCandidate(
+        name="BeachIsland", country="A", vibe_tags=["beach", "relaxation"],
+        rationale="beach resort paradise", source_url="http://ex.com",
+        query="beach relaxation holiday",
+    )
+    beach.added_at = 1
+    city = DestinationCandidate(
+        name="CityHub", country="B", vibe_tags=["city", "culture"],
+        rationale="vibrant city culture scene", source_url="http://ex.com",
+        query="city culture exploration",
+    )
+    city.added_at = 1
+    ks.add_candidates([beach, city])
     # "city culture" matches CityHub's tags/rationale/query; BeachIsland shares nothing.
     uc = UserContext("city culture exploration")
     result = ks.to_prompt_context(uc, top_n=1)
@@ -146,18 +148,19 @@ def test_to_prompt_context_recency_winner_shown_with_top_n_1():
     """With top_n=1 and equal Jaccard, the more recent candidate appears."""
     ks = KnowledgeState()
     # Both candidates share the same query words → Jaccard is tied; recency decides.
-    ks.add_candidates([
-        DestinationCandidate(
-            name="OlderCity", country="A", vibe_tags=["city"],
-            rationale="city trip", source_url="http://ex.com",
-            query="city trip", added_at=1,
-        ),
-        DestinationCandidate(
-            name="NewerCity", country="B", vibe_tags=["city"],
-            rationale="city trip", source_url="http://ex.com",
-            query="city trip", added_at=10,
-        ),
-    ])
+    older = DestinationCandidate(
+        name="OlderCity", country="A", vibe_tags=["city"],
+        rationale="city trip", source_url="http://ex.com",
+        query="city trip",
+    )
+    older.added_at = 1
+    newer = DestinationCandidate(
+        name="NewerCity", country="B", vibe_tags=["city"],
+        rationale="city trip", source_url="http://ex.com",
+        query="city trip",
+    )
+    newer.added_at = 10
+    ks.add_candidates([older, newer])
     uc = UserContext("city trip")
     result = ks.to_prompt_context(uc, top_n=1)
     assert "NewerCity" in result
@@ -377,6 +380,69 @@ def test_user_context_initial_context_in_constructor_triggers_recompute():
 
 
 # ---------------------------------------------------------------------------
+# DestinationCandidate should_exclude
+# ---------------------------------------------------------------------------
+
+def test_should_exclude_by_name():
+    c = DestinationCandidate(name="Thailand", country="Thailand", vibe_tags=["beach"], rationale="x", source_url="", query="")
+    assert c.should_exclude(frozenset(["thailand"]))
+    assert not c.should_exclude(frozenset(["japan"]))
+
+
+def test_should_exclude_by_country():
+    c = DestinationCandidate(name="Phuket", country="Thailand", vibe_tags=["beach"], rationale="x", source_url="", query="")
+    assert c.should_exclude(frozenset(["thailand"]))
+
+
+def test_should_exclude_tag_only_tag_blocked():
+    # Single tag, and it is blocked → blocked(1) > unblocked(0) → exclude
+    c = DestinationCandidate(name="Maldives", country="Maldives", vibe_tags=["beach"], rationale="x", source_url="", query="")
+    assert c.should_exclude(frozenset(["beach"]))
+
+
+def test_should_exclude_tag_minority_not_excluded():
+    # 1 of 3 tags blocked → Jaccard scoring handles deprioritisation, no hard exclusion
+    c = DestinationCandidate(name="Barcelona", country="Spain", vibe_tags=["beach", "city", "culture"], rationale="x", source_url="", query="")
+    assert not c.should_exclude(frozenset(["beach"]))
+
+
+def test_should_exclude_tag_majority_blocked():
+    # 2 of 3 tags blocked → blocked(2) > unblocked(1) → exclude
+    c = DestinationCandidate(name="Ibiza", country="Spain", vibe_tags=["beach", "nightlife", "food"], rationale="x", source_url="", query="")
+    assert c.should_exclude(frozenset(["beach", "nightlife"]))
+    assert not c.should_exclude(frozenset(["beach"]))  # 1 vs 2 — kept
+
+
+def test_should_exclude_tag_tie_not_excluded():
+    # Equal blocked and unblocked tags → not strictly greater → keep
+    c = DestinationCandidate(name="SomeCity", country="Spain", vibe_tags=["beach", "city"], rationale="x", source_url="", query="")
+    assert not c.should_exclude(frozenset(["beach"]))
+
+
+def test_should_exclude_tag_lemmatised():
+    # "beaches" in blocklist → lemmatised to "beach" → matches tag "beach"
+    c = DestinationCandidate(name="Bali", country="Indonesia", vibe_tags=["beach"], rationale="x", source_url="", query="")
+    assert c.should_exclude(frozenset(["beach"]))   # blocklist already lemmatised by UserContext
+
+
+def test_should_exclude_multiword_name():
+    # "not Czech" → blocklist: {"czech"} — should still block "Czech Republic"
+    c = DestinationCandidate(name="Prague", country="Czech Republic", vibe_tags=["city"], rationale="x", source_url="", query="")
+    assert c.should_exclude(frozenset(["czech"]))
+
+
+def test_should_exclude_hyphenated_tag():
+    # "not budget" → blocklist: {"budget"} — should block tag "budget-friendly"
+    c = DestinationCandidate(name="Bangkok", country="Thailand", vibe_tags=["budget-friendly"], rationale="x", source_url="", query="")
+    assert c.should_exclude(frozenset(["budget"]))
+
+
+def test_should_exclude_empty_blocklist():
+    c = DestinationCandidate(name="Tokyo", country="Japan", vibe_tags=["city"], rationale="x", source_url="", query="")
+    assert not c.should_exclude(frozenset())
+
+
+# ---------------------------------------------------------------------------
 # DestinationCandidate wordset
 # ---------------------------------------------------------------------------
 
@@ -388,7 +454,6 @@ def test_destination_candidate_wordset_populated_from_fields():
         rationale="amazing food scene",
         source_url="http://ex.com",
         query="best food cities Asia",
-        added_at=1,
     )
     assert len(c.wordset) > 0
     # "tokyo" or "food" should appear after NLTK processing

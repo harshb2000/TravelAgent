@@ -16,6 +16,14 @@ from nltk.tokenize import word_tokenize
 # NLTK helpers (shared by UserContext and DestinationCandidate)
 # ---------------------------------------------------------------------------
 
+_SPLIT_RE = re.compile(r"[\s\-]+")  # split on whitespace and hyphens
+
+
+def _tokenize(text: str) -> frozenset[str]:
+    """Lowercase, split on whitespace/hyphens, lemmatise each token."""
+    return frozenset(_lemmatizer.lemmatize(t.lower()) for t in _SPLIT_RE.split(text) if t)
+
+
 _NEGATION_RE = re.compile(
     r"(?:not interested in|don't want|don't|not|avoid|no|skip|except)\s+(\w+)",
     re.IGNORECASE,
@@ -26,13 +34,13 @@ _ISO_DATE_RE = re.compile(r"^(\d{4}-\d{2}-\d{2})$")
 _lemmatizer = WordNetLemmatizer()
 
 
-def _extract_blocklist(text: str) -> frozenset[str]:
+def extract_blocklist(text: str) -> frozenset[str]:
     """Return lemmatised set of negated entities from text."""
     raw = {m.group(1).lower() for m in _NEGATION_RE.finditer(text)}
     return frozenset(_lemmatizer.lemmatize(w) for w in raw)
 
 
-def _build_wordset(text: str, blocklist: frozenset[str] = frozenset()) -> frozenset[str]:
+def build_wordset(text: str, blocklist: frozenset[str] = frozenset()) -> frozenset[str]:
     """Tokenise, remove stop words, lemmatise, exclude blocklist."""
     stop = set(stopwords.words("english"))
     tokens = word_tokenize(text.lower())
@@ -213,21 +221,46 @@ class DestinationCandidate(BaseModel):
     rationale: str = Field(default="", description="One-line reason this destination matches the user's query.")
     source_url: str = Field(default="", description="URL of the web search result that surfaced this candidate.")
     query: str = Field(default="", description="The user query string that generated this candidate. Preserved so the Orchestrator can reason about relevance if intent shifts mid-session.")
-    added_at: int = Field(default=0, description="Turn index when this candidate was added. Used for recency scoring.")
-
-    # Computed at construction from name + rationale + query + vibe_tags.
-    # PrivateAttr keeps it out of model_json_schema() — the LLM must not set this.
+    # Both fields below are system-managed — excluded from model_json_schema()
+    # so the LLM never sees or sets them.
+    #
+    # added_at: set by the wrapper to the current turn index after construction.
+    # wordset:  computed at construction from the candidate's text fields.
+    _added_at: int = PrivateAttr(default=0)
     _wordset: frozenset = PrivateAttr(default_factory=frozenset)
 
     @model_validator(mode="after")
     def _compute_wordset(self) -> "DestinationCandidate":
         text = " ".join([self.name, self.rationale, self.query] + self.vibe_tags)
-        self._wordset = _build_wordset(text)
+        self._wordset = build_wordset(text)
         return self
+
+    @property
+    def added_at(self) -> int:
+        return self._added_at
+
+    @added_at.setter
+    def added_at(self, value: int) -> None:
+        self._added_at = value
 
     @property
     def wordset(self) -> frozenset:
         return self._wordset
+
+    def should_exclude(self, blocklist: frozenset[str]) -> bool:
+        """
+        Hard-exclude if name or country contains a blocklisted term (identity signal).
+        Soft-exclude on tags only when blocked tags strictly outnumber unblocked ones —
+        a single blocked tag among several positive ones is handled by Jaccard scoring instead.
+        """
+        if not blocklist:
+            return False
+        # Hard: name or country token matches → this IS the blocked place
+        if (_tokenize(self.name) | _tokenize(self.country)) & blocklist:
+            return True
+        # Soft: tag majority — exclude only when more tags are blocked than unblocked
+        blocked = sum(1 for tag in self.vibe_tags if _tokenize(tag) & blocklist)
+        return blocked > (len(self.vibe_tags) - blocked)
 
 
 # ---------------------------------------------------------------------------
@@ -253,8 +286,8 @@ class UserContext:
 
     def _recompute(self) -> None:
         text = self._context
-        self.blocklist = _extract_blocklist(text)
-        self.wordset = _build_wordset(text, self.blocklist)
+        self.blocklist = extract_blocklist(text)
+        self.wordset = build_wordset(text, self.blocklist)
 
 
 # ---------------------------------------------------------------------------

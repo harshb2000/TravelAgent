@@ -44,11 +44,13 @@ def tool_call_msg(calls: list[dict]) -> dict:
 
 
 def _candidate(name: str, turn: int = 0, query: str = "beach trip") -> DestinationCandidate:
-    return DestinationCandidate(
+    c = DestinationCandidate(
         name=name, country="TestCountry", vibe_tags=["beach"],
         rationale=f"Beautiful {name}", source_url="http://example.com",
-        query=query, added_at=turn,
+        query=query,
     )
+    c.added_at = turn
+    return c
 
 
 # ===========================================================================
@@ -67,7 +69,7 @@ def _valid_candidate_json(name: str = "Prague", country: str = "Czech Republic")
         "rationale": f"Great city trip to {name}",
         "source_url": "http://example.com",
         "query": "city trip Europe",
-        "added_at": 0,
+        # added_at intentionally omitted — system-managed field
     }])
 
 
@@ -133,7 +135,41 @@ def test_explorer_wrapper_excludes_blocklisted_candidates():
     assert "Thailand" not in summary
 
 
-# ---- Wrapper pre-firing check: full cache hit ----
+# ---- Wrapper pre-firing check: full cache hit, sorted by relevance ----
+
+def test_explorer_wrapper_full_cache_hit_returns_highest_scoring():
+    """When more cached candidates pass the threshold than max_results, the most relevant ones are returned."""
+    llm = make_llm()
+    ks = KnowledgeState()
+
+    # High relevance: query closely matches "city culture Europe"
+    high = DestinationCandidate(
+        name="Prague", country="Czech Republic",
+        vibe_tags=["city", "culture"],
+        rationale="vibrant city culture trip in Europe",
+        source_url="http://ex.com",
+        query="city culture Europe",
+    )
+    # Low relevance: only "city" overlaps
+    low = DestinationCandidate(
+        name="Bangkok", country="Thailand",
+        vibe_tags=["city", "budget"],
+        rationale="cheap city street food",
+        source_url="http://ex.com",
+        query="cheap city budget Asia",
+    )
+    ks.add_candidates([low, high])  # low added first — insertion order would return it first without sorting
+
+    uc = UserContext("city culture Europe")
+    specialist = ExplorerSpecialist(llm, [])
+    wrapper = ExplorerWrapperTool(specialist, ks, uc)
+
+    result = wrapper.execute(query="city culture Europe", max_results=1)
+
+    llm.chat.assert_not_called()
+    assert "Prague" in result["summary"]
+    assert "Bangkok" not in result["summary"]
+
 
 def test_explorer_wrapper_full_cache_hit_skips_specialist():
     """K >= max_results candidates above threshold → specialist not called."""
@@ -141,14 +177,15 @@ def test_explorer_wrapper_full_cache_hit_skips_specialist():
     ks = KnowledgeState()
     # Add candidates with query that closely matches incoming query
     for i in range(5):
-        ks.add_candidates([DestinationCandidate(
+        c = DestinationCandidate(
             name=f"City{i}", country="Europe",
             vibe_tags=["city", "culture"],
             rationale="vibrant city culture trip",
             source_url="http://ex.com",
             query="city culture Europe trip",
-            added_at=i,
-        )])
+        )
+        c.added_at = i
+        ks.add_candidates([c])
 
     uc = UserContext("city culture Europe")
     specialist = ExplorerSpecialist(llm, [])
@@ -171,14 +208,15 @@ def test_explorer_wrapper_partial_cache_hit_reduces_max_results():
     ks = KnowledgeState()
     # 2 matching candidates (query closely matches)
     for name in ["Prague", "Berlin"]:
-        ks.add_candidates([DestinationCandidate(
+        c = DestinationCandidate(
             name=name, country="Europe",
             vibe_tags=["city", "culture"],
             rationale="vibrant city culture trip",
             source_url="http://ex.com",
             query="city culture Europe trip",
-            added_at=1,
-        )])
+        )
+        c.added_at = 1
+        ks.add_candidates([c])
 
     uc = UserContext("city culture Europe")
     specialist = ExplorerSpecialist(llm, [])

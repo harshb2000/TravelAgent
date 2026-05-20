@@ -376,26 +376,26 @@ Each specialist has a corresponding **wrapper tool** registered on the Orchestra
 **Contract:** see architecture.md L384–417
 
 **Scaffold:**
-- [ ] `specialists/explorer.py` — `ExplorerSpecialist.run()` returns `[]`
-- [ ] `agent/prompts/explorer.py` — empty string
+- [x] `specialists/explorer.py` — `ExplorerSpecialist.run()` returns `[]`
+- [x] `agent/prompts/explorer.py` — empty string
 
 **Tests (`tests/test_specialists.py`):**
-- [ ] Stub LLM returns a valid candidate list; `run()` output parses to `list[DestinationCandidate]` with all fields populated including `wordset`
-- [ ] Stub LLM returns a `web_search` tool call then a final answer; assert `web_search` was dispatched
-- [ ] Wrapper pre-firing check: blocklisted candidate (name in `user_context.blocklist`) is excluded before Jaccard runs and never appears in cache hit counts or results
-- [ ] Wrapper pre-firing check: all K surviving candidates score above threshold → specialist not called; template summary returned
-- [ ] Wrapper pre-firing check: K < max_results surviving candidates match → specialist called with `max_results = max_results − K`; surviving candidates passed in prompt
-- [ ] Negative constraints from UserContext appear in the task string passed to the specialist
-- [ ] `specialist.run()` raises an exception → wrapper catches it, returns error string as tool result, `knowledge.add_candidates()` not called
+- [x] Stub LLM returns a valid candidate list; `run()` output parses to `list[DestinationCandidate]` with all fields populated including `wordset`
+- [x] Stub LLM returns a `web_search` tool call then a final answer; assert `web_search` was dispatched
+- [x] Wrapper pre-firing check: blocklisted candidate (name in `user_context.blocklist`) is excluded before Jaccard runs and never appears in cache hit counts or results
+- [x] Wrapper pre-firing check: all K surviving candidates score above threshold → specialist not called; template summary returned
+- [x] Wrapper pre-firing check: K < max_results surviving candidates match → specialist called with `max_results = max_results − K`; surviving candidates passed in prompt
+- [x] Negative constraints from UserContext appear in the task string passed to the specialist
+- [x] `specialist.run()` raises an exception → wrapper catches it, returns error string as tool result, `knowledge.add_candidates()` not called
 
 Note: wrapper exception handling is tested here as the canonical example; the same pattern applies to every specialist wrapper — each Phase 5x adds this test.
 
 **Verify red:** `pytest tests/test_specialists.py -k explorer` — all fail
 
 **Implement:**
-- [ ] `agent/prompts/explorer.py` — instructs agent to use `web_search`, not repeat candidates already in the current list, respect negative constraints, return structured `DestinationCandidate` list
-- [ ] `specialists/explorer.py` — `ExplorerSpecialist(llm_client, tools)`; `run(query, max_results, existing_candidates) -> list[DestinationCandidate]`
-- [ ] Wrapper tool for ExplorerSpecialist — pre-firing check using `EXPLORER_CACHE_THRESHOLD = 0.6`; calls `knowledge.add_candidates()`; returns template summary
+- [x] `agent/prompts/explorer.py` — instructs agent to use `web_search`, not repeat candidates already in the current list, respect negative constraints, return structured `DestinationCandidate` list
+- [x] `specialists/explorer.py` — `ExplorerSpecialist(llm_client, tools)`; `run(query, max_results, existing_candidates) -> list[DestinationCandidate]`
+- [x] Wrapper tool for ExplorerSpecialist — pre-firing check using `EXPLORER_CACHE_THRESHOLD = 0.6`; calls `knowledge.add_candidates()`; returns template summary
 
 **Verify green:** `pytest tests/test_specialists.py -k explorer` — all pass
 
@@ -621,6 +621,8 @@ Note: clarification logic, `update_user_context` call timing, query routing, and
 **Implement:**
 - [ ] `tools/update_user_context.py` — `UpdateUserContextTool(user_context: UserContext)`; sets `user_context.context = new_context`; triggers NLTK recomputation of `wordset` and `blocklist`; returns `{"status": "ok"}`
 - [ ] `agent/prompts/orchestrator.py` — covers: call `update_user_context` first when user provides new trip information; query type recognition; when to clarify vs. act; which specialists to call and when in parallel; depth escalation rules
+  - **UserContext format note:** When writing or updating `UserContext.context`, negative constraints must be expressed as distinct, explicit phrases that the negation regex can match: "not Thailand", "avoid beaches", "no nightlife" — not buried in prose like "I'm not really a beach person". This ensures `blocklist` is correctly populated and scoring/exclusion work as intended.
+  - **Explorer query note:** When calling the ExplorerWrapperTool, the `query` argument must be a positive-intent rewrite of the user's request — affirmative signals only, negatives stripped out. Example: "trip in SEA, not too heavy on nightlife, more nature focused" → `query="nature focused trip in South East Asia"`. Negatives are handled via `blocklist`; including them in the query string corrupts Jaccard scoring.
 - [ ] `agent/orchestrator.py`
   - `Orchestrator(llm_client: LLMClient, specialists: dict[str, SpecialistClass])`
   - State: `user_context: UserContext`, `knowledge: KnowledgeState`
