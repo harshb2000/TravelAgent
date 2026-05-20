@@ -342,30 +342,30 @@ Each specialist has a corresponding **wrapper tool** registered on the Orchestra
 **Goal:** All data models for KnowledgeState defined and importable. No specialist logic yet.
 
 **Models to implement** (see architecture.md for full field specs at given line numbers):
-- [ ] `UserContext(context, wordset, blocklist)` — see architecture.md L53–68; both `wordset` (positive-intent terms, blocklist excluded) and `blocklist` (negated entities) recomputed on each `context` update via NLTK pipeline + lightweight negation parser (regex on "not X", "avoid X", "no X", "skip X", "except X", "don't want X")
-- [ ] `DateRange` — L103–112; `from_string()` classmethod
-- [ ] `RouteKey(origin, destination)` — L114–116; frozen dataclass
-- [ ] `DestinationCandidate` — L118–131; `wordset` computed at creation via NLTK pipeline; `score` not stored
-- [ ] `Activity(name, tags, indoor, duration_min)` — see architecture.md Activity model
-- [ ] `DestinationResearch` — L138–154; includes `depth: Literal["light","full"]`
-- [ ] `StringWithAttribution(text, source_url)` — for factual claims with per-field source tracking
-- [ ] `CostWithAttribution(amount, source_url)` — wraps all cost fields in DestinationBudget
-- [ ] `DestinationBudget` — all USD, `dict[str, CostWithAttribution]` per category, `summary: str`
-- [ ] `TravelOption` — see architecture.md TravelOption model; `mode` discriminates flight vs. ground transport; `flight: FlightOption | None` for flight-specific detail
-- [ ] `DestinationKnowledge` — research, weather, budget
-- [ ] `RouteKnowledge(options: dict[DateRange, list[TravelOption]])` — `DateRange("any")` sentinel for time-insensitive options
-- [ ] `TimeSlot`, `ItineraryDay`, `Itinerary` — see architecture.md Itinerary models
-- [ ] `KnowledgeState` — all `update_*()` / `add_candidates()` methods including `update_route()`, `update_activities()`, `update_itinerary()`; `itineraries: dict[frozenset[str], Itinerary]`; `to_prompt_context(user_context, top_n)` implementing NLTK-based Jaccard scoring, destination budget range computation, and BFS-composed routes section (see architecture.md)
+- [x] `UserContext(context, wordset, blocklist)` — see architecture.md L53–68; both `wordset` (positive-intent terms, blocklist excluded) and `blocklist` (negated entities) recomputed on each `context` update via NLTK pipeline + lightweight negation parser (regex on "not X", "avoid X", "no X", "skip X", "except X", "don't want X")
+- [x] `DateRange` — L103–112; `from_string()` classmethod
+- [x] `RouteKey(origin, destination)` — L114–116; frozen dataclass
+- [x] `DestinationCandidate` — L118–131; `wordset` computed at creation via NLTK pipeline; `score` not stored
+- [x] `Activity(name, tags, indoor, duration_min)` — see architecture.md Activity model
+- [x] `DestinationResearch` — L138–154; includes `depth: Literal["light","full"]`
+- [x] `StringWithAttribution(text, source_url)` — for factual claims with per-field source tracking
+- [x] `CostWithAttribution(amount, source_url)` — wraps all cost fields in DestinationBudget
+- [x] `DestinationBudget` — all USD, `dict[str, CostWithAttribution]` per category, `summary: str`
+- [x] `TravelOption` — see architecture.md TravelOption model; `mode` discriminates flight vs. ground transport; `flight: FlightOption | None` for flight-specific detail
+- [x] `DestinationKnowledge` — research, weather, budget
+- [x] `RouteKnowledge(options: dict[DateRange, list[TravelOption]])` — `DateRange("any")` sentinel for time-insensitive options
+- [x] `TimeSlot`, `ItineraryDay`, `Itinerary` — see architecture.md Itinerary models
+- [x] `KnowledgeState` — all `update_*()` / `add_candidates()` methods including `update_route()`, `update_activities()`, `update_itinerary()`; `itineraries: dict[frozenset[str], Itinerary]`; `to_prompt_context(user_context, top_n)` implementing NLTK-based Jaccard scoring, destination budget range computation, and BFS-composed routes section (see architecture.md)
 
 **Tests (`tests/test_knowledge_state.py`):**
-- [ ] `DateRange.from_string()` handles ISO range, single date, and natural language label
-- [ ] `KnowledgeState.add_candidates()` appends and never replaces
-- [ ] `KnowledgeState.to_prompt_context()` returns top-N candidates by recency + Jaccard score; normalises both components before combining
-- [ ] `KnowledgeState.to_prompt_context()` shows `(showing N of M)` when candidates exceed top_n
-- [ ] `KnowledgeState.update_*()` methods populate correct nested entries; re-calling with same key overwrites
-- [ ] `UserContext.wordset` updates when `context` changes; does not update otherwise
-- [ ] `UserContext.blocklist` populated from negation patterns — "not Thailand" → `{"thailand"}` in blocklist, "thailand" absent from `wordset`
-- [ ] `UserContext.blocklist` and `wordset` recomputed together on each `context` update; blocklist terms excluded from `wordset`
+- [x] `DateRange.from_string()` handles ISO range, single date, and natural language label
+- [x] `KnowledgeState.add_candidates()` appends and never replaces
+- [x] `KnowledgeState.to_prompt_context()` returns top-N candidates by recency + Jaccard score; normalises both components before combining
+- [x] `KnowledgeState.to_prompt_context()` shows `(showing N of M)` when candidates exceed top_n
+- [x] `KnowledgeState.update_*()` methods populate correct nested entries; re-calling with same key overwrites
+- [x] `UserContext.wordset` updates when `context` changes; does not update otherwise
+- [x] `UserContext.blocklist` populated from negation patterns — "not Thailand" → `{"thailand"}` in blocklist, "thailand" absent from `wordset`
+- [x] `UserContext.blocklist` and `wordset` recomputed together on each `context` update; blocklist terms excluded from `wordset`
 
 **Verify red → implement → verify green**
 
