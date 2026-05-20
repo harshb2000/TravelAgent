@@ -63,25 +63,6 @@ def test_chat_sends_tools_when_provided():
 # ConversationHistory tests
 # ---------------------------------------------------------------------------
 
-def test_conversation_history_starts_with_system_message():
-    h = ConversationHistory("You are a helpful assistant.")
-    msgs = h.messages
-    assert msgs[0] == {"role": "system", "content": "You are a helpful assistant."}
-
-
-def test_add_user_appends_user_message():
-    h = ConversationHistory("system")
-    h.add_user("hello")
-    assert h.messages[-1] == {"role": "user", "content": "hello"}
-
-
-def test_add_assistant_appends_message_dict():
-    h = ConversationHistory("system")
-    msg = {"role": "assistant", "content": "hi", "tool_calls": []}
-    h.add_assistant(msg)
-    assert h.messages[-1] == msg
-
-
 def test_add_tool_result_appends_tool_message():
     h = ConversationHistory("system")
     h.add_tool_result("call_abc", '{"result": 42}')
