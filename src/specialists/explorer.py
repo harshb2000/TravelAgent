@@ -64,21 +64,26 @@ class ExplorerSpecialist:
         # Exposed for wrapper tests — record what was passed on the last run
         self._last_run_max_results: int | None = None
         self._last_run_query: str | None = None
+        self._last_run_user_context: str | None = None
 
     def run(
         self,
         query: str,
         max_results: int = 5,
         existing_candidates: list[DestinationCandidate] | None = None,
+        user_context: str = "",
     ) -> list[DestinationCandidate]:
         self._last_run_max_results = max_results
         self._last_run_query = query
+        self._last_run_user_context = user_context
 
         lines = [f"Find up to {max_results} destination candidates for: {query}"]
+        if user_context:
+            lines.append(f"\nUser context: {user_context}")
         if existing_candidates:
             names = [c.name for c in existing_candidates]
             lines.append(f"Already suggested (do not repeat): {', '.join(names)}")
-        lines.append(f"Return a JSON array of up to {max_results} candidates.")
+        lines.append(f"\nReturn a JSON array of up to {max_results} candidates.")
 
         response = self._agent.run("\n".join(lines))
         return _parse_candidates(response)

@@ -433,26 +433,26 @@ Note: which tool the LLM selects (mode selection, when to use `slice_weather_ran
 **Contract:** see architecture.md — DestinationResearchSpecialist section
 
 **Scaffold:**
-- [ ] `specialists/destination_research.py` — `DestinationResearchSpecialist.run()` returns empty `DestinationResearch`
-- [ ] `agent/prompts/destination_research.py` — empty string
+- [x] `specialists/destination_research.py` — `DestinationResearchSpecialist.run()` returns empty `DestinationResearch`
+- [x] `agent/prompts/destination_research.py` — empty string
 
 **Tests (`tests/test_specialists.py`):**
-- [ ] Stub LLM returns a valid `DestinationResearch`; `run()` output has `summary` populated alongside all depth-appropriate fields
-- [ ] Stub LLM returns a `web_search` tool call then a final answer; assert `web_search` was dispatched
-- [ ] Wrapper pre-firing check: light cache exists + `depth="light"` → specialist not called; `research.summary` returned verbatim
-- [ ] Wrapper pre-firing check: full cache exists + `depth="light"` → specialist not called; `research.summary` returned verbatim (full is superset)
-- [ ] Wrapper pre-firing check: light cache exists + `depth="full"` → specialist called with `max_iterations=3` (upgrade)
-- [ ] Wrapper pre-firing check: full cache exists + `depth="full"` → specialist called with `max_iterations=4` (pass-through; specialist self-directs)
-- [ ] Wrapper calls `knowledge.update_research()` with typed `DestinationResearch` result after specialist returns
+- [x] Stub LLM returns a valid `DestinationResearch`; `run()` output has `summary` populated alongside all depth-appropriate fields
+- [x] Stub LLM returns a `web_search` tool call then a final answer; assert `web_search` was dispatched
+- [x] Wrapper pre-firing check: light cache exists + `depth="light"` → specialist not called; `research.summary` returned verbatim
+- [x] Wrapper pre-firing check: full cache exists + `depth="light"` → specialist not called; `research.summary` returned verbatim (full is superset)
+- [x] Wrapper pre-firing check: light cache exists + `depth="full"` → specialist called with `max_iterations=3` (upgrade)
+- [x] Wrapper pre-firing check: full cache exists + `depth="full"` → specialist called with `max_iterations=4` (pass-through; specialist self-directs)
+- [x] Wrapper calls `knowledge.update_research()` with typed `DestinationResearch` result after specialist returns
 
 Note: how many searches the specialist conducts per depth mode, context drift refresh decisions, and summary content quality depend on the prompt — these belong in evaluation, not the test suite.
 
 **Verify red:** `pytest tests/test_specialists.py -k destination_research` — all fail
 
 **Implement:**
-- [ ] `agent/prompts/destination_research.py` — instructs specialist to conduct light vs. full searches per depth instruction, generate `summary` alongside structured fields in one response, use UserContext for nationality (visa profiles) and interest tailoring
-- [ ] `specialists/destination_research.py` — `DestinationResearchSpecialist(llm_client, tools)`; `run(destination, depth, user_context) -> DestinationResearch`
-- [ ] Wrapper tool for DestinationResearchSpecialist — pre-firing check per five-case table; sets `max_iterations` accordingly; calls `knowledge.update_research()`; returns `research.summary` verbatim as orchestrator summary
+- [x] `agent/prompts/destination_research.py` — instructs specialist to conduct light vs. full searches per depth instruction, generate `summary` alongside structured fields in one response, use UserContext for nationality (visa profiles) and interest tailoring
+- [x] `specialists/destination_research.py` — `DestinationResearchSpecialist(llm_client, tools)`; `run(destination, depth, user_context) -> DestinationResearch`
+- [x] Wrapper tool for DestinationResearchSpecialist — pre-firing check per five-case table; sets `max_iterations` accordingly; calls `knowledge.update_research()`; returns `research.summary` verbatim as orchestrator summary
 
 **Verify green:** `pytest tests/test_specialists.py -k destination_research` — all pass
 

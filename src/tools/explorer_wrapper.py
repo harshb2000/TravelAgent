@@ -23,7 +23,7 @@ class ExplorerWrapperTool(BaseTool):
                     "Positive-intent exploration query derived from UserContext. "
                     "Rewrite the user's intent in clean, affirmative terms — include all relevant positive signals "
                     "(activity type, budget tier, geography, travel style) and omit negations entirely. "
-                    "Negatives are handled separately via UserContext.blocklist and must not appear in this string. "
+                    "Negatives are conveyed to the specialist via user_context and must not appear here. "
                     "Example: user says 'trip in SEA, not too heavy on nightlife, more nature focused' → "
                     "pass 'nature focused trip in South East Asia'."
                 ),
@@ -81,18 +81,13 @@ class ExplorerWrapperTool(BaseTool):
                 summary = self._template_summary(relevant_cached[:max_results], cached=n_relevant_cached, new=0)
                 return {"status": "ok", "summary": summary, "from_cache": True, "cached": True}
 
-            # Partial or full miss — call the specialist for the remaining slots.
-            # Embed negative constraints explicitly so the LLM respects them even if
-            # the positive-intent query doesn't surface them.
-            constrained_query = query
-            if uc.blocklist:
-                exclusions = " ".join(f"not {t}" for t in sorted(uc.blocklist))
-                constrained_query = f"{query} (exclude: {exclusions})"
-
+            # Partial or full miss — negative constraints are in user_context,
+            # no need to also embed them in the query string.
             new_candidates = self._specialist.run(
-                query=constrained_query,
+                query=query,
                 max_results=max_results - n_relevant_cached,
                 existing_candidates=relevant_cached if relevant_cached else None,
+                user_context=uc.context,
             )
 
             ks.add_candidates(new_candidates)

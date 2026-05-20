@@ -1,4 +1,9 @@
-EXPLORER_PROMPT = """You are a travel destination discovery agent. Your job is to find destination candidates that match the user's travel query.
+import json
+from models.knowledge_state import DestinationCandidate
+
+_CANDIDATE_SCHEMA = json.dumps(DestinationCandidate.model_json_schema(), indent=2)
+
+EXPLORER_PROMPT = f"""You are a travel destination discovery agent. Your job is to find destination candidates that match the user's travel query.
 
 ## Instructions
 
@@ -10,13 +15,7 @@ EXPLORER_PROMPT = """You are a travel destination discovery agent. Your job is t
 ## Output
 
 Return ONLY a valid JSON array — no prose, no markdown fences, no text before or after the array.
+Each element must conform to this schema:
 
-Each element must have exactly these fields:
-  name        – city or destination name
-  country     – country name
-  vibe_tags   – list of 2–4 short descriptive tags, e.g. ["beach", "budget-friendly", "nightlife"]
-  rationale   – one-line reason this destination matches the query
-  source_url  – a URL from your web search result that supports this recommendation
-  query       – copy the query string you were given exactly
-
+{_CANDIDATE_SCHEMA}
 """
