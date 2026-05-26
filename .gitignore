@@ -24,3 +24,6 @@ Thumbs.db
 
 # Internal memory (Claude Code project memory, not source)
 memory/
+
+# Throwaway scripts
+src/scripts/

@@ -1,14 +1,7 @@
-import json
 import httpx
 from pydantic import BaseModel, ConfigDict
 
 from models.flights import FlightOption
-
-TRIP_TYPE_MAP = {
-    "one_way":    "2",
-    "round_trip": "1",
-    "multi_city": "3",
-}
 
 
 # ---------------------------------------------------------------------------
@@ -95,73 +88,44 @@ class SerpApiClient:
             raise RuntimeError(f"SerpApi error ({r.status_code}): {r.text[:200]}")
         return _RawFlightSearchResponse.model_validate(r.json())
 
-    def search_one_way(self, leg: dict, adults: int = 1, currency: str = "USD") -> list[FlightOption]:
-        response = self._get({
-            "engine": "google_flights", "type": "2",
-            "departure_id": ",".join(leg["origin_airports"]),
-            "arrival_id":   ",".join(leg["destination_airports"]),
-            "outbound_date": leg["date"],
-            "adults": str(adults), "currency": currency,
-        })
-        return _extract_priced_flights(response)
-
-    def search_round_trip(
-        self, outbound_leg: dict, return_date: str, adults: int = 1, currency: str = "USD"
+    def search(
+        self,
+        origin_airports: list[str],
+        destination_airports: list[str],
+        departure_date: str,
+        return_date: str | None = None,
+        adults: int = 1,
+        currency: str = "USD",
     ) -> tuple[list[FlightOption], list[FlightOption] | None]:
         """
-        Returns (outbound_options, return_options_for_first_available_outbound).
-        Returns None for return_options when no valid departure_token is available from outbound results.
-        Only the outbound_leg airports define the route — the return call must reuse the same
-        departure_id/arrival_id pool (confirmed by API testing: changing these causes no-result errors).
+        Returns (outbound_options, return_options).
+        return_options is None for one-way, or when no departure_token is available for the return leg.
+        The return call reuses the same departure_id/arrival_id pool (changing these causes no-result errors).
         """
         base_params = {
-            "engine": "google_flights", "type": "1",
-            "departure_id":  ",".join(outbound_leg["origin_airports"]),
-            "arrival_id":    ",".join(outbound_leg["destination_airports"]),
-            "outbound_date": outbound_leg["date"],
-            "return_date":   return_date,
+            "engine": "google_flights",
+            "type": "1" if return_date else "2",
+            "departure_id":  ",".join(origin_airports),
+            "arrival_id":    ",".join(destination_airports),
+            "outbound_date": departure_date,
             "adults": str(adults),
         }
+        if return_date:
+            base_params["return_date"] = return_date
+
         outbound_response = self._get({**base_params, "currency": currency})
         outbound = _extract_priced_flights(outbound_response)
+
+        if not return_date:
+            return outbound, None
 
         if not outbound:
             return [], None
 
         token = _first_departure_token(outbound_response)
         if not token:
-            return outbound, None  # outbound found but no valid departure_token for return leg
+            return outbound, None  # outbound found but no departure_token for return leg
 
         return_response = self._get({**base_params, "departure_token": token, "currency": currency})
         return outbound, _extract_priced_flights(return_response)
 
-    def search_multi_city(self, legs: list[dict], adults: int = 1, currency: str = "USD") -> list[list[FlightOption]]:
-        """
-        Returns one option-list per leg, chained from the first available prior leg's departure_token.
-        May return fewer lists than len(legs) if the chain breaks (no token available for the next leg).
-        The caller is responsible for detecting and surfacing a partial result.
-        """
-        mc_legs = [
-            {"departure_id": ",".join(leg["origin_airports"]),
-             "arrival_id":   ",".join(leg["destination_airports"]),
-             "date":          leg["date"]}
-            for leg in legs
-        ]
-        base_params = {
-            "engine": "google_flights", "type": "3",
-            "multi_city_json": json.dumps(mc_legs),
-            "adults": str(adults),
-        }
-
-        first_response = self._get({**base_params, "currency": currency})
-        all_legs: list[list[FlightOption]] = [_extract_priced_flights(first_response)]
-        last_response = first_response
-
-        for _ in legs[1:]:
-            token = _first_departure_token(last_response)
-            if not token:
-                break  # Chain broken — no token available for the next leg; remaining legs unfetchable
-            last_response = self._get({**base_params, "departure_token": token, "currency": currency})
-            all_legs.append(_extract_priced_flights(last_response))
-
-        return all_legs

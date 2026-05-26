@@ -14,33 +14,22 @@ class FlightOption(BaseModel):
     destination_iata: str = Field(description="Arrival airport IATA code")
 
 
-class FlightLegResult(BaseModel):
-    leg: int = Field(description="Leg number starting from 1")
-    origin: str = Field(description="Comma-joined origin IATA codes as searched")
-    destination: str = Field(description="Comma-joined destination IATA codes as searched")
-    date: str = Field(description="Departure date YYYY-MM-DD")
-    options: list[FlightOption] = Field(description="Available flights for this leg")
+class FlightLegSummary(BaseModel):
+    options: list[FlightOption] = Field(
+        description="Top-3 options covering min-cost, min-duration, and min-stops representatives"
+    )
+    total_found: int = Field(description="Total number of flights found before top-3 selection")
 
 
 class FlightSearchOutput(BaseModel):
-    trip_type: str = Field(description="one_way, round_trip, or multi_city")
+    trip_type: Literal["one_way", "round_trip"] = Field(description="one_way or round_trip")
+    outbound: FlightLegSummary = Field(description="Outbound leg summary with top-3 options")
+    return_leg: FlightLegSummary | None = Field(
+        default=None,
+        description="Return leg summary. None for one_way or when departure token unavailable.",
+    )
     status: Literal["ok", "partial"] = Field(
         default="ok",
-        description=(
-            "'ok': all requested legs were fetched. "
-            "'partial': search chain broke before all legs were retrieved — "
-            "legs_fetched of legs_requested legs have results."
-        ),
+        description="'ok': all legs fetched. 'partial': return leg unavailable (no flights available).",
     )
-    legs_requested: int | None = Field(
-        default=None,
-        description="Total legs requested. Only set when status='partial'.",
-    )
-    legs_fetched: int | None = Field(
-        default=None,
-        description="Number of legs successfully fetched. Only set when status='partial'.",
-    )
-    legs: list[FlightLegResult] = Field(
-        description="One entry per successfully fetched leg. round_trip leg 2 options are for the first available outbound."
-    )
-    note: str = Field(description="Context about result generation e.g. which outbound was used to fetch return options")
+    note: str = Field(default="", description="Context about result generation")

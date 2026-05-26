@@ -262,7 +262,7 @@ Each tool has its own client and is independently testable. Unit tests mock HTTP
 ### 4d: Flight Search (SerpApi Google Flights)
 
 **Models:**
-- `DateRange`: `label: str`, `start_date: str | None`, `end_date: str | None`; `from_string(s) -> DateRange` classmethod; `DateRange("any")` sentinel for time-insensitive KnowledgeState entries
+- `DateRange`: `label: str`, `start_date: str | None`, `end_date: str | None`; `from_string(s) -> DateRange` classmethod; `DateRange("any")` sentinel for date-invariant KnowledgeState entries
 - `FlightOption`: `airline`, `flight_number`, `price_usd` (round-trip total for rt searches), `stops`, `duration_min`, `departure`, `arrival`, `origin_iata`, `destination_iata`
 - `FlightLegSummary`: `options: list[FlightOption]` (top-3 covering min-cost, min-duration, min-stops), `total_found: int`
 - `FlightSearchOutput`: `trip_type: "one_way"|"round_trip"`, `outbound: FlightLegSummary`, `return_leg: FlightLegSummary | None`, `status: "ok"|"partial"`, `note: str`
@@ -289,8 +289,8 @@ Each tool has its own client and is independently testable. Unit tests mock HTTP
 
 **Verify green:** flight tests pass
 
-**Cleanup (deferred):**
-- [ ] Simplify `FlightSearchTool` to `trip_type: "one_way" | "round_trip"` only — remove `"multi_city"` from the enum, validation, and execute path; remove `search_multi_city` from `SerpApiClient`; delete `serpapi_flights_multicity*.json` fixtures and all multi-city tests from `test_tools.py`
+**Cleanup (done in Phase 5e):**
+- [x] Simplify `FlightSearchTool` to `trip_type: "one_way" | "round_trip"` only — removed `"multi_city"` from the enum, validation, and execute path; removed `search_multi_city` from `SerpApiClient`; removed multi-city tests from `test_tools.py`; simplified input to flat fields (no `legs`); added top-3 selection logic; added `FlightLegSummary`
 
 ### 4f: Calculator
 
@@ -353,7 +353,7 @@ Each specialist has a corresponding **wrapper tool** registered on the Orchestra
 - [x] `DestinationBudget` — all USD, `dict[str, CostWithAttribution]` per category, `summary: str`
 - [x] `TravelOption` — see architecture.md TravelOption model; `mode` discriminates flight vs. ground transport; `flight: FlightOption | None` for flight-specific detail
 - [x] `DestinationKnowledge` — research, weather, budget
-- [x] `RouteKnowledge(options: dict[DateRange, list[TravelOption]])` — `DateRange("any")` sentinel for time-insensitive options
+- [x] `RouteKnowledge(options: dict[DateRange, list[TravelOption]])` — `DateRange("any")` sentinel for date-invariant options
 - [x] `TimeSlot`, `ItineraryDay`, `Itinerary` — see architecture.md Itinerary models
 - [x] `KnowledgeState` — all `update_*()` / `add_candidates()` methods including `update_route()`, `update_activities()`, `update_itinerary()`; `itineraries: dict[frozenset[str], Itinerary]`; `to_prompt_context(user_context, top_n)` implementing NLTK-based Jaccard scoring, destination budget range computation, and BFS-composed routes section (see architecture.md)
 
@@ -463,31 +463,30 @@ Note: how many searches the specialist conducts per depth mode, context drift re
 **Contract:** see architecture.md — TransportationSpecialist section
 
 **Prerequisite cleanup from Phase 4d:**
-- [ ] Revise `FlightSearchOutput` to `FlightLegSummary` + revised `FlightSearchOutput` structure (see Phase 4d models above); update `FlightSearchTool` top-3 selection logic; update tests accordingly
+- [x] Revise `FlightSearchOutput` to `FlightLegSummary` + revised `FlightSearchOutput` structure (see Phase 4d models above); update `FlightSearchTool` top-3 selection logic; update tests accordingly
 
 **Scaffold:**
-- [ ] `specialists/transportation.py` — `TransportationSpecialist.run()` returns `[]`
-- [ ] `agent/prompts/transportation.py` — empty string
+- [x] `specialists/transportation.py` — `TransportationSpecialist.run()` returns `[]`
+- [x] `agent/prompts/transportation.py` — empty string
 
 **Tests (`tests/test_specialists.py`):**
-- [ ] Stub LLM returns a valid `list[TravelOption]`; `run()` output parses with flight and transfer options present
-- [ ] Stub LLM returns parallel `flight_search` calls for two routes; assert parallel dispatch
-- [ ] Stub LLM returns `web_search` for transfer options after `flight_search`; assert both dispatched
-- [ ] Wrapper pre-firing check: BFS finds complete path for all routes → specialist not called; composed template returned
-- [ ] Wrapper pre-firing check: BFS finds partial path for one route → specialist called with partial edges in task context
-- [ ] Wrapper groups TravelOptions by `(origin, destination)`; calls `update_route()` per group with correct `DateRange` — `DateRange("any")` for non-flight modes
-- [ ] Round-trip: `mode="flight/return"` options stored under reversed RouteKey
-- [ ] `max_iterations` set to `min(2 + len(missing_routes), 5)`
+- [x] Stub LLM returns a valid `list[TravelOption]`; `run()` output parses with flight and transfer options present
+- [x] Stub LLM returns parallel `flight_search` calls for two routes; assert parallel dispatch
+- [x] Stub LLM returns `web_search` for transfer options after `flight_search`; assert both dispatched
+- [x] Wrapper pre-firing check: BFS finds complete path for all routes → specialist not called; composed template returned
+- [x] Wrapper pre-firing check: BFS finds partial path for one route → specialist called with partial edges in task context
+- [x] Wrapper groups TravelOptions by `(origin, destination)`; calls `update_route()` per group with correct `DateRange` — `DateRange("any")` for non-flight modes
+- [x] Round-trip: `mode="flight/return"` options stored under reversed RouteKey
+- [x] `max_iterations` set to `min(2 + len(missing_routes), 5)`
 
 Note: IATA resolution strategy, round-trip vs. one-way decision, and ground transport identification depend on the prompt — these belong in evaluation, not the test suite.
 
 **Verify red:** `pytest tests/test_specialists.py -k transportation` — all fail
 
 **Implement:**
-- [ ] `models/transportation.py` — `TravelOption` (with `flight: FlightOption | None`)
-- [ ] `agent/prompts/transportation.py` — instructs specialist to resolve city names to IATA codes via `web_search`, ensure composed path starts and ends at Orchestrator city names, store departure and arrival transfers, use `trip_type="round_trip"` when applicable, fall back to ground transport search when flights unavailable or unnatural (short overland corridors)
-- [ ] `specialists/transportation.py` — `TransportationSpecialist(llm_client, tools)`; `run(routes, user_context) -> list[TravelOption]`
-- [ ] Wrapper tool for TransportationSpecialist — BFS pre-firing check; sets `max_iterations`; groups output by RouteKey; calls `update_route()` per group; BFS compose for template summary
+- [x] `agent/prompts/transportation.py` — instructs specialist to resolve city names to IATA codes via `web_search`, ensure composed path starts and ends at Orchestrator city names, store departure and arrival transfers, use `trip_type="round_trip"` when applicable, fall back to ground transport search when flights unavailable or unnatural (short overland corridors)
+- [x] `specialists/transportation.py` — `TransportationSpecialist(llm_client, tools)`; `run(routes, user_context) -> list[TravelOption]`
+- [x] Wrapper tool for TransportationSpecialist — BFS pre-firing check; sets `max_iterations`; groups output by RouteKey; calls `update_route()` per group; BFS compose for template summary
 
 **Verify green:** `pytest tests/test_specialists.py -k transportation` — all pass
 

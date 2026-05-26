@@ -226,7 +226,7 @@ DestinationKnowledge:
 
 RouteKnowledge:
   options:   dict[DateRange, list[TravelOption]]
-             # DateRange("any") for time-insensitive options (transfers, fixed-schedule trains)
+             # DateRange("any") for date-invariant options (transfers, fixed-schedule trains)
              # specific DateRange for flight options
 
 KnowledgeState:
