@@ -381,7 +381,6 @@ Each specialist has a corresponding **wrapper tool** registered on the Orchestra
 
 **Tests (`tests/test_specialists.py`):**
 - [x] Stub LLM returns a valid candidate list; `run()` output parses to `list[DestinationCandidate]` with all fields populated including `wordset`
-- [x] Stub LLM returns a `web_search` tool call then a final answer; assert `web_search` was dispatched
 - [x] Wrapper pre-firing check: blocklisted candidate (name in `user_context.blocklist`) is excluded before Jaccard runs and never appears in cache hit counts or results
 - [x] Wrapper pre-firing check: all K surviving candidates score above threshold → specialist not called; template summary returned
 - [x] Wrapper pre-firing check: K < max_results surviving candidates match → specialist called with `max_results = max_results − K`; surviving candidates passed in prompt
@@ -411,10 +410,8 @@ Note: wrapper exception handling is tested here as the canonical example; the sa
 - [x] `tools/slice_weather_range.py` — `SliceWeatherRangeTool.execute()` returns `{"status": "ok", "days": []}`
 
 **Tests (`tests/test_specialists.py`):**
-- [x] Stub returns `slice_weather_range` tool call (subset case); tool correctly slices existing `WeatherOutput` days and calls `update_weather()` with new entry; no `weather_forecast`/`climate_summary` dispatched
 - [x] Stub returns `slice_weather_range` + `weather_forecast` as parallel tool calls (augment case); wrapper merges the two `WeatherOutput.days` arrays in Python and calls `update_weather()` with combined entry; no extra LLM call
-- [x] Wrapper pre-firing check: exact key exists → specialist not called; template summary returned with correct avg stats and "historical avg" label for climate mode
-- [x] Wrapper template: forecast summary includes avg high/low and precipitation probability; climate summary includes "historical avg" label and precipitation sum
+- [x] Wrapper pre-firing check: exact key exists → specialist not called; template summary returned
 
 Note: which tool the LLM selects (mode selection, when to use `slice_weather_range`) depends on the prompt and belongs in evaluation, not the test suite.
 
@@ -438,7 +435,6 @@ Note: which tool the LLM selects (mode selection, when to use `slice_weather_ran
 
 **Tests (`tests/test_specialists.py`):**
 - [x] Stub LLM returns a valid `DestinationResearch`; `run()` output has `summary` populated alongside all depth-appropriate fields
-- [x] Stub LLM returns a `web_search` tool call then a final answer; assert `web_search` was dispatched
 - [x] Wrapper pre-firing check: light cache exists + `depth="light"` → specialist not called; `research.summary` returned verbatim
 - [x] Wrapper pre-firing check: full cache exists + `depth="light"` → specialist not called; `research.summary` returned verbatim (full is superset)
 - [x] Wrapper pre-firing check: light cache exists + `depth="full"` → specialist called with `max_iterations=3` (upgrade)
@@ -470,14 +466,9 @@ Note: how many searches the specialist conducts per depth mode, context drift re
 - [x] `agent/prompts/transportation.py` — empty string
 
 **Tests (`tests/test_specialists.py`):**
-- [x] Stub LLM returns a valid `list[TravelOption]`; `run()` output parses with flight and transfer options present
-- [x] Stub LLM returns parallel `flight_search` calls for two routes; assert parallel dispatch
-- [x] Stub LLM returns `web_search` for transfer options after `flight_search`; assert both dispatched
 - [x] Wrapper pre-firing check: BFS finds complete path for all routes → specialist not called; composed template returned
 - [x] Wrapper pre-firing check: BFS finds partial path for one route → specialist called with partial edges in task context
 - [x] Wrapper groups TravelOptions by `(origin, destination)`; calls `update_route()` per group with correct `DateRange` — `DateRange("any")` for non-flight modes
-- [x] Round-trip: `mode="flight/return"` options stored under reversed RouteKey
-- [x] `max_iterations` set to `min(2 + len(missing_routes), 5)`
 
 Note: IATA resolution strategy, round-trip vs. one-way decision, and ground transport identification depend on the prompt — these belong in evaluation, not the test suite.
 
@@ -497,29 +488,27 @@ Note: IATA resolution strategy, round-trip vs. one-way decision, and ground tran
 **Contract:** see architecture.md — BudgetSpecialist section
 
 **Scaffold:**
-- [ ] `specialists/budget.py` — `BudgetSpecialist.run()` returns empty `BudgetSpecialistOutput`
-- [ ] `agent/prompts/budget.py` — empty string
+- [x] `specialists/budget.py` — `BudgetSpecialist.run()` returns empty `BudgetSpecialistOutput`
+- [x] `agent/prompts/budget.py` — empty string
 
-**Tests (`tests/test_specialists.py`):**
-- [ ] Stub LLM returns valid `BudgetSpecialistOutput` with `breakdown` populated; `run()` output parses correctly
-- [ ] Stub LLM returns parallel `web_search` calls for accommodation and food costs in one iteration; assert parallel dispatch
-- [ ] Stub LLM returns `currency_convert` then `calculate` calls in sequence; assert both dispatched
-- [ ] Wrapper calls `update_destination_budget()` when `result.destination_budget` is not `None`; skips call when `None`
-- [ ] Wrapper passes existing `DestinationBudget` snapshot + TravelOption costs (excluding `mode="flight/return"`) in task context
+**Tests (`tests/specialists/test_budget.py`):**
+- [x] `run()` raises on valid JSON that fails schema validation
+- [x] Wrapper calls `update_destination_budget()` when `result.destination_budget` is not `None`; skips call when `None`
+- [x] Wrapper passes existing `DestinationBudget` snapshot in task context; travel options shown as price range per route and mode (flight/return included, noted as round-trip price)
 
 Note: whether the specialist skips `web_search` when `DestinationBudget` is already present depends on the prompt — belongs in evaluation, not the test suite.
 
 Note: cost estimation quality, currency selection, and arithmetic expression construction depend on the prompt — these belong in evaluation, not the test suite.
 
-**Verify red:** `pytest tests/test_specialists.py -k budget` — all fail
+**Verify red:** `pytest tests/specialists/test_budget.py` — all fail
 
 **Implement:**
-- [ ] `models/budget.py` — `BudgetSpecialistOutput(destination_budget: DestinationBudget | None, breakdown: str)`
-- [ ] `agent/prompts/budget.py` — instructs specialist to use parallel `web_search` for missing cost categories, route all arithmetic through `calculate`, skip `mode="flight/return"` TravelOptions when summing route costs, output ranges (low/high) rather than point estimates
-- [ ] `specialists/budget.py` — `BudgetSpecialist(llm_client, tools)`; `run(query, context) -> BudgetSpecialistOutput`
-- [ ] Wrapper tool for BudgetSpecialist — no pre-firing check; extracts DestinationBudget + TravelOptions from KnowledgeState for context; calls `update_destination_budget()` if new data returned; returns `result.breakdown` verbatim
+- [x] `models/budget.py` — `BudgetSpecialistOutput(destination_budget: DestinationBudget | None, breakdown: str)`
+- [x] `agent/prompts/budget.py` — instructs specialist to use parallel `web_search` for missing cost categories, route all arithmetic through `calculate`, skip `mode="flight/return"` TravelOptions when summing route costs, output ranges (low/high) rather than point estimates
+- [x] `specialists/budget.py` — `BudgetSpecialist(llm_client, tools)`; `run(query, context) -> BudgetSpecialistOutput`
+- [x] Wrapper tool for BudgetSpecialist — no pre-firing check; extracts DestinationBudget + TravelOptions from KnowledgeState for context; calls `update_destination_budget()` if new data returned; returns `result.breakdown` verbatim
 
-**Verify green:** `pytest tests/test_specialists.py -k budget` — all pass
+**Verify green:** `pytest tests/specialists/test_budget.py` — all pass
 
 ---
 
@@ -532,8 +521,6 @@ Note: cost estimation quality, currency selection, and arithmetic expression con
 - [ ] `agent/prompts/itinerary_planner.py` — empty string
 
 **Tests (`tests/test_specialists.py`):**
-- [ ] Stub LLM returns valid `ItineraryPlannerOutput`; `run()` output parses with `itinerary.days` populated and `day_num` sequential from 1
-- [ ] Stub LLM returns parallel `web_search` calls for multiple venues in one iteration; assert parallel dispatch
 - [ ] Wrapper calls `update_itinerary()` with `frozenset(destinations)` key
 - [ ] Wrapper calls `update_activities(destination, activities)` for each non-empty entry in `result.activity_updates`; skips call when list is empty
 - [ ] Second `run()` call on same instance includes prior itinerary in history (refinement path)

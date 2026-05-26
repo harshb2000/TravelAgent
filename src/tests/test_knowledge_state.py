@@ -228,11 +228,10 @@ def test_update_destination_budget_populates():
     budget = DestinationBudget(
         accommodation={"hostel": CostWithAttribution(amount=20.0)},
         food={"street food": CostWithAttribution(amount=5.0)},
-        summary="Budget city",
     )
     ks.update_destination_budget("Bangkok", budget)
     assert ks.destinations["Bangkok"].budget is not None
-    assert ks.destinations["Bangkok"].budget.summary == "Budget city"
+    assert "hostel" in ks.destinations["Bangkok"].budget.accommodation
 
 
 def test_update_destination_budget_merges_categories():
@@ -241,12 +240,10 @@ def test_update_destination_budget_merges_categories():
     ks.update_destination_budget("Bangkok", DestinationBudget(
         accommodation={"hostel": CostWithAttribution(amount=15.0)},
         food={"street food": CostWithAttribution(amount=5.0)},
-        summary="First pass",
     ))
     ks.update_destination_budget("Bangkok", DestinationBudget(
         accommodation={"mid-range hotel": CostWithAttribution(amount=60.0)},
         local_transport={"metro": CostWithAttribution(amount=3.0)},
-        summary="Second pass",
     ))
     b = ks.destinations["Bangkok"].budget
     # First-call accommodation key preserved alongside new key
@@ -256,8 +253,6 @@ def test_update_destination_budget_merges_categories():
     assert "street food" in b.food
     # Second-call transport added (first call had none)
     assert "metro" in b.local_transport
-    # Summary updated to latest non-empty value
-    assert b.summary == "Second pass"
 
 
 def test_update_activities_sets_on_research():

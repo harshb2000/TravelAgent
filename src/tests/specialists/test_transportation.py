@@ -9,6 +9,7 @@ from models.knowledge_state import (
     TravelOption,
     RouteKey,
     DateRange,
+    UserContext,
 )
 from models.flights import FlightOption
 from specialists.transportation import TransportationSpecialist
@@ -61,7 +62,7 @@ def _make_wrapper(ks: KnowledgeState | None = None):
     llm = make_llm()
     llm.chat.return_value = stop_msg(_options_json([]))
     specialist = TransportationSpecialist(llm, [])
-    return TransportationWrapperTool(specialist, ks), specialist, ks, llm
+    return TransportationWrapperTool(specialist, ks, UserContext()), specialist, ks, llm
 
 
 def _populate_complete_path(ks: KnowledgeState, dr: DateRange) -> None:
@@ -302,7 +303,6 @@ def test_transportation_wrapper_bfs_complete_returns_cache_without_calling_speci
     wrapper, _, _, llm = _make_wrapper(ks)
     result = wrapper.execute(
         origin="Mumbai", destination="Tokyo", date_range="2026-07-13",
-        user_context="",
     )
     llm.chat.assert_not_called()
     assert result["status"] == "ok"
@@ -318,7 +318,6 @@ def test_transportation_wrapper_bfs_partial_calls_specialist():
     wrapper, _, _, llm = _make_wrapper(ks)
     wrapper.execute(
         origin="Mumbai", destination="Tokyo", date_range="2026-07-13",
-        user_context="",
     )
     llm.chat.assert_called()
 
@@ -337,8 +336,8 @@ def test_transportation_wrapper_groups_by_origin_destination_and_updates_route()
     _, specialist, ks, llm = _make_wrapper(ks)
     llm.chat.return_value = stop_msg(_options_json(options))
 
-    wrapper = TransportationWrapperTool(specialist, ks)
-    wrapper.execute(origin="Mumbai", destination="Tokyo", date_range="2026-07-13", user_context="")
+    wrapper = TransportationWrapperTool(specialist, ks, UserContext())
+    wrapper.execute(origin="Mumbai", destination="Tokyo", date_range="2026-07-13")
 
     assert DR in ks.routes[RouteKey("BOM Airport", "NRT Airport")].options
     assert ANY in ks.routes[RouteKey("Mumbai", "BOM Airport")].options
@@ -350,10 +349,9 @@ def test_transportation_wrapper_exception_returns_error_and_leaves_knowledge_unc
     _, specialist, ks, _ = _make_wrapper(ks)
     specialist.run = MagicMock(side_effect=RuntimeError("quota exceeded"))
 
-    wrapper = TransportationWrapperTool(specialist, ks)
+    wrapper = TransportationWrapperTool(specialist, ks, UserContext())
     result = wrapper.execute(
         origin="Mumbai", destination="Tokyo", date_range="2026-07-13",
-        user_context="",
     )
     assert result["status"] == "error"
     assert "TransportationSpecialist" in result["summary"]
@@ -381,10 +379,9 @@ def test_wrapper_retries_when_first_attempt_leaves_path_incomplete():
         stop_msg(_options_json(_complete_options())),  # retry — complete path
     ]
 
-    wrapper = TransportationWrapperTool(specialist, ks)
+    wrapper = TransportationWrapperTool(specialist, ks, UserContext())
     result = wrapper.execute(
         origin="Mumbai", destination="Tokyo", date_range="2026-07-13",
-        user_context="",
     )
     assert result["status"] == "ok"
     # LLM was called more than once (at least 2 specialist iterations)
@@ -396,10 +393,9 @@ def test_wrapper_returns_failed_when_path_not_found_after_two_attempts():
     _, specialist, ks, llm = _make_wrapper(ks)
     llm.chat.return_value = stop_msg(_options_json([]))  # both attempts find nothing
 
-    wrapper = TransportationWrapperTool(specialist, ks)
+    wrapper = TransportationWrapperTool(specialist, ks, UserContext())
     result = wrapper.execute(
         origin="Mumbai", destination="Tokyo", date_range="2026-07-13",
-        user_context="",
     )
     assert result["status"] == "failed"
     assert "Mumbai" in result["summary"] and "Tokyo" in result["summary"]
@@ -410,10 +406,9 @@ def test_wrapper_does_not_retry_when_first_attempt_succeeds():
     _, specialist, ks, llm = _make_wrapper(ks)
     llm.chat.return_value = stop_msg(_options_json(_complete_options()))
 
-    wrapper = TransportationWrapperTool(specialist, ks)
+    wrapper = TransportationWrapperTool(specialist, ks, UserContext())
     result = wrapper.execute(
         origin="Mumbai", destination="Tokyo", date_range="2026-07-13",
-        user_context="",
     )
     assert result["status"] == "ok"
     # Should have stopped after first successful attempt (1 specialist run = 1 LLM call)

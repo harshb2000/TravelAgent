@@ -1,5 +1,5 @@
 from tools.base import BaseTool
-from models.knowledge_state import KnowledgeState
+from models.knowledge_state import KnowledgeState, UserContext
 from specialists.destination_research import DestinationResearchSpecialist
 
 
@@ -26,25 +26,24 @@ class DestinationResearchWrapperTool(BaseTool):
                     "'full': complete research including safety, visa, neighbourhoods, activities."
                 ),
             },
-            "user_context": {
-                "type": "string",
-                "description": (
-                    "Full UserContext string. The specialist extracts nationality, passport and visa information (for visa profiles), "
-                    "travel dates (for festival/weather alignment), and interests (for activity tailoring)."
-                ),
-            },
         },
-        "required": ["destination", "depth", "user_context"],
+        "required": ["destination", "depth"],
     }
 
-    def __init__(self, specialist: DestinationResearchSpecialist, knowledge: KnowledgeState):
+    def __init__(
+        self,
+        specialist: DestinationResearchSpecialist,
+        knowledge: KnowledgeState,
+        user_context: UserContext,
+    ):
         self._specialist = specialist
         self._knowledge = knowledge
+        self._user_context = user_context
 
     def execute(self, **kwargs) -> dict:
         destination: str = kwargs["destination"]
         depth: str = kwargs.get("depth", "light")
-        user_context: str = kwargs.get("user_context", "")
+        user_context: str = self._user_context.context
         ks = self._knowledge
 
         # Pre-firing check — five-case table from architecture.md

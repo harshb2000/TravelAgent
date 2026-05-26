@@ -135,7 +135,6 @@ class DestinationBudget(BaseModel):
     food: dict[str, CostWithAttribution] = Field(default_factory=dict, description="Per-person/day food costs keyed by style, e.g. {'street food': {amount: 8.0}, 'sit-down restaurant': {amount: 20.0}}. All amounts in USD.")
     local_transport: dict[str, CostWithAttribution] = Field(default_factory=dict, description="Local transport costs keyed by mode, e.g. {'metro day pass': {amount: 5.0}, 'taxi 5km': {amount: 8.0}}. Per person for transit; per vehicle for taxis. All amounts in USD.")
     activities: dict[str, CostWithAttribution] = Field(default_factory=dict, description="Per-person activity costs keyed by activity, e.g. {'temple entry': {amount: 5.0}, 'guided tour': {amount: 40.0}}. All amounts in USD.")
-    summary: str = Field(default="", description="LLM-generated narrative overview of the cost landscape — tier characterisation, what drives costs, value tips.")
 
 
 # ---------------------------------------------------------------------------
@@ -345,8 +344,6 @@ class KnowledgeState:
         dk.budget.food.update(result.food)
         dk.budget.local_transport.update(result.local_transport)
         dk.budget.activities.update(result.activities)
-        if result.summary:
-            dk.budget.summary = result.summary
 
     def update_activities(
         self, destination: str, activities: list[Activity]

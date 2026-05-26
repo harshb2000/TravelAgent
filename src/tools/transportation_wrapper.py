@@ -6,6 +6,7 @@ from models.knowledge_state import (
     RouteKnowledge,
     DateRange,
     TravelOption,
+    UserContext,
 )
 from specialists.transportation import TransportationSpecialist
 from tools.base import BaseTool
@@ -292,22 +293,24 @@ class TransportationWrapperTool(BaseTool):
                     "Omit for date-invariant ground-only routes."
                 ),
             },
-            "user_context": {
-                "type": "string",
-                "description": "Full UserContext string; specialist extracts stop preferences, travel class, etc.",
-            },
         },
-        "required": ["origin", "destination", "user_context"],
+        "required": ["origin", "destination"],
     }
 
-    def __init__(self, specialist: TransportationSpecialist, knowledge: KnowledgeState):
+    def __init__(
+        self,
+        specialist: TransportationSpecialist,
+        knowledge: KnowledgeState,
+        user_context: UserContext,
+    ):
         self._specialist = specialist
         self._knowledge = knowledge
+        self._user_context = user_context
 
     def execute(self, **kwargs) -> dict:
         origin: str = kwargs["origin"]
         destination: str = kwargs["destination"]
-        user_context: str = kwargs.get("user_context", "")
+        user_context: str = self._user_context.context
         date_range = DateRange.from_string(kwargs.get("date_range", "any"))
         route_key = RouteKey(origin, destination)
         knowledge = self._knowledge
