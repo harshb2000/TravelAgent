@@ -1,8 +1,8 @@
 import json
 import pytest
 import httpx
-from unittest.mock import patch, MagicMock
-from clients.llm_client import LLMClient, LLMError
+from unittest.mock import patch, MagicMock, call
+from clients.llm_client import LLMClient, LLMError, _parse_failed_generation, _retry_after
 from agent.session import ConversationHistory
 
 
@@ -43,6 +43,102 @@ def test_chat_raises_llm_error_on_non_200():
     error_resp.status_code = 401
     error_resp.text = "Unauthorized"
     with patch("httpx.post", return_value=error_resp):
+        with pytest.raises(LLMError):
+            client.chat([{"role": "user", "content": "hi"}])
+
+
+def _make_error_response(code: str, failed_generation: str = "", status_code: int = 400) -> MagicMock:
+    resp = MagicMock(spec=httpx.Response)
+    resp.status_code = status_code
+    resp.text = code
+    resp.json.return_value = {
+        "error": {"code": code, "message": "...", "failed_generation": failed_generation}
+    }
+    return resp
+
+
+def test_parse_failed_generation_single_call():
+    msg = _parse_failed_generation('<function=search>{"query": "Japan"}</function>')
+    assert msg["role"] == "assistant"
+    assert msg["content"] == ""
+    assert len(msg["tool_calls"]) == 1
+    tc = msg["tool_calls"][0]
+    assert tc["type"] == "function"
+    assert tc["function"]["name"] == "search"
+    assert json.loads(tc["function"]["arguments"]) == {"query": "Japan"}
+
+
+def test_parse_failed_generation_with_preamble():
+    msg = _parse_failed_generation(
+        'Sure, let me look that up. <function=search>{"query": "flights"}</function>'
+    )
+    assert msg["content"] == "Sure, let me look that up."
+    assert msg["tool_calls"][0]["function"]["name"] == "search"
+
+
+def test_parse_failed_generation_multiple_calls():
+    raw = '<function=search>{"query": "a"}</function><function=weather>{"city": "Tokyo"}</function>'
+    msg = _parse_failed_generation(raw)
+    assert len(msg["tool_calls"]) == 2
+    assert msg["tool_calls"][0]["function"]["name"] == "search"
+    assert msg["tool_calls"][1]["function"]["name"] == "weather"
+    ids = {tc["id"] for tc in msg["tool_calls"]}
+    assert len(ids) == 2  # unique IDs
+
+
+def test_parse_failed_generation_no_calls_raises():
+    with pytest.raises(LLMError):
+        _parse_failed_generation("I cannot help with that.")
+
+
+def test_chat_recovers_from_tool_use_failed():
+    client = LLMClient("https://api.example.com/v1", "key", "model-x")
+    raw = '<function=search>{"query": "Japan"}</function>'
+    with patch("httpx.post", return_value=_make_error_response("tool_use_failed", raw)):
+        result = client.chat([{"role": "user", "content": "find flights"}])
+    assert result["role"] == "assistant"
+    assert len(result["tool_calls"]) == 1
+    assert result["tool_calls"][0]["function"]["name"] == "search"
+
+
+def _make_429_response(wait_seconds: float = 5.0) -> MagicMock:
+    resp = MagicMock(spec=httpx.Response)
+    resp.status_code = 429
+    resp.text = f"Rate limit reached. Please try again in {wait_seconds}s."
+    resp.json.return_value = {"error": {"code": "rate_limit_exceeded", "message": resp.text}}
+    return resp
+
+
+def test_retry_after_parses_seconds():
+    assert _retry_after("Please try again in 31.985s.") == pytest.approx(31.985)
+
+
+def test_retry_after_fallback_on_no_match():
+    assert _retry_after("no timing info here") == 10.0
+
+
+def test_chat_retries_on_429_then_succeeds():
+    client = LLMClient("https://api.example.com/v1", "key", "model-x")
+    ok_msg = {"role": "assistant", "content": "hi"}
+    with patch("httpx.post", side_effect=[_make_429_response(0.01), _make_response(ok_msg)]) as mock_post:
+        with patch("time.sleep") as mock_sleep:
+            result = client.chat([{"role": "user", "content": "hi"}])
+    assert result == ok_msg
+    assert mock_post.call_count == 2
+    mock_sleep.assert_called_once_with(pytest.approx(0.01))
+
+
+def test_chat_raises_after_max_retries_on_429():
+    client = LLMClient("https://api.example.com/v1", "key", "model-x")
+    with patch("httpx.post", return_value=_make_429_response(0.01)):
+        with patch("time.sleep"):
+            with pytest.raises(LLMError, match="429"):
+                client.chat([{"role": "user", "content": "hi"}])
+
+
+def test_chat_raises_on_400_other_error():
+    client = LLMClient("https://api.example.com/v1", "key", "model-x")
+    with patch("httpx.post", return_value=_make_error_response("invalid_request_error")):
         with pytest.raises(LLMError):
             client.chat([{"role": "user", "content": "hi"}])
 

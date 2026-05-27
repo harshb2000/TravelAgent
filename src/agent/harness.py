@@ -33,13 +33,12 @@ class SimpleReActAgent:
         iterations_left = self._max_iterations
 
         while True:
-            hint = self._iterations_hint(iterations_left)
+            is_last = iterations_left <= 1
+            tools_to_pass = (self._tool_defs if self._tool_defs and not is_last else None)
+            hint = self._iterations_hint(iterations_left, has_tools=tools_to_pass is not None)
             messages = self._history.messages
             # Inject the hint as the last user-role message before the LLM call
             messages_with_hint = messages + [{"role": "user", "content": hint}]
-
-            is_last = iterations_left <= 1
-            tools_to_pass = (self._tool_defs if self._tool_defs and not is_last else None)
 
             msg = self._llm.chat(messages_with_hint, tools=tools_to_pass)
 
@@ -107,9 +106,11 @@ class SimpleReActAgent:
                 self._history.add_tool_result(tc["id"], results[tc["id"]])
 
     @staticmethod
-    def _iterations_hint(remaining: int) -> str:
+    def _iterations_hint(remaining: int, has_tools: bool) -> str:
         if remaining <= 1:
             return _LAST_ROUND_HINT
+        if not has_tools:
+            return f"[Iterations remaining: {remaining}.]"
         return (
             f"[Tool-use rounds remaining: {remaining}. "
             f"You may call multiple tools in a single response — they execute in parallel. "
