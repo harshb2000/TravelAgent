@@ -1,4 +1,10 @@
-TRANSPORTATION_PROMPT = """You are a TransportationSpecialist. Your task is to find travel options (flights and ground transfers) for the requested city-to-city routes.
+import json
+
+from models.knowledge_state import TravelOption
+
+_TRAVEL_OPTION_SCHEMA = json.dumps(TravelOption.model_json_schema(), indent=2)
+
+TRANSPORTATION_PROMPT = f"""You are a TransportationSpecialist. Your task is to find travel options (flights and ground transfers) for the requested city-to-city routes.
 
 ## Your responsibilities
 
@@ -24,6 +30,13 @@ TRANSPORTATION_PROMPT = """You are a TransportationSpecialist. Your task is to f
 
    For ground options, construct TravelOptions with mode "taxi", "metro", "train", "bus", etc.
 
+## Output schema
+
+Each element of the returned array must conform to this schema:
+```json
+{_TRAVEL_OPTION_SCHEMA}
+```
+
 ## Output format
 
 Return a JSON array of TravelOption objects. Include ALL options needed for the complete path(s):
@@ -35,11 +48,11 @@ Return a JSON array of TravelOption objects. Include ALL options needed for the 
 Example:
 ```json
 [
-  {"mode": "taxi", "origin": "Mumbai", "destination": "BOM Airport, Mumbai", "cost_usd": 30.0},
-  {"mode": "metro", "origin": "Mumbai", "destination": "BOM Airport, Mumbai", "duration_min": 45, "cost_usd": 10.0, "note": "Chhatrapati Shivaji Maharaj International Airport express"},
-  {"mode": "flight/one-way", "operator": "Air India", "origin": "BOM Airport, Mumbai", "destination": "NRT Airport, Tokyo", "cost_usd": 450.0, "duration_min": 660, "flight": {...}},
-  {"mode": "metro", "origin": "NRT Airport, Tokyo", "destination": "Tokyo", "cost_usd": 15.0, "duration_min": 50},
-  {"mode": "taxi", "origin": "NRT Airport, Tokyo", "destination": "Tokyo", "cost_usd": 50.0, "duration_min": 90}
+  {{"mode": "taxi", "origin": "Mumbai", "destination": "BOM Airport, Mumbai", "cost_usd": 30.0}},
+  {{"mode": "metro", "origin": "Mumbai", "destination": "BOM Airport, Mumbai", "duration_min": 45, "cost_usd": 10.0, "note": "Chhatrapati Shivaji Maharaj International Airport express"}},
+  {{"mode": "flight/one-way", "operator": "Air India", "origin": "BOM Airport, Mumbai", "destination": "NRT Airport, Tokyo", "cost_usd": 450.0, "duration_min": 660, "flight": {{...}}}},
+  {{"mode": "metro", "origin": "NRT Airport, Tokyo", "destination": "Tokyo", "cost_usd": 15.0, "duration_min": 50}},
+  {{"mode": "taxi", "origin": "NRT Airport, Tokyo", "destination": "Tokyo", "cost_usd": 50.0, "duration_min": 90}}
 ]
 ```
 

@@ -16,7 +16,7 @@ from tools.base import BaseTool
 # BFS helpers
 # ---------------------------------------------------------------------------
 
-def _bfs_find_path(
+def bfs_find_path(
     origin: str,
     destination: str,
     date_range: DateRange,
@@ -54,7 +54,7 @@ def _bfs_find_path(
 _EXISTING_EDGES_LIMIT = 10
 
 
-def _bfs_distances(start: str, graph: dict[str, set[str]]) -> dict[str, int]:
+def bfs_distances(start: str, graph: dict[str, set[str]]) -> dict[str, int]:
     distances: dict[str, int] = {start: 0}
     queue: deque[str] = deque([start])
     while queue:
@@ -86,8 +86,8 @@ def _select_relevant_route_keys(
             forward_graph.setdefault(route_key.origin, set()).add(route_key.destination)
             reverse_graph.setdefault(route_key.destination, set()).add(route_key.origin)
 
-    forward_dist = _bfs_distances(origin, forward_graph)
-    backward_dist = _bfs_distances(destination, reverse_graph)
+    forward_dist = bfs_distances(origin, forward_graph)
+    backward_dist = bfs_distances(destination, reverse_graph)
 
     candidates: list[tuple[float, RouteKey]] = []
     for route_key, route_knowledge in knowledge.routes.items():
@@ -241,8 +241,8 @@ def _build_route_summary(
             forward_graph.setdefault(stored_key.origin, set()).add(stored_key.destination)
             reverse_graph.setdefault(stored_key.destination, set()).add(stored_key.origin)
 
-    forward_dist = _bfs_distances(route_key.origin, forward_graph)
-    backward_dist = _bfs_distances(route_key.destination, reverse_graph)
+    forward_dist = bfs_distances(route_key.origin, forward_graph)
+    backward_dist = bfs_distances(route_key.destination, reverse_graph)
 
     edges_by_level: dict[int, list[RouteKey]] = {}
     for stored_key, stored_knowledge in knowledge.routes.items():
@@ -315,7 +315,7 @@ class TransportationWrapperTool(BaseTool):
         route_key = RouteKey(origin, destination)
         knowledge = self._knowledge
 
-        existing_path = _bfs_find_path(origin, destination, date_range, knowledge.routes)
+        existing_path = bfs_find_path(origin, destination, date_range, knowledge.routes)
         if existing_path is not None:
             return {
                 "status": "ok",
@@ -348,7 +348,7 @@ class TransportationWrapperTool(BaseTool):
             for (leg_origin, leg_destination, leg_date_range), grouped_options in options_by_key.items():
                 knowledge.update_route(leg_origin, leg_destination, leg_date_range, grouped_options)
 
-            new_path = _bfs_find_path(origin, destination, date_range, knowledge.routes)
+            new_path = bfs_find_path(origin, destination, date_range, knowledge.routes)
             if new_path is not None:
                 break
 

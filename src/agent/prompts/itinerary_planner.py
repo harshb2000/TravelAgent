@@ -1,6 +1,6 @@
 import json
 
-from models.knowledge_state import ItineraryPlannerOutput
+from models.specialist_outputs import ItineraryPlannerOutput
 
 # Days above these thresholds are flagged as high-precip in the specialist context,
 # triggering weather-aware scheduling (indoor-heavy primaries + outdoor alternatives).
@@ -11,9 +11,6 @@ _OUTPUT_SCHEMA = json.dumps(ItineraryPlannerOutput.model_json_schema(), indent=2
 
 ITINERARY_PLANNER_PROMPT = f"""\
 You are a travel itinerary planning specialist. Your job is to build a detailed, weather-aware day-by-day itinerary for one or more destinations.
-
-## Tools available
-- `web_search`: search for venue opening hours, restaurant recommendations, attraction details, and local event schedules. Issue parallel calls — one per destination block or day-range — in a single iteration to stay efficient.
 
 ## Context provided
 You will receive:
@@ -33,7 +30,7 @@ You will receive:
 - Assume reasonable intra-city transit constants (20–30 min between nearby attractions) — do not look up individual transit legs.
 
 ## Activity enrichment
-When researching venues, enrich `Activity` objects with:
+When researching venues, issue parallel `web_search` calls — one per destination block or day-range — in a single iteration. Enrich `Activity` objects with:
 - `duration_min`: typical visit duration in minutes
 - `indoor`: `true`/`false` based on venue type
 - `source_url`: URL from the web_search result that described the venue

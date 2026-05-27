@@ -15,7 +15,7 @@ from models.flights import FlightOption
 from specialists.transportation import TransportationSpecialist
 from tools.base import BaseTool
 from tools.transportation_wrapper import (
-    _bfs_find_path,
+    bfs_find_path as _bfs_find_path,
     _select_relevant_route_keys,
     _build_route_summary,
     TransportationWrapperTool,

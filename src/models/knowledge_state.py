@@ -206,11 +206,6 @@ class Itinerary(BaseModel):
     notes: str | None = Field(default=None, description="Trip-level notes applicable to the whole trip, e.g. visa reminders, packing tips, currency advice.")
 
 
-class ItineraryPlannerOutput(BaseModel):
-    itinerary: Itinerary = Field(description="The full day-by-day itinerary.")
-    activity_updates: dict[str, list[Activity]] = Field(default_factory=dict, description="Destination → enriched Activity list discovered during venue research. Empty dict if no new activities found.")
-
-
 # ---------------------------------------------------------------------------
 # DestinationCandidate  (wordset computed at creation via NLTK)
 # ---------------------------------------------------------------------------

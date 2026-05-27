@@ -89,7 +89,7 @@ class ItineraryPlannerWrapperTool(BaseTool):
             if activities:
                 self._knowledge.update_activities(destination, activities)
 
-        return {"status": "ok", "summary": _render_itinerary(result.itinerary)}
+        return {"status": "ok", "summary": render_itinerary(result.itinerary)}
 
 
 def _missing_full_research(destinations: list[str], knowledge: KnowledgeState) -> list[str]:
@@ -163,7 +163,7 @@ def _build_context(
     return "\n".join(lines)
 
 
-def _render_itinerary(itinerary: Itinerary) -> str:
+def render_itinerary(itinerary: Itinerary) -> str:
     destinations_str = " + ".join(itinerary.destinations) if itinerary.destinations else "unknown"
     n_days = len(itinerary.days)
     start = itinerary.start_date or "dates TBD"
@@ -192,11 +192,12 @@ def _render_itinerary(itinerary: Itinerary) -> str:
             tag_str = f" [{tags}]" if tags else ""
             indoor = "indoor" if slot.activity.indoor else "outdoor"
             dur = f", {slot.activity.duration_min}min" if slot.activity.duration_min else ""
+            src = f" [source]({slot.activity.source_url})" if slot.activity.source_url else ""
             loc = f" @ {slot.location}" if slot.location else ""
             notes = f" — {slot.notes}" if slot.notes else ""
             lines.append(
                 f"  {slot.start_time}{alt_marker} | {slot.activity.name}{tag_str}"
-                f" ({indoor}{dur}){loc}{notes}"
+                f" ({indoor}{dur}){src}{loc}{notes}"
             )
 
     if itinerary.notes:

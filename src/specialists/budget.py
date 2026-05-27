@@ -6,7 +6,7 @@ from pydantic import ValidationError
 from agent.harness import SimpleReActAgent
 from agent.prompts.budget import BUDGET_PROMPT
 from clients.llm_client import LLMClient
-from models.budget import BudgetSpecialistOutput
+from models.specialist_outputs import BudgetSpecialistOutput
 from tools.base import BaseTool
 
 

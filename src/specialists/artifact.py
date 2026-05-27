@@ -4,13 +4,13 @@ import re
 from pydantic import ValidationError
 
 from agent.harness import SimpleReActAgent
-from agent.prompts.itinerary_planner import ITINERARY_PLANNER_PROMPT
+from agent.prompts.artifact import ARTIFACT_PROMPT
 from clients.llm_client import LLMClient
-from models.specialist_outputs import ItineraryPlannerOutput
+from models.specialist_outputs import ArtifactOutput
 from tools.base import BaseTool
 
 
-def _parse_itinerary_output(text: str) -> ItineraryPlannerOutput:
+def _parse_artifact_output(text: str) -> ArtifactOutput:
     cleaned = re.sub(r"```(?:json)?\s*|\s*```", "", text).strip()
 
     try:
@@ -20,9 +20,9 @@ def _parse_itinerary_output(text: str) -> ItineraryPlannerOutput:
 
     if isinstance(data, dict):
         try:
-            return ItineraryPlannerOutput(**data)
+            return ArtifactOutput(**data)
         except ValidationError as e:
-            raise ValueError(f"ItineraryPlannerOutput validation failed: {e}") from e
+            raise ValueError(f"ArtifactOutput validation failed: {e}") from e
 
     match = re.search(r"\{.*\}", cleaned, re.DOTALL)
     if match:
@@ -32,31 +32,25 @@ def _parse_itinerary_output(text: str) -> ItineraryPlannerOutput:
             data = None
         if isinstance(data, dict):
             try:
-                return ItineraryPlannerOutput(**data)
+                return ArtifactOutput(**data)
             except ValidationError as e:
-                raise ValueError(f"ItineraryPlannerOutput validation failed: {e}") from e
+                raise ValueError(f"ArtifactOutput validation failed: {e}") from e
 
-    raise ValueError(f"Could not parse ItineraryPlannerOutput from: {text[:200]!r}")
+    raise ValueError(f"Could not parse ArtifactOutput from: {text[:200]!r}")
 
 
-class ItineraryPlannerSpecialist:
+class ArtifactSpecialist:
     def __init__(self, llm_client: LLMClient, tools: list[BaseTool]):
         self._agent = SimpleReActAgent(
             llm_client=llm_client,
             tools=tools,
-            system_prompt=ITINERARY_PLANNER_PROMPT,
-            max_iterations=6,
+            system_prompt=ARTIFACT_PROMPT,
+            max_iterations=3,
         )
         self._last_run_context: str | None = None
 
-    def run(
-        self,
-        query: str,
-        context: str = "",
-        max_iterations: int = 6,
-    ) -> ItineraryPlannerOutput:
+    def run(self, query: str, context: str = "") -> ArtifactOutput:
         self._last_run_context = context
-        self._agent._max_iterations = max_iterations
         task = query if not context else f"{query}\n\n{context}"
         raw = self._agent.run(task)
-        return _parse_itinerary_output(raw)
+        return _parse_artifact_output(raw)

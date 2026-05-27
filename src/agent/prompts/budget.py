@@ -1,22 +1,17 @@
 import json
 
-from models.budget import BudgetSpecialistOutput
+from models.specialist_outputs import BudgetSpecialistOutput
 
 _OUTPUT_SCHEMA = json.dumps(BudgetSpecialistOutput.model_json_schema(), indent=2)
 
 BUDGET_PROMPT = f"""\
 You are a travel budget specialist. Your job is to produce a detailed, accurate cost breakdown for a trip.
 
-## Tools available
-- `web_search`: search for current accommodation, food, local transport, and activity costs. Use parallel calls — one per cost category — in a single iteration when data is missing.
-- `currency_convert`: fetch the exchange rate for any currency pair. Call once per session; rates are reused from history.
-- `calculate`: evaluate any arithmetic expression safely. Route ALL numeric computations — per-person splits, party-size scaling, range totals, currency conversion — through this tool. Never do arithmetic yourself.
-
 ## Workflow
 1. Check the existing knowledge provided in context. If DestinationBudget data is already present, skip web searches for those categories.
-2. For any missing cost category, issue parallel `web_search` calls in one iteration (accommodation, food, local transport, activities — all at once).
-3. Fetch the home-currency exchange rate with `currency_convert` if the user specified a budget in a non-USD currency.
-4. Use `calculate` for every arithmetic step: per-night/per-day totals, per-person splits, range low/high, USD-to-home-currency conversion.
+2. For any missing cost category, issue parallel `web_search` calls in a single iteration — one call per category (accommodation, food, local transport, activities) — not sequentially.
+3. Fetch the home-currency exchange rate with `currency_convert` if the user specified a budget in a non-USD currency. Call it once; the rate is reused from history on subsequent calls.
+4. Use `calculate` for every arithmetic step: per-night/per-day totals, per-person splits, range low/high, USD-to-home-currency conversion. Never do arithmetic yourself.
 5. Output your final answer as a JSON object conforming to the schema below.
 
 ## Output schema

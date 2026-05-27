@@ -545,39 +545,39 @@ Note: scheduling rule application (arrival/departure/transit day structure, weat
 **Contract:** see architecture.md — ArtifactSpecialist section
 
 **Scaffold:**
-- [ ] `specialists/artifact.py` — `ArtifactSpecialist.run()` returns empty `ArtifactOutput`
-- [ ] `agent/prompts/artifact.py` — empty string
-- [ ] `tools/get_compiled.py` — one file; all `Get*CompiledTool` classes return `""` stubs
-- [ ] `tools/get_itinerary.py` — `GetItineraryTool.execute()` returns `""`
-- [ ] `tools/self_critique.py` — `SelfCritiqueTool.execute()` returns `""`
+- [x] `specialists/artifact.py` — `ArtifactSpecialist.run()` returns empty `ArtifactOutput`
+- [x] `agent/prompts/artifact.py` — empty string
+- [x] `tools/get_compiled.py` — one file; all `Get*CompiledTool` classes return `""` stubs
+- [x] `tools/get_itinerary.py` — `GetItineraryTool.execute()` returns `""`
+- [x] `tools/self_critique.py` — `SelfCritiqueTool.execute()` returns `""`
 
-**Tests (`tests/test_specialists.py`):**
-- [ ] Stub LLM calls parallel compiled tools then `self_critique` then `file_write`; assert all dispatched
-- [ ] `GetResearchCompiledTool("Tokyo")` returns structured Markdown including vibe, attractions, safety with `[source](url)`, neighbourhoods with `[source](url)`, activities with `[source](url)`, summary; returns informative error string when absent
-- [ ] `GetBudgetCompiledTool("Tokyo")` returns all cost categories with `[source](url)` and summary; returns error string when absent
-- [ ] `GetWeatherCompiledTool("Tokyo", "June 2026")` returns serialised `WeatherOutput.days`; returns error string when absent
-- [ ] `GetRouteCompiledTool("Mumbai", "Tokyo", "Jul 2026")` returns BFS-composed TravelOptions with source links; returns error string when absent
-- [ ] `GetCandidatesCompiledTool()` returns all candidates with rationale and `[source](url)`
-- [ ] `GetItineraryTool(["Tokyo"])` returns day-by-day with `is_alternative` slots marked; returns error string when absent
-- [ ] `SelfCritiqueTool` makes one LLM call with `content` + `query` only (no skeleton); returns non-empty critique string
-- [ ] Draft is passed as argument to `self_critique`, not returned as standalone message content
-- [ ] `ArtifactOutput.file_path` matches actual path returned by `file_write`
-- [ ] Wrapper injects `to_prompt_context()` skeleton in task context; no KnowledgeState write after run
+**Tests (`tests/specialists/test_artifact.py`):**
+- [x] Stub LLM calls parallel compiled tools then `self_critique` then `file_write`; assert all dispatched
+- [x] `GetResearchCompiledTool("Tokyo")` returns structured Markdown including vibe, attractions, safety with `[source](url)`, neighbourhoods with `[source](url)`, activities with `[source](url)`, summary; returns informative error string when absent
+- [x] `GetBudgetCompiledTool("Tokyo")` returns all cost categories with `[source](url)` and summary; returns error string when absent
+- [x] `GetWeatherCompiledTool("Tokyo", "June 2026")` returns serialised `WeatherOutput.days`; returns error string when absent
+- [x] `GetRouteCompiledTool("Mumbai", "Tokyo", "Jul 2026")` returns BFS-composed TravelOptions with source links; returns error string when absent
+- [x] `GetCandidatesCompiledTool()` returns all candidates with rationale and `[source](url)`
+- [x] `GetItineraryTool(["Tokyo"])` returns day-by-day with `is_alternative` slots marked; returns error string when absent
+- [x] `SelfCritiqueTool` makes one LLM call with `content` + `query` only (no skeleton); returns non-empty critique string
+- [x] Draft is passed as argument to `self_critique`, not returned as standalone message content
+- [x] `ArtifactOutput.file_path` matches actual path returned by `file_write`
+- [x] Wrapper injects `to_prompt_context()` skeleton in task context; no KnowledgeState write after run
 
 Note: draft quality, critique usefulness, and source link density depend on the prompt — these belong in evaluation, not the test suite.
 
-**Verify red:** `pytest tests/test_specialists.py -k artifact` — all fail
+**Verify red:** `pytest tests/specialists/test_artifact.py` — all fail (stubs return empty strings)
 
 **Implement:**
-- [ ] `models/artifact.py` — `ArtifactOutput(file_path: str)`
-- [ ] `tools/get_compiled.py` — `GetResearchCompiledTool(knowledge_state)`, `GetBudgetCompiledTool(knowledge_state)`, `GetWeatherCompiledTool(knowledge_state)`, `GetRouteCompiledTool(knowledge_state)`, `GetCandidatesCompiledTool(knowledge_state)`; each serialises the relevant model to structured data (JSON or plain text) with source URLs co-located next to attributed fields; returns informative error string on miss (never raises)
-- [ ] `tools/get_itinerary.py` — `GetItineraryTool(knowledge_state)`; looks up `itineraries[frozenset(destinations)]`; serialises `Itinerary` to structured day-by-day string with `is_alternative` slots clearly marked
-- [ ] `tools/self_critique.py` — `SelfCritiqueTool(llm_client)`; focused LLM call with `content` + `query`; no KnowledgeState access; returns structured critique
-- [ ] `agent/prompts/artifact.py` — instructs specialist to: read skeleton to determine available data, call compiled tools in parallel for needed sections, embed draft as `content` arg to `self_critique` (never output draft as standalone message), apply critique then call `file_write`, weave inline `[source](url)` links from attributed fields, append standard footer
-- [ ] `specialists/artifact.py` — `ArtifactSpecialist(llm_client, tools)`; `run(query, context) -> ArtifactOutput`
-- [ ] Wrapper tool for ArtifactSpecialist — no pre-firing check; injects `knowledge.to_prompt_context()` in task context; constructs all compiled tools and `GetItineraryTool` with `knowledge_state` reference; no KnowledgeState write; returns file path as summary
+- [x] `models/artifact.py` — `ArtifactOutput(file_path: str)`
+- [x] `tools/get_compiled.py` — `GetResearchCompiledTool(knowledge_state)`, `GetBudgetCompiledTool(knowledge_state)`, `GetWeatherCompiledTool(knowledge_state)`, `GetRouteCompiledTool(knowledge_state)`, `GetCandidatesCompiledTool(knowledge_state)`; each serialises the relevant model to structured data (JSON or plain text) with source URLs co-located next to attributed fields; returns informative error string on miss (never raises)
+- [x] `tools/get_itinerary.py` — `GetItineraryTool(knowledge_state)`; looks up `itineraries[frozenset(destinations)]`; serialises `Itinerary` to structured day-by-day string with `is_alternative` slots clearly marked
+- [x] `tools/self_critique.py` — `SelfCritiqueTool(llm_client)`; focused LLM call with `content` + `query`; no KnowledgeState access; returns structured critique
+- [x] `agent/prompts/artifact.py` — instructs specialist to: read skeleton to determine available data, call compiled tools in parallel for needed sections, embed draft as `content` arg to `self_critique` (never output draft as standalone message), apply critique then call `file_write`, weave inline `[source](url)` links from attributed fields, append standard footer
+- [x] `specialists/artifact.py` — `ArtifactSpecialist(llm_client, tools)`; `run(query, context) -> ArtifactOutput`
+- [x] Wrapper tool for ArtifactSpecialist — no pre-firing check; injects `knowledge.to_prompt_context()` in task context; no KnowledgeState write; returns file path as summary
 
-**Verify green:** `pytest tests/test_specialists.py -k artifact` — all pass
+**Verify green:** `pytest tests/specialists/test_artifact.py` — 15 tests pass
 
 ---
 
