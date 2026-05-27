@@ -40,12 +40,13 @@ def _parse_budget_output(text: str) -> BudgetSpecialistOutput:
 
 
 class BudgetSpecialist:
-    def __init__(self, llm_client: LLMClient, tools: list[BaseTool]):
+    def __init__(self, llm_client: LLMClient, tools: list[BaseTool], debug: bool = False):
         self._agent = SimpleReActAgent(
             llm_client=llm_client,
             tools=tools,
             system_prompt=BUDGET_PROMPT,
             max_iterations=5,
+            debug=debug,
         )
         self._last_run_max_iterations: int | None = None
         self._last_run_context: str | None = None

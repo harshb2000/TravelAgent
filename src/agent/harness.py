@@ -1,4 +1,5 @@
 import json
+import sys
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from clients.llm_client import LLMClient
 from tools.base import BaseTool
@@ -18,12 +19,14 @@ class SimpleReActAgent:
         tools: list[BaseTool],
         system_prompt: str,
         max_iterations: int = 10,
+        debug: bool = False,
     ):
         self._llm = llm_client
         self._tools = {t.name: t for t in tools}
         self._tool_defs = [t.to_llm_definition() for t in tools] if tools else None
         self._max_iterations = max_iterations
         self._history = ConversationHistory(system_prompt)
+        self._debug = debug
 
     def run(self, task: str) -> str:
         self._history.add_user(task)
@@ -66,10 +69,14 @@ class SimpleReActAgent:
         def execute_one(tc: dict) -> tuple[str, str]:
             call_id = tc["id"]
             name = tc["function"]["name"]
+            args_raw = tc["function"].get("arguments", "{}")
             try:
-                args = json.loads(tc["function"]["arguments"])
+                args = json.loads(args_raw)
             except (json.JSONDecodeError, KeyError):
                 args = {}
+
+            if self._debug:
+                print(f"[debug] → {name}({args_raw[:120]})", file=sys.stderr)
 
             tool = self._tools.get(name)
             if tool is None:
@@ -80,7 +87,10 @@ class SimpleReActAgent:
                 except Exception as e:
                     result = {"status": "error", "error": str(e), "fallback": ""}
 
-            return call_id, json.dumps(result)
+            content = json.dumps(result)
+            if self._debug:
+                print(f"[debug] ← {name}: {content[:200]}", file=sys.stderr)
+            return call_id, content
 
         if len(tool_calls) == 1:
             call_id, content = execute_one(tool_calls[0])

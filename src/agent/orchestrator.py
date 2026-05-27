@@ -19,6 +19,7 @@ class Orchestrator:
         user_context: UserContext,
         knowledge: KnowledgeState,
         specialists: dict,
+        debug: bool = False,
     ):
         self._user_context = user_context
         self._knowledge = knowledge
@@ -35,7 +36,7 @@ class Orchestrator:
         ]
 
         self._agent = SimpleReActAgent(
-            llm_client, wrapper_tools, ORCHESTRATOR_PROMPT, max_iterations=8
+            llm_client, wrapper_tools, ORCHESTRATOR_PROMPT, max_iterations=8, debug=debug,
         )
 
     def turn(self, user_input: str) -> str:
