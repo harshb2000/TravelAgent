@@ -517,26 +517,26 @@ Note: cost estimation quality, currency selection, and arithmetic expression con
 **Contract:** see architecture.md — ItineraryPlannerSpecialist section
 
 **Scaffold:**
-- [ ] `specialists/itinerary_planner.py` — `ItineraryPlannerSpecialist.run()` returns empty `ItineraryPlannerOutput`
-- [ ] `agent/prompts/itinerary_planner.py` — empty string
+- [x] `specialists/itinerary_planner.py` — `ItineraryPlannerSpecialist.run()` returns empty `ItineraryPlannerOutput`
+- [x] `agent/prompts/itinerary_planner.py` — empty string
 
-**Tests (`tests/test_specialists.py`):**
-- [ ] Wrapper calls `update_itinerary()` with `frozenset(destinations)` key
-- [ ] Wrapper calls `update_activities(destination, activities)` for each non-empty entry in `result.activity_updates`; skips call when list is empty
-- [ ] Second `run()` call on same instance includes prior itinerary in history (refinement path)
-- [ ] `TimeSlot.is_alternative=True` slots in a day's list all follow a non-alternative slot; no two consecutive `is_alternative=True` slots without a primary between them (structural validity, not prompt behavior)
+**Tests (`tests/specialists/test_itinerary_planner.py`):**
+- [x] Wrapper calls `update_itinerary()` with `frozenset(destinations)` key
+- [x] Wrapper calls `update_activities(destination, activities)` for each non-empty entry in `result.activity_updates`; skips call when list is empty
+- [x] Second `run()` call on same instance includes prior itinerary in history (refinement path)
+- [x] `TimeSlot.is_alternative=True` slots in a day's list all follow a non-alternative slot; no two consecutive `is_alternative=True` slots without a primary between them (structural validity, not prompt behavior)
 
 Note: scheduling rule application (arrival/departure/transit day structure, weather-aware slot selection, festival incorporation) depends on the prompt — these belong in evaluation, not the test suite.
 
-**Verify red:** `pytest tests/test_specialists.py -k itinerary` — all fail
+**Verify red:** `pytest tests/specialists/test_itinerary_planner.py` — all fail
 
 **Implement:**
-- [ ] `models/itinerary.py` — `TimeSlot`, `ItineraryDay`, `Itinerary`, `ItineraryPlannerOutput`
-- [ ] `agent/prompts/itinerary_planner.py` — instructs specialist to use parallel `web_search` per destination block for venues/hours, apply scheduling rules (arrival/departure/transit days, weather-aware primary/alternative slots via `is_alternative` flag, ≤2 alternatives per primary slot, ≤3 alternative slots per day), assume reasonable intra-city transit constants, enrich `Activity` objects with `duration_min` and `indoor` when researching venues, incorporate festivals and closures from DestinationResearch
-- [ ] `specialists/itinerary_planner.py` — `ItineraryPlannerSpecialist(llm_client, tools)`; `run(query, context) -> ItineraryPlannerOutput`
-- [ ] Wrapper tool for ItineraryPlannerSpecialist — no pre-firing check; passes UserContext + DestinationResearch + WeatherOutput from KnowledgeState as appended context; calls `update_itinerary()` and `update_activities()` per result; returns template summary
+- [x] `TimeSlot`, `ItineraryDay`, `Itinerary`, `ItineraryPlannerOutput` already in `models/knowledge_state.py`
+- [x] `agent/prompts/itinerary_planner.py` — instructs specialist to use parallel `web_search` per destination block for venues/hours, apply scheduling rules (arrival/departure/transit days, weather-aware primary/alternative slots via `is_alternative` flag, ≤2 alternatives per primary slot, ≤3 alternative slots per day), assume reasonable intra-city transit constants, enrich `Activity` objects with `duration_min` and `indoor` when researching venues, incorporate festivals and closures from DestinationResearch; embeds live schema via `ItineraryPlannerOutput.model_json_schema()`
+- [x] `specialists/itinerary_planner.py` — `ItineraryPlannerSpecialist(llm_client, tools)`; `run(query, context) -> ItineraryPlannerOutput`; `_check_alternative_structure(slots)` validates ≤2 alternatives per primary
+- [x] `tools/itinerary_planner_wrapper.py` — no pre-firing check; passes UserContext + DestinationResearch + WeatherOutput from KnowledgeState as appended context; calls `update_itinerary()` and `update_activities()` per result; returns template summary
 
-**Verify green:** `pytest tests/test_specialists.py -k itinerary` — all pass
+**Verify green:** `pytest tests/specialists/test_itinerary_planner.py` — all pass
 
 ---
 
