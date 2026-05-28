@@ -1,3 +1,5 @@
+from datetime import date
+
 from agent.harness import SimpleReActAgent
 from agent.prompts.orchestrator import ORCHESTRATOR_PROMPT
 from clients.llm_client import LLMClient
@@ -37,10 +39,12 @@ class Orchestrator:
 
         self._agent = SimpleReActAgent(
             llm_client, wrapper_tools, ORCHESTRATOR_PROMPT, max_iterations=8, debug=debug,
+            reasoning_effort="none",
         )
 
     def turn(self, user_input: str) -> str:
         task = (
+            f"Today: {date.today().isoformat()}\n"
             f"UserContext:\n{self._user_context.context}\n\n"
             f"KnowledgeState:\n{self._knowledge.to_prompt_context(self._user_context)}\n\n"
             f"User: {user_input}"
