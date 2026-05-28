@@ -109,17 +109,18 @@ def main() -> None:
 
     # Specialists
     specialists = {
-        "explorer": ExplorerSpecialist(llm_client, [web_search], debug=args.debug),
-        "weather": WeatherSpecialist(llm_client, [weather_forecast, climate_summary, slice_weather], knowledge),
-        "destination_research": DestinationResearchSpecialist(llm_client, [web_search], debug=args.debug),
-        "transportation": TransportationSpecialist(llm_client, [web_search, flight_search], debug=args.debug),
-        "budget": BudgetSpecialist(llm_client, [web_search, currency_convert, calculate], debug=args.debug),
-        "itinerary_planner": ItineraryPlannerSpecialist(llm_client, [web_search], debug=args.debug),
+        "explorer": ExplorerSpecialist(llm_client, [web_search], debug=args.debug, reasoning_effort="none"),
+        "weather": WeatherSpecialist(llm_client, [weather_forecast, climate_summary, slice_weather], knowledge, reasoning_effort="none"),
+        "destination_research": DestinationResearchSpecialist(llm_client, [web_search], debug=args.debug, reasoning_effort="low"),
+        "transportation": TransportationSpecialist(llm_client, [web_search, flight_search], debug=args.debug, reasoning_effort="none"),
+        "budget": BudgetSpecialist(llm_client, [web_search, currency_convert, calculate], debug=args.debug, reasoning_effort="low"),
+        "itinerary_planner": ItineraryPlannerSpecialist(llm_client, [web_search], debug=args.debug, reasoning_effort="medium"),
         "artifact": ArtifactSpecialist(
             llm_client,
             [get_research, get_budget, get_weather_compiled, get_route, get_candidates,
              get_itinerary, self_critique, file_write],
             debug=args.debug,
+            reasoning_effort="low",
         ),
     }
 

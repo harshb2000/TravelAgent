@@ -30,13 +30,14 @@ class DestinationResearchSpecialist:
     upgrading from light to full depth without re-fetching basic info).
     """
 
-    def __init__(self, llm_client: LLMClient, tools: list[BaseTool], debug: bool = False):
+    def __init__(self, llm_client: LLMClient, tools: list[BaseTool], debug: bool = False, reasoning_effort: str | None = None):
         self._agent = SimpleReActAgent(
             llm_client=llm_client,
             tools=tools,
             system_prompt=DESTINATION_RESEARCH_PROMPT,
             max_iterations=4,
             debug=debug,
+            reasoning_effort=reasoning_effort,
         )
         self._last_run_max_iterations: int | None = None
 

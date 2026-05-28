@@ -40,13 +40,14 @@ def _parse_artifact_output(text: str) -> ArtifactOutput:
 
 
 class ArtifactSpecialist:
-    def __init__(self, llm_client: LLMClient, tools: list[BaseTool], debug: bool = False):
+    def __init__(self, llm_client: LLMClient, tools: list[BaseTool], debug: bool = False, reasoning_effort: str | None = None):
         self._agent = SimpleReActAgent(
             llm_client=llm_client,
             tools=tools,
             system_prompt=ARTIFACT_PROMPT,
             max_iterations=3,
             debug=debug,
+            reasoning_effort=reasoning_effort,
         )
         self._last_run_context: str | None = None
 

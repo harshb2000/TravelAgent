@@ -54,13 +54,14 @@ def _parse_candidates(text: str) -> list[DestinationCandidate]:
 
 
 class ExplorerSpecialist:
-    def __init__(self, llm_client: LLMClient, tools: list[BaseTool], debug: bool = False):
+    def __init__(self, llm_client: LLMClient, tools: list[BaseTool], debug: bool = False, reasoning_effort: str | None = None):
         self._agent = SimpleReActAgent(
             llm_client=llm_client,
             tools=tools,
             system_prompt=EXPLORER_PROMPT,
             max_iterations=3,
             debug=debug,
+            reasoning_effort=reasoning_effort,
         )
         # Exposed for wrapper tests — record what was passed on the last run
         self._last_run_max_results: int | None = None

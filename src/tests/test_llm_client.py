@@ -2,7 +2,7 @@ import json
 import pytest
 import httpx
 from unittest.mock import patch, MagicMock, call
-from clients.llm_client import LLMClient, LLMError, _parse_failed_generation, _retry_after
+from clients.llm_client import LLMClient, LLMError, _parse_failed_generation, _retry_after, _supports_reasoning_effort
 from agent.session import ConversationHistory
 
 
@@ -107,6 +107,38 @@ def _make_429_response(wait_seconds: float = 5.0) -> MagicMock:
     resp.text = f"Rate limit reached. Please try again in {wait_seconds}s."
     resp.json.return_value = {"error": {"code": "rate_limit_exceeded", "message": resp.text}}
     return resp
+
+
+def test_supports_reasoning_effort_known_prefixes():
+    assert _supports_reasoning_effort("qwen3:8b")
+    assert _supports_reasoning_effort("qwen3:32b")
+    assert _supports_reasoning_effort("o1-mini")
+    assert _supports_reasoning_effort("o3")
+    assert _supports_reasoning_effort("o4-turbo")
+
+
+def test_supports_reasoning_effort_unknown_model():
+    assert not _supports_reasoning_effort("llama-3.3-70b-versatile")
+    assert not _supports_reasoning_effort("gpt-4o")
+    assert not _supports_reasoning_effort("claude-3-5-sonnet")
+
+
+def test_chat_includes_reasoning_effort_for_supported_model():
+    client = LLMClient("https://api.example.com/v1", "key", "qwen3:8b")
+    ok_msg = {"role": "assistant", "content": "hi"}
+    with patch("httpx.post", return_value=_make_response(ok_msg)) as mock_post:
+        client.chat([{"role": "user", "content": "hi"}], reasoning_effort="low")
+    body = mock_post.call_args.kwargs["json"]
+    assert body.get("reasoning_effort") == "low"
+
+
+def test_chat_omits_reasoning_effort_for_unsupported_model():
+    client = LLMClient("https://api.example.com/v1", "key", "llama-3.3-70b-versatile")
+    ok_msg = {"role": "assistant", "content": "hi"}
+    with patch("httpx.post", return_value=_make_response(ok_msg)) as mock_post:
+        client.chat([{"role": "user", "content": "hi"}], reasoning_effort="low")
+    body = mock_post.call_args.kwargs["json"]
+    assert "reasoning_effort" not in body
 
 
 def test_retry_after_parses_seconds():

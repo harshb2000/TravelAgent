@@ -1,5 +1,6 @@
 import json
 import re
+from datetime import date
 
 from pydantic import ValidationError
 
@@ -58,13 +59,14 @@ def _parse_travel_options(text: str) -> list[TravelOption]:
 
 
 class TransportationSpecialist:
-    def __init__(self, llm_client: LLMClient, tools: list[BaseTool], debug: bool = False):
+    def __init__(self, llm_client: LLMClient, tools: list[BaseTool], debug: bool = False, reasoning_effort: str | None = None):
         self._agent = SimpleReActAgent(
             llm_client=llm_client,
             tools=tools,
             system_prompt=TRANSPORTATION_PROMPT,
             max_iterations=5,
             debug=debug,
+            reasoning_effort=reasoning_effort,
         )
         self._last_run_max_iterations: int | None = None
 
@@ -78,7 +80,7 @@ class TransportationSpecialist:
         self._last_run_max_iterations = max_iterations
         self._agent._max_iterations = max_iterations
 
-        lines = ["Find transportation options for the following routes:"]
+        lines = [f"Today: {date.today().isoformat()}", "Find transportation options for the following routes:"]
         for entry in routes:
             if isinstance(entry, tuple) and len(entry) == 2:
                 rk, dr = entry

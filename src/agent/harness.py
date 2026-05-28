@@ -20,6 +20,7 @@ class SimpleReActAgent:
         system_prompt: str,
         max_iterations: int = 10,
         debug: bool = False,
+        reasoning_effort: str | None = None,
     ):
         self._llm = llm_client
         self._tools = {t.name: t for t in tools}
@@ -27,6 +28,7 @@ class SimpleReActAgent:
         self._max_iterations = max_iterations
         self._history = ConversationHistory(system_prompt)
         self._debug = debug
+        self._reasoning_effort = reasoning_effort
 
     def run(self, task: str) -> str:
         self._history.add_user(task)
@@ -40,7 +42,7 @@ class SimpleReActAgent:
             # Inject the hint as the last user-role message before the LLM call
             messages_with_hint = messages + [{"role": "user", "content": hint}]
 
-            msg = self._llm.chat(messages_with_hint, tools=tools_to_pass)
+            msg = self._llm.chat(messages_with_hint, tools=tools_to_pass, reasoning_effort=self._reasoning_effort)
 
             finish_reason = msg.get("finish_reason") or (
                 "tool_calls" if msg.get("tool_calls") else "stop"
@@ -60,7 +62,7 @@ class SimpleReActAgent:
                 final_messages = self._history.messages + [
                     {"role": "user", "content": _LAST_ROUND_HINT}
                 ]
-                final_msg = self._llm.chat(final_messages, tools=None)
+                final_msg = self._llm.chat(final_messages, tools=None, reasoning_effort=self._reasoning_effort)
                 self._history.add_assistant(final_msg)
                 return final_msg.get("content") or ""
 

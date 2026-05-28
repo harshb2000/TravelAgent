@@ -1,5 +1,6 @@
 import json
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from datetime import date
 
 from agent.prompts.weather import WEATHER_PROMPT
 from clients.llm_client import LLMClient
@@ -23,11 +24,13 @@ class WeatherSpecialist:
         llm_client: LLMClient,
         tools: list[BaseTool],
         knowledge: KnowledgeState,
+        reasoning_effort: str | None = None,
     ):
         self._llm = llm_client
         self._knowledge = knowledge
         self._tool_map = {t.name: t for t in tools}
         self._tool_defs = [t.to_llm_definition() for t in tools] or None
+        self._reasoning_effort = reasoning_effort
 
     def run(
         self,
@@ -41,7 +44,7 @@ class WeatherSpecialist:
         """
         target_dr = DateRange.from_string(date_range)
 
-        task = f"Get weather for {destination} for date range: {date_range}"
+        task = f"Today: {date.today().isoformat()}\n\nGet weather for {destination} for date range: {date_range}"
         if existing_entries:
             task += "\n\nExisting entries (use slice_weather_range to avoid redundant API calls):"
             for label, summary in existing_entries.items():
@@ -51,7 +54,7 @@ class WeatherSpecialist:
             {"role": "system", "content": WEATHER_PROMPT},
             {"role": "user", "content": task},
         ]
-        msg = self._llm.chat(messages, tools=self._tool_defs)
+        msg = self._llm.chat(messages, tools=self._tool_defs, reasoning_effort=self._reasoning_effort)
 
         tool_calls = msg.get("tool_calls") or []
         if not tool_calls:

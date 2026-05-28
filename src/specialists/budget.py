@@ -1,5 +1,6 @@
 import json
 import re
+from datetime import date
 
 from pydantic import ValidationError
 
@@ -40,13 +41,14 @@ def _parse_budget_output(text: str) -> BudgetSpecialistOutput:
 
 
 class BudgetSpecialist:
-    def __init__(self, llm_client: LLMClient, tools: list[BaseTool], debug: bool = False):
+    def __init__(self, llm_client: LLMClient, tools: list[BaseTool], debug: bool = False, reasoning_effort: str | None = None):
         self._agent = SimpleReActAgent(
             llm_client=llm_client,
             tools=tools,
             system_prompt=BUDGET_PROMPT,
             max_iterations=5,
             debug=debug,
+            reasoning_effort=reasoning_effort,
         )
         self._last_run_max_iterations: int | None = None
         self._last_run_context: str | None = None
@@ -61,9 +63,7 @@ class BudgetSpecialist:
         self._last_run_context = context
         self._agent._max_iterations = max_iterations
 
-        task = query
-        if context:
-            task = f"{query}\n\n{context}"
+        task = f"Today: {date.today().isoformat()}\n\n" + (query if not context else f"{query}\n\n{context}")
 
         raw = self._agent.run(task)
         return _parse_budget_output(raw)

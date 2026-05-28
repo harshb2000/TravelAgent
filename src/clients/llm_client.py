@@ -8,6 +8,20 @@ class LLMError(Exception):
     pass
 
 
+# Models that accept a `reasoning_effort` parameter in the request body.
+# Checked by prefix so variants like "qwen3:8b" and "qwen3:32b" both match "qwen3".
+_REASONING_EFFORT_MODELS: frozenset[str] = frozenset({
+    "qwen3",
+    "o1",
+    "o3",
+    "o4",
+})
+
+
+def _supports_reasoning_effort(model: str) -> bool:
+    return any(model.startswith(prefix) for prefix in _REASONING_EFFORT_MODELS)
+
+
 _RATE_LIMIT_RETRIES = 3
 
 
@@ -40,7 +54,12 @@ class LLMClient:
         self.model = model
         self.extra_headers = extra_headers
 
-    def chat(self, messages: list[dict], tools: list[dict] | None = None) -> dict:
+    def chat(
+        self,
+        messages: list[dict],
+        tools: list[dict] | None = None,
+        reasoning_effort: str | None = None,
+    ) -> dict:
         headers = {
             "Authorization": f"Bearer {self.api_key}",
             "Content-Type": "application/json",
@@ -50,6 +69,8 @@ class LLMClient:
         if tools:
             body["tools"] = tools
             body["tool_choice"] = "auto"
+        if reasoning_effort is not None and _supports_reasoning_effort(self.model):
+            body["reasoning_effort"] = reasoning_effort
 
         for attempt in range(_RATE_LIMIT_RETRIES + 1):
             response = httpx.post(
@@ -74,4 +95,6 @@ class LLMClient:
         if response.status_code != 200:
             raise LLMError(f"LLM request failed ({response.status_code}): {response.text}")
 
-        return response.json()["choices"][0]["message"]
+        message = response.json()["choices"][0]["message"]
+        message.pop("reasoning", None)
+        return message
