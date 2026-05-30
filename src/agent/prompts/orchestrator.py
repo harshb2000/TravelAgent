@@ -33,8 +33,12 @@ negatives stripped — they are handled via user context). E.g. "nature focused 
 
 **Weather** — call `weather` once per destination and date-range pair needed.
 
-**Transport** — call `transportation` once per origin, destination and date range. Call sequentially for \
-multiple independent routes.
+**Transport** — call `transportation` once per origin, destination and date range. Set \
+`trip_type="round_trip"` only when this specific leg has a return flight back to the same origin \
+(e.g. a simple A→B→A trip). Every leg of a multi-city itinerary gets `trip_type="one_way"`. \
+Call sequentially for multiple independent routes. Non-flight ground options (taxi, metro, bus, \
+ferry) are symmetric — if the outbound summary shows a ground transfer, assume the same option \
+exists in the reverse direction without needing a separate lookup.
 
 **Budget** — call `budget` after destination research and transport are done so cost context \
 is available.

@@ -76,11 +76,16 @@ class TransportationSpecialist:
         user_context: str = "",
         existing_edges: str | None = None,
         max_iterations: int = 5,
+        trip_type: str = "one_way",
     ) -> list[TravelOption]:
         self._last_run_max_iterations = max_iterations
         self._agent._max_iterations = max_iterations
 
-        lines = [f"Today: {date.today().isoformat()}", "Find transportation options for the following routes:"]
+        lines = [
+            f"Today: {date.today().isoformat()}",
+            f"trip_type: {trip_type}",
+            "Find transportation options for the following routes:",
+        ]
         for entry in routes:
             if isinstance(entry, tuple) and len(entry) == 2:
                 rk, dr = entry

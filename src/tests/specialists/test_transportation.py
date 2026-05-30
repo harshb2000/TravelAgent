@@ -179,6 +179,23 @@ def test_bfs_find_path_respects_date_range_any_fallback():
     assert path == ["A", "B", "C"]
 
 
+def test_bfs_find_path_ground_edges_are_bidirectional():
+    """A stored A→B ground option (DateRange('any')) makes B→A traversable without being stored."""
+    ks = KnowledgeState()
+    ks.update_route("City", "Airport", ANY, [_opt("taxi", "City", "Airport", cost=30)])
+    # Only City→Airport stored; Airport→City should be reachable via bidirectional ground edge.
+    assert _bfs_find_path("Airport", "City", DR, ks.routes) == ["Airport", "City"]
+
+
+def test_bfs_find_path_flight_edges_are_not_bidirectional():
+    """A stored flight A→B does NOT imply B→A is reachable."""
+    ks = KnowledgeState()
+    ks.update_route("BOM Airport", "NRT Airport", DR, [
+        _opt("flight/one-way", "BOM Airport", "NRT Airport", cost=450, fl=_flight_option()),
+    ])
+    assert _bfs_find_path("NRT Airport", "BOM Airport", DR, ks.routes) is None
+
+
 def test_bfs_find_path_ignores_edges_with_wrong_date():
     # Edge stored under a different specific date should not be traversable
     other_dr = DateRange.from_string("2026-08-01")
@@ -259,6 +276,32 @@ def test_select_relevant_respects_limit():
     ks = _get_populated_knowledge_state_from_edges([_get_edge_with_taxi(f"Mumbai", f"Node{i}") for i in range(15)])
     keys = _select_relevant_route_keys("Mumbai", "Tokyo", DR, ks, limit=5)
     assert len(keys) <= 5
+
+
+def test_select_relevant_ground_reverse_duplicate_excluded():
+    """If A→B (ground) is already selected, B→A (ground) should be skipped."""
+    ks = KnowledgeState()
+    # Both directions stored explicitly as ground routes
+    ks.update_route("Mumbai", "BOM Airport", ANY, [_opt("taxi", "Mumbai", "BOM Airport", cost=30)])
+    ks.update_route("BOM Airport", "Mumbai", ANY, [_opt("taxi", "BOM Airport", "Mumbai", cost=30)])
+    keys = _select_relevant_route_keys("Mumbai", "Tokyo", DR, ks)
+    # Only one direction should appear — the reverse is redundant
+    has_forward = RouteKey("Mumbai", "BOM Airport") in keys
+    has_reverse = RouteKey("BOM Airport", "Mumbai") in keys
+    assert has_forward != has_reverse  # exactly one, not both
+
+
+def test_select_relevant_ground_reverse_not_excluded_when_flight_also_exists():
+    """If B→A has a flight option in addition to ground, it must not be suppressed."""
+    ks = KnowledgeState()
+    ks.update_route("BOM Airport", "NRT Airport", ANY, [_opt("taxi", "BOM Airport", "NRT Airport", cost=5)])
+    ks.update_route("NRT Airport", "BOM Airport", DR,  [_opt("flight/return", "NRT Airport", "BOM Airport",
+                                                              cost=420, fl=_flight_option(origin_iata="NRT", destination_iata="BOM"))])
+    # Also add ground for NRT→BOM to make it a mixed route
+    ks.update_route("NRT Airport", "BOM Airport", ANY, [_opt("taxi", "NRT Airport", "BOM Airport", cost=5)])
+    keys = _select_relevant_route_keys("BOM Airport", "Mumbai", DR, ks)
+    # NRT→BOM has a flight — must not be dropped even if BOM→NRT is also selected
+    assert RouteKey("NRT Airport", "BOM Airport") in keys
 
 
 # ---------------------------------------------------------------------------
@@ -401,6 +444,35 @@ def test_wrapper_returns_failed_when_path_not_found_after_two_attempts():
     assert "Mumbai" in result["summary"] and "Tokyo" in result["summary"]
 
 
+def test_wrapper_failed_includes_partial_summary_when_edges_exist():
+    """When the specialist finds some edges but not a complete path, partial_summary is included."""
+    ks = KnowledgeState()
+    _, specialist, ks, llm = _make_wrapper(ks)
+    # Only the departure transfer — flight leg is never found so path stays incomplete.
+    partial_options = [_opt("taxi", "Mumbai", "BOM Airport", cost=30)]
+    llm.chat.return_value = stop_msg(_options_json(partial_options))
+
+    wrapper = TransportationWrapperTool(specialist, ks, UserContext())
+    result = wrapper.execute(origin="Mumbai", destination="Tokyo", date_range="2026-07-13")
+
+    assert result["status"] == "failed"
+    assert "partial_summary" in result
+    assert "Mumbai" in result["partial_summary"] and "BOM Airport" in result["partial_summary"]
+
+
+def test_wrapper_failed_omits_partial_summary_when_no_edges():
+    """When the specialist returns nothing at all, partial_summary is absent."""
+    ks = KnowledgeState()
+    _, specialist, ks, llm = _make_wrapper(ks)
+    llm.chat.return_value = stop_msg(_options_json([]))
+
+    wrapper = TransportationWrapperTool(specialist, ks, UserContext())
+    result = wrapper.execute(origin="Mumbai", destination="Tokyo", date_range="2026-07-13")
+
+    assert result["status"] == "failed"
+    assert "partial_summary" not in result
+
+
 def test_wrapper_does_not_retry_when_first_attempt_succeeds():
     ks = KnowledgeState()
     _, specialist, ks, llm = _make_wrapper(ks)
@@ -413,3 +485,109 @@ def test_wrapper_does_not_retry_when_first_attempt_succeeds():
     assert result["status"] == "ok"
     # Should have stopped after first successful attempt (1 specialist run = 1 LLM call)
     assert llm.chat.call_count == 1
+
+
+# ---------------------------------------------------------------------------
+# trip_type propagation
+# ---------------------------------------------------------------------------
+
+def test_wrapper_passes_trip_type_round_trip_to_specialist():
+    wrapper, specialist, ks, llm = _make_wrapper()
+    llm.chat.return_value = stop_msg(_options_json(_complete_options()))
+    specialist.run = MagicMock(return_value=_complete_options())
+
+    wrapper.execute(origin="Mumbai", destination="Tokyo", date_range="2026-07-13", trip_type="round_trip")
+
+    _, call_kwargs = specialist.run.call_args
+    assert call_kwargs["trip_type"] == "round_trip"
+
+
+def test_wrapper_defaults_trip_type_to_one_way_when_omitted():
+    wrapper, specialist, ks, llm = _make_wrapper()
+    llm.chat.return_value = stop_msg(_options_json(_complete_options()))
+    specialist.run = MagicMock(return_value=_complete_options())
+
+    wrapper.execute(origin="Mumbai", destination="Tokyo", date_range="2026-07-13")
+
+    _, call_kwargs = specialist.run.call_args
+    assert call_kwargs["trip_type"] == "one_way"
+
+
+# ---------------------------------------------------------------------------
+# Round-trip path completeness and summary
+# ---------------------------------------------------------------------------
+
+def _complete_round_trip_options() -> list[TravelOption]:
+    """Full set of options for a Mumbai ↔ Tokyo round trip."""
+    return [
+        # Outbound
+        _opt("taxi",  "Mumbai", "BOM Airport", cost=30),
+        _opt("flight/one-way", "BOM Airport", "NRT Airport", cost=450, fl=_flight_option()),
+        _opt("metro", "NRT Airport", "Tokyo",  cost=15),
+        # Return
+        _opt("metro", "Tokyo", "NRT Airport", cost=15),
+        _opt("flight/return", "NRT Airport", "BOM Airport", cost=420,
+             fl=_flight_option(origin_iata="NRT", destination_iata="BOM")),
+        _opt("taxi",  "BOM Airport", "Mumbai", cost=30),
+    ]
+
+
+def test_round_trip_cache_hit_requires_both_directions():
+    """Cache hit only when both outbound AND return paths are complete."""
+    ks = KnowledgeState()
+    # Only populate the outbound path — return should be a miss.
+    _populate_complete_path(ks, DR)
+
+    wrapper, specialist, ks, _ = _make_wrapper(ks)
+    specialist.run = MagicMock(return_value=[])
+
+    wrapper.execute(origin="Mumbai", destination="Tokyo", date_range="2026-07-13", trip_type="round_trip")
+
+    # Specialist must have been called — forward-only cache is not enough for round_trip.
+    specialist.run.assert_called()
+
+
+def test_round_trip_cache_hit_when_both_directions_present():
+    """When both directions are complete the specialist is never called.
+    Ground transfers are reversible, so only the return flight needs to be stored explicitly."""
+    ks = KnowledgeState()
+    _populate_complete_path(ks, DR)
+    # Return flight only — outbound ground transfers cover Tokyo↔NRT and BOM↔Mumbai
+    # in both directions via reversible-edge rule.
+    ks.update_route("NRT Airport", "BOM Airport", DR, [_opt("flight/return", "NRT Airport", "BOM Airport", cost=420,
+                                                             fl=_flight_option(origin_iata="NRT", destination_iata="BOM"))])
+
+    wrapper, specialist, _, _ = _make_wrapper(ks)
+    specialist.run = MagicMock()
+
+    result = wrapper.execute(origin="Mumbai", destination="Tokyo", date_range="2026-07-13", trip_type="round_trip")
+
+    assert result["status"] == "ok"
+    assert result.get("from_cache") is True
+    specialist.run.assert_not_called()
+
+
+def test_round_trip_summary_includes_return_flight():
+    """Returned summary includes the outbound path and a return flight section."""
+    wrapper, specialist, ks, llm = _make_wrapper()
+    llm.chat.return_value = stop_msg(_options_json(_complete_round_trip_options()))
+
+    result = wrapper.execute(origin="Mumbai", destination="Tokyo", date_range="2026-07-13", trip_type="round_trip")
+
+    assert result["status"] == "ok"
+    summary = result["summary"]
+    assert "Mumbai to Tokyo" in summary
+    assert "Return flight:" in summary
+    assert summary.index("Mumbai to Tokyo") < summary.index("Return flight:")
+
+
+def test_round_trip_fails_when_return_path_missing_after_retries():
+    """If the return path is never completed the wrapper reports failed."""
+    ks = KnowledgeState()
+    wrapper, specialist, ks, llm = _make_wrapper(ks)
+    # Specialist only returns the outbound options — return path stays incomplete.
+    llm.chat.return_value = stop_msg(_options_json(_complete_options()))
+
+    result = wrapper.execute(origin="Mumbai", destination="Tokyo", date_range="2026-07-13", trip_type="round_trip")
+
+    assert result["status"] == "failed"
