@@ -9,6 +9,7 @@ from models.knowledge_state import (
     DestinationBudget,
     CostWithAttribution,
     StringWithAttribution,
+    NotableArea,
     Activity,
     TravelOption,
     DateRange,
@@ -46,7 +47,7 @@ def _seed_research(ks: KnowledgeState, destination: str = "Tokyo") -> None:
         safety_summary=StringWithAttribution(text="Generally safe", source_url="https://example.com/safety"),
         visa_complexity={"Indian passport": StringWithAttribution(text="e-visa $25", source_url="https://example.com/visa")},
         festivals=["Hanami", "Obon"],
-        neighbourhoods={"Shinjuku": StringWithAttribution(text="Bustling hub", source_url="https://example.com/shinjuku")},
+        notable_areas={"Shinjuku": NotableArea(description="Bustling hub for nightlife and shopping", highlights=["Golden Gai", "Kabukicho"], source_url="https://example.com/shinjuku")},
         activities=[Activity(name="teamLab Planets", tags=["art", "indoor"], indoor=True, duration_min=90, source_url="https://example.com/teamlab")],
     ))
 

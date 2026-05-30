@@ -39,11 +39,12 @@ class GetResearchCompiledTool(BaseTool):
                 lines.append(f"  {profile}: {swa.text}{url}")
         if r.festivals:
             lines.append(f"**Festivals:** {', '.join(r.festivals)}")
-        if r.neighbourhoods:
-            lines.append("**Neighbourhoods:**")
-            for name, swa in r.neighbourhoods.items():
-                url = f" [source]({swa.source_url})" if swa.source_url else ""
-                lines.append(f"  {name}: {swa.text}{url}")
+        if r.notable_areas:
+            lines.append("**Notable Areas:**")
+            for name, na in r.notable_areas.items():
+                url = f" [source]({na.source_url})" if na.source_url else ""
+                highlights = " — " + ", ".join(na.highlights) if na.highlights else ""
+                lines.append(f"  {name}: {na.description}{highlights}{url}")
         if r.activities:
             lines.append("**Activities:**")
             for act in r.activities:

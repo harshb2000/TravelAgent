@@ -7,7 +7,7 @@ class DestinationResearchWrapperTool(BaseTool):
     name = "destination_research"
     description = (
         "Research a destination — vibe, attractions, safety, visa requirements, "
-        "neighbourhoods, and activities. Use depth='light' for shortlisting comparisons; "
+        "notable areas, and activities. Use depth='light' for shortlisting comparisons; "
         "depth='full' before building an itinerary, generating an artifact, or answering "
         "specific questions about a place."
     )
@@ -23,7 +23,7 @@ class DestinationResearchWrapperTool(BaseTool):
                 "enum": ["light", "full"],
                 "description": (
                     "'light': vibe + top attractions only — sufficient for shortlisting. "
-                    "'full': complete research including safety, visa, neighbourhoods, activities."
+                    "'full': complete research including safety, visa, notable areas, activities."
                 ),
             },
         },
@@ -64,7 +64,7 @@ class DestinationResearchWrapperTool(BaseTool):
             max_iterations = 1 if depth == "light" else 4   # full miss
 
         try:
-            result = self._specialist.run(destination, depth, user_context, max_iterations)
+            result = self._specialist.run(destination, depth, user_context, max_iterations, existing_research)
         except Exception as e:
             return {"status": "error", "summary": f"DestinationResearchSpecialist failed: {e}"}
 

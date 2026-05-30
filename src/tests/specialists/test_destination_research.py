@@ -25,7 +25,7 @@ def _full_json(name: str = "Tokyo") -> str:
         "summary": f"{name} is a world-class destination suited to all travel styles.",
         "safety_summary": {"text": "Very safe, low crime", "source_url": "https://example.com"},
         "festivals": ["Cherry Blossom (late March–April)"],
-        "neighbourhoods": {"Shinjuku": {"text": "Shopping and nightlife hub", "source_url": "https://example.com"}},
+        "notable_areas": {"Shinjuku": {"description": "Shopping and nightlife hub", "highlights": ["Golden Gai", "Kabukicho"], "source_url": "https://example.com"}},
         "visa_complexity": {"Indian passport": {"text": "Advance visa required, ~7 days", "source_url": "https://example.com"}},
         "activities": [{"name": "Shibuya Crossing", "tags": ["iconic"], "indoor": False, "duration_min": 30, "source_url": None}],
     })

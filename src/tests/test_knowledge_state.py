@@ -4,6 +4,7 @@ from models.knowledge_state import (
     RouteKey,
     DestinationCandidate,
     Activity,
+    NotableArea,
     DestinationResearch,
     StringWithAttribution,
     CostWithAttribution,
@@ -185,6 +186,155 @@ def test_update_research_overwrites_existing():
     ks.update_research("Tokyo", DestinationResearch(name="Tokyo", country="Japan", depth="full", summary="V2"))
     assert ks.destinations["Tokyo"].research.depth == "full"
     assert ks.destinations["Tokyo"].research.summary == "V2"
+
+
+# ---------------------------------------------------------------------------
+# KnowledgeState.update_research — additive merge
+# ---------------------------------------------------------------------------
+
+def test_update_research_merge_structural_fields_always_overwrite():
+    """name, country, depth are always updated regardless of other field values."""
+    ks = KnowledgeState()
+    ks.update_research("Tokyo", DestinationResearch(name="Tokyo", country="Japan", depth="light", summary="Brief"))
+    ks.update_research("Tokyo", DestinationResearch(name="Tokyo", country="Japan", depth="full", summary="Fuller"))
+    r = ks.destinations["Tokyo"].research
+    assert r.depth == "full"
+    assert r.name == "Tokyo"
+    assert r.country == "Japan"
+
+
+def test_update_research_merge_preserves_vibe_when_new_is_empty():
+    """Empty vibe in the second write leaves the original value intact."""
+    ks = KnowledgeState()
+    ks.update_research("Tokyo", DestinationResearch(
+        name="Tokyo", country="Japan", depth="light",
+        vibe="Neon-lit metropolis", summary="Great city",
+    ))
+    ks.update_research("Tokyo", DestinationResearch(
+        name="Tokyo", country="Japan", depth="full",
+        vibe="",  # specialist skipped re-filling this
+        summary="Even better summary",
+    ))
+    assert ks.destinations["Tokyo"].research.vibe == "Neon-lit metropolis"
+
+
+def test_update_research_merge_overwrites_vibe_when_new_is_nonempty():
+    """A non-empty vibe in the second write replaces the original."""
+    ks = KnowledgeState()
+    ks.update_research("Tokyo", DestinationResearch(
+        name="Tokyo", country="Japan", depth="light",
+        vibe="Old vibe", summary="s",
+    ))
+    ks.update_research("Tokyo", DestinationResearch(
+        name="Tokyo", country="Japan", depth="full",
+        vibe="Richer vibe description", summary="s",
+    ))
+    assert ks.destinations["Tokyo"].research.vibe == "Richer vibe description"
+
+
+def test_update_research_merge_preserves_top_attractions_when_new_is_empty():
+    """Empty top_attractions list in the second write leaves the original list intact."""
+    ks = KnowledgeState()
+    ks.update_research("Tokyo", DestinationResearch(
+        name="Tokyo", country="Japan", depth="light",
+        top_attractions=["Senso-ji", "Shibuya Crossing"], summary="s",
+    ))
+    ks.update_research("Tokyo", DestinationResearch(
+        name="Tokyo", country="Japan", depth="full",
+        top_attractions=[],  # specialist left this blank
+        summary="Fuller summary",
+    ))
+    assert ks.destinations["Tokyo"].research.top_attractions == ["Senso-ji", "Shibuya Crossing"]
+
+
+def test_update_research_merge_preserves_null_optional_fields():
+    """Optional fields already populated are not cleared by a new write that leaves them null."""
+    ks = KnowledgeState()
+    safety = StringWithAttribution(text="Generally safe", source_url="http://example.com")
+    ks.update_research("Tokyo", DestinationResearch(
+        name="Tokyo", country="Japan", depth="full",
+        summary="s", safety_summary=safety,
+        festivals=["Obon", "Cherry Blossom"],
+    ))
+    # Second write is a no-op for these optional fields
+    ks.update_research("Tokyo", DestinationResearch(
+        name="Tokyo", country="Japan", depth="full",
+        summary="Updated summary",
+        safety_summary=None,
+        festivals=None,
+    ))
+    r = ks.destinations["Tokyo"].research
+    assert r.safety_summary is not None
+    assert r.safety_summary.text == "Generally safe"
+    assert r.festivals == ["Obon", "Cherry Blossom"]
+
+
+def test_update_research_merge_fills_null_optional_fields():
+    """Optional fields that were null get populated when the new write provides values."""
+    ks = KnowledgeState()
+    ks.update_research("Tokyo", DestinationResearch(
+        name="Tokyo", country="Japan", depth="light", summary="Brief",
+        safety_summary=None, festivals=None, notable_areas=None,
+    ))
+    safety = StringWithAttribution(text="Safe city", source_url="http://gov.jp")
+    ks.update_research("Tokyo", DestinationResearch(
+        name="Tokyo", country="Japan", depth="full", summary="Fuller",
+        safety_summary=safety,
+        festivals=["Obon"],
+        notable_areas={"Shinjuku": NotableArea(description="Entertainment hub", highlights=["Golden Gai", "Kabukicho"])},
+    ))
+    r = ks.destinations["Tokyo"].research
+    assert r.safety_summary.text == "Safe city"
+    assert r.festivals == ["Obon"]
+    assert "Shinjuku" in r.notable_areas
+
+
+def test_update_research_merge_light_to_full_upgrade():
+    """
+    Simulates the full light→full upgrade flow: the specialist returns empty strings/lists
+    for fields it already covered at light depth, and populates only the previously-null
+    fields. The merge must preserve the light-mode data while adding the full-mode data.
+    """
+    ks = KnowledgeState()
+
+    # Light research — sparse but non-null for the three light-mode fields
+    ks.update_research("Tokyo", DestinationResearch(
+        name="Tokyo", country="Japan", depth="light",
+        vibe="Electric megacity",
+        top_attractions=["Senso-ji", "Shibuya"],
+        summary="Worth shortlisting for its energy and food scene.",
+    ))
+
+    # Full-depth upgrade — specialist leaves light-mode fields empty,
+    # fills in the previously-null full-mode fields
+    safety = StringWithAttribution(text="Very safe", source_url="http://travel.gc.ca")
+    ks.update_research("Tokyo", DestinationResearch(
+        name="Tokyo", country="Japan", depth="full",
+        vibe="",           # intentionally left blank — system should keep old value
+        top_attractions=[], # intentionally left blank — system should keep old value
+        summary="",         # intentionally left blank — system should keep old value
+        safety_summary=safety,
+        festivals=["Cherry Blossom (March–April)", "Obon (mid-August)"],
+        notable_areas={
+            "Shinjuku": NotableArea(description="Entertainment and nightlife hub", highlights=["Golden Gai", "Kabukicho"]),
+            "Asakusa": NotableArea(description="Historic temple district", highlights=["Senso-ji", "Nakamise Shopping Street"]),
+        },
+        visa_complexity={"Indian passport": StringWithAttribution(text="e-visa required")},
+    ))
+
+    r = ks.destinations["Tokyo"].research
+    # Structural
+    assert r.depth == "full"
+    # Light-mode fields preserved from original write
+    assert r.vibe == "Electric megacity"
+    assert r.top_attractions == ["Senso-ji", "Shibuya"]
+    assert r.summary == "Worth shortlisting for its energy and food scene."
+    # Full-mode fields populated by upgrade
+    assert r.safety_summary.text == "Very safe"
+    assert len(r.festivals) == 2
+    assert "Shinjuku" in r.notable_areas
+    assert "Golden Gai" in r.notable_areas["Shinjuku"].highlights
+    assert "Indian passport" in r.visa_complexity
 
 
 def test_update_weather_keyed_by_date_range():

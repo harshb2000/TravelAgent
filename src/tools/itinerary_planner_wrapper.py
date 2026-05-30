@@ -128,10 +128,11 @@ def _build_context(
                 lines.append(f"  summary: {r.summary}")
             if r.festivals:
                 lines.append(f"  festivals: {', '.join(r.festivals)}")
-            if r.neighbourhoods:
-                lines.append("  neighbourhoods:")
-                for name, sw in r.neighbourhoods.items():
-                    lines.append(f"    {name}: {sw.text}")
+            if r.notable_areas:
+                lines.append("  notable_areas:")
+                for name, na in r.notable_areas.items():
+                    highlights = ", ".join(na.highlights) if na.highlights else "—"
+                    lines.append(f"    {name}: {na.description} | highlights: {highlights}")
             if r.activities:
                 lines.append("  activities:")
                 for act in r.activities:

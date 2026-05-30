@@ -108,6 +108,12 @@ class Activity(BaseModel):
     source_url: str | None = Field(default=None, description="URL of the source that described this activity.")
 
 
+class NotableArea(BaseModel):
+    description: str = Field(description="What makes this area worth exploring as a zone — its character, why a traveller should spend dedicated time here.")
+    highlights: list[str] = Field(default_factory=list, description="Key sub-spots, streets, or experiences within the area, e.g. ['Japanese Covered Bridge', 'Lantern-lit alleyways', 'Silk shops'].")
+    source_url: str | None = Field(default=None, description="URL of the source describing this area.")
+
+
 # ---------------------------------------------------------------------------
 # DestinationResearch
 # ---------------------------------------------------------------------------
@@ -122,7 +128,7 @@ class DestinationResearch(BaseModel):
     visa_complexity: dict[str, StringWithAttribution] | None = Field(default=None, description="Visa info keyed by passport/profile, e.g. {'Indian passport': {text: 'e-visa $25, 3–5 days', source_url: '...'}}. Null in light mode or when nationality unknown.")
     safety_summary: StringWithAttribution | None = Field(default=None, description="Current safety assessment with source. Null in light mode.")
     festivals: list[str] | None = Field(default=None, description="Notable festivals and busy periods in the travel window that affect crowds or prices. Null in light mode.")
-    neighbourhoods: dict[str, StringWithAttribution] | None = Field(default=None, description="Neighbourhood guide keyed by area name. Null in light mode.")
+    notable_areas: dict[str, NotableArea] | None = Field(default=None, description="Areas worth exploring as a zone — historic quarters, market districts, scenic towns, temple complexes — keyed by area name. Each entry is a cluster of experiences that cannot be reduced to a single activity. Example: 'Hoi An Old Town' for Da Nang, 'Asakusa' for Tokyo. Null in light mode.")
     activities: list[Activity] | None = Field(default=None, description="Interest-tailored activities for full-depth research. DestinationResearchSpecialist populates initial names and tags; ItineraryPlannerSpecialist later enriches with duration_min and indoor flag. Should be a non-empty list in full mode when activities are researchable; null in light mode.")
 
 
@@ -307,7 +313,33 @@ class KnowledgeState:
         self.candidates.extend(results)
 
     def update_research(self, destination: str, result: DestinationResearch) -> None:
-        self._ensure_destination(destination).research = result
+        dk = self._ensure_destination(destination)
+        if dk.research is None:
+            dk.research = result
+            return
+        existing = dk.research
+        # Always overwrite structural/identity fields
+        existing.name = result.name
+        existing.country = result.country
+        existing.depth = result.depth
+        # Overwrite content fields only when the incoming result provides a value,
+        # so a light→full upgrade doesn't erase fields the specialist left as defaults.
+        if result.vibe:
+            existing.vibe = result.vibe
+        if result.top_attractions:
+            existing.top_attractions = result.top_attractions
+        if result.summary:
+            existing.summary = result.summary
+        if result.visa_complexity is not None:
+            existing.visa_complexity = result.visa_complexity
+        if result.safety_summary is not None:
+            existing.safety_summary = result.safety_summary
+        if result.festivals is not None:
+            existing.festivals = result.festivals
+        if result.notable_areas is not None:
+            existing.notable_areas = result.notable_areas
+        if result.activities is not None:
+            existing.activities = result.activities
 
     def update_weather(
         self, destination: str, date_range: DateRange, result: WeatherOutput
