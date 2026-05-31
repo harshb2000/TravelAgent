@@ -119,6 +119,16 @@ class NotableArea(BaseModel):
 # ---------------------------------------------------------------------------
 
 class DestinationResearch(BaseModel):
+    _stale: bool = PrivateAttr(default=True)
+
+    @property
+    def stale(self) -> bool:
+        return self._stale
+
+    @stale.setter
+    def stale(self, value: bool) -> None:
+        self._stale = value
+
     name: str = Field(description="Destination city or region name.")
     country: str = Field(description="Country the destination is in.")
     depth: Literal["light", "full"] = Field(description="Research depth. 'light': only vibe, top_attractions, and summary are expected — all other fields should be null. 'full': all fields should be populated where applicable.")
@@ -137,6 +147,16 @@ class DestinationResearch(BaseModel):
 # ---------------------------------------------------------------------------
 
 class DestinationBudget(BaseModel):
+    _stale: bool = PrivateAttr(default=True)
+
+    @property
+    def stale(self) -> bool:
+        return self._stale
+
+    @stale.setter
+    def stale(self, value: bool) -> None:
+        self._stale = value
+
     accommodation: dict[str, CostWithAttribution] = Field(default_factory=dict, description="Per-unit/night costs keyed by type, e.g. {'hostel dorm': {amount: 15.0}, 'mid-range hotel': {amount: 80.0}}. All amounts in USD.")
     food: dict[str, CostWithAttribution] = Field(default_factory=dict, description="Per-person/day food costs keyed by style, e.g. {'street food': {amount: 8.0}, 'sit-down restaurant': {amount: 20.0}}. All amounts in USD.")
     local_transport: dict[str, CostWithAttribution] = Field(default_factory=dict, description="Local transport costs keyed by mode, e.g. {'metro day pass': {amount: 5.0}, 'taxi 5km': {amount: 8.0}}. Per person for transit; per vehicle for taxis. All amounts in USD.")
@@ -181,6 +201,7 @@ class DestinationKnowledge:
 @dataclass
 class RouteKnowledge:
     options: dict[DateRange, list[TravelOption]] = dc_field(default_factory=dict)
+    stale: bool = True
 
 
 # ---------------------------------------------------------------------------
@@ -206,6 +227,16 @@ class ItineraryDay(BaseModel):
 
 
 class Itinerary(BaseModel):
+    _stale: bool = PrivateAttr(default=True)
+
+    @property
+    def stale(self) -> bool:
+        return self._stale
+
+    @stale.setter
+    def stale(self, value: bool) -> None:
+        self._stale = value
+
     destinations: list[str] = Field(default_factory=list, description="Ordered list of cities/destinations. Single entry for one-city trips; multiple for multi-city routes.")
     start_date: str | None = Field(default=None, description="Arrival date in ISO format YYYY-MM-DD. Null when dates are not yet confirmed.")
     days: list[ItineraryDay] = Field(default_factory=list, description="One entry per day in trip order, starting from day 1 (arrival day).")
@@ -306,11 +337,13 @@ class KnowledgeState:
         self.destinations: dict[str, DestinationKnowledge] = {}
         self.routes: dict[RouteKey, RouteKnowledge] = {}
         self.itineraries: dict[frozenset, Itinerary] = {}
+        self.candidates_stale: bool = True
 
     # ---- write methods ----
 
     def add_candidates(self, results: list[DestinationCandidate]) -> None:
         self.candidates.extend(results)
+        self.candidates_stale = True
 
     def update_research(self, destination: str, result: DestinationResearch) -> None:
         dk = self._ensure_destination(destination)
@@ -318,6 +351,7 @@ class KnowledgeState:
             dk.research = result
             return
         existing = dk.research
+        existing.stale = True
         # Always overwrite structural/identity fields
         existing.name = result.name
         existing.country = result.country
@@ -344,7 +378,8 @@ class KnowledgeState:
     def update_weather(
         self, destination: str, date_range: DateRange, result: WeatherOutput
     ) -> None:
-        self._ensure_destination(destination).weather[date_range] = result
+        dk = self._ensure_destination(destination)
+        dk.weather[date_range] = result
 
     def update_route(
         self,
@@ -356,7 +391,8 @@ class KnowledgeState:
         rk = RouteKey(origin, destination)
         if rk not in self.routes:
             self.routes[rk] = RouteKnowledge()
-        self.routes[rk].options[date_range] = options
+        self.routes[rk].options[date_range].extend(options)
+        self.routes[rk].stale = True
 
     def update_destination_budget(
         self, destination: str, result: DestinationBudget
@@ -365,6 +401,7 @@ class KnowledgeState:
         if dk.budget is None:
             dk.budget = result
             return
+        dk.budget.stale = True
         # Merge each cost category so previously fetched entries are not lost.
         # New keys are added; existing keys are overwritten with fresher data.
         dk.budget.accommodation.update(result.accommodation)
@@ -378,6 +415,7 @@ class KnowledgeState:
         dk = self._ensure_destination(destination)
         if dk.research is None:
             return
+        dk.research.stale = True
         if not dk.research.activities:
             dk.research.activities = list(activities)
             return
@@ -403,10 +441,17 @@ class KnowledgeState:
 
     # ---- read methods ----
 
+    @staticmethod
+    def _fetch_stale_tag(stale: bool, artifact_mode: bool) -> str:
+        if not artifact_mode:
+            return ""
+        return " [stale]" if stale else " [up to date]"
+
     def to_prompt_context(
         self,
         user_context: "UserContext | None" = None,
         top_n: int = TOP_N_CANDIDATES,
+        artifact_mode: bool = False,
     ) -> str:
         sections: list[str] = []
 
@@ -440,10 +485,11 @@ class KnowledgeState:
                 top = sorted(candidates, key=lambda c: -c.added_at)[:top_n]
 
             n_showing = len(top)
+            fetch_tag = self._fetch_stale_tag(self.candidates_stale, artifact_mode)
             header = (
-                f"CANDIDATES (showing {n_showing} of {n_total}):"
+                f"CANDIDATES (showing {n_showing} of {n_total}):{fetch_tag}"
                 if n_total > top_n
-                else f"CANDIDATES ({n_showing}):"
+                else f"CANDIDATES ({n_showing}):{fetch_tag}"
             )
             lines = [header]
             for c in top:
@@ -456,7 +502,10 @@ class KnowledgeState:
             lines = ["DESTINATIONS"]
             for name, dk in self.destinations.items():
                 depth = dk.research.depth if dk.research else "—"
-                lines.append(f"  {name}  [{depth}]")
+                if artifact_mode and dk.research:
+                    lines.append(f"  {name}  [{depth}, research:{self._fetch_stale_tag(dk.research.stale, artifact_mode)}]")
+                else:
+                    lines.append(f"  {name}  [{depth}]")
                 if dk.weather:
                     for dr, wo in dk.weather.items():
                         lines.append(f"    weather ({dr.label}): ✓ ({wo.mode})")
@@ -476,9 +525,11 @@ class KnowledgeState:
                         high = sum(
                             max(v.amount for v in cat.values()) for cat in cats if cat
                         )
-                        lines.append(f"    destination budget: ~${low:.0f}–${high:.0f}/day")
+                        b_suffix = self._fetch_stale_tag(dk.budget.stale, artifact_mode)
+                        lines.append(f"    destination budget: ~${low:.0f}–${high:.0f}/day{b_suffix}")
                     except (ValueError, AttributeError):
-                        lines.append("    destination budget: ✓")
+                        b_suffix = self._fetch_stale_tag(dk.budget.stale, artifact_mode)
+                        lines.append(f"    destination budget: ✓{b_suffix}")
                 else:
                     lines.append("    destination budget: —")
             sections.append("\n".join(lines))
@@ -491,13 +542,23 @@ class KnowledgeState:
                     flight_opts = [
                         o for o in opts if "flight" in o.mode and o.cost_usd is not None
                     ]
+                    r_tag = self._fetch_stale_tag(rk_knowledge.stale, artifact_mode)
                     if flight_opts:
                         min_cost = min(o.cost_usd for o in flight_opts)
                         lines.append(
-                            f"  {rk.origin} → {rk.destination} ({dr.label}): ✓ from ${min_cost:.0f}"
+                            f"  {rk.origin} → {rk.destination} ({dr.label}): ✓ from ${min_cost:.0f}{r_tag}"
                         )
                     elif opts:
-                        lines.append(f"  {rk.origin} → {rk.destination} ({dr.label}): ✓")
+                        lines.append(f"  {rk.origin} → {rk.destination} ({dr.label}): ✓{r_tag}")
+            sections.append("\n".join(lines))
+
+        # ITINERARIES section (artifact mode only)
+        if artifact_mode and self.itineraries:
+            lines = ["ITINERARIES"]
+            for dest_key, itinerary in self.itineraries.items():
+                label = " + ".join(sorted(dest_key))
+                n_days = len(itinerary.days)
+                lines.append(f"  {label}: ✓ ({n_days} days){self._fetch_stale_tag(itinerary.stale, artifact_mode)}")
             sections.append("\n".join(lines))
 
         return "\n\n".join(sections) if sections else "(no information collected yet)"

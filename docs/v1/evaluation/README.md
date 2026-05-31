@@ -40,8 +40,8 @@ Judge tests are slower and have a cost per run. Run them on demand (before a rel
 | DestinationResearchSpecialist | [destination_research_specialist.md](destination_research_specialist.md) | [destination_research_specialist.md](destination_research_specialist.md) | Draft |
 | TransportationSpecialist | [transportation_specialist.md](transportation_specialist.md) | [transportation_specialist.md](transportation_specialist.md) | Draft |
 | BudgetSpecialist | [budget_specialist.md](budget_specialist.md) | [budget_specialist.md](budget_specialist.md) | Draft |
-| ItineraryPlannerSpecialist | TBD | TBD | — |
-| ArtifactSpecialist | TBD | TBD | — |
+| ItineraryPlannerSpecialist | [itinerary_planner_specialist.md](itinerary_planner_specialist.md) | [itinerary_planner_specialist.md](itinerary_planner_specialist.md) | Draft |
+| ArtifactSpecialist | [artifact_specialist.md](artifact_specialist.md) | [artifact_specialist.md](artifact_specialist.md) | Draft |
 | Orchestrator (routing) | TBD | TBD | — |
 | Full system (end-to-end) | TBD | TBD | — |
 

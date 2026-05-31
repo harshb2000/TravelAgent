@@ -137,10 +137,13 @@ One judge prompt is used across all scenarios. Each scenario is designed to stre
    Query: '{query}'
    User context: '{user_context}'  (empty string if none)
 
+   Tool call log (web_search queries issued, in order):
+   {conversation_history}
+
    It returned these candidates:
    {candidates}
 
-   Evaluate the quality of this result across all of the following:
+   Evaluate the quality across all of the following:
 
    1. Relevance — do the candidates genuinely match the query's intent, or are
       any generic popular destinations included regardless of fit?
@@ -154,13 +157,20 @@ One judge prompt is used across all scenarios. Each scenario is designed to stre
       (Skip this criterion if user context has no exclusions.)
    5. Vibe tag accuracy — do the tags reflect what the destination is actually
       known for, or are they vague and interchangeable?
+   6. Search strategy — were the queries issued well-matched to the query's
+      intent? Were they specific and targeted (e.g. 'budget trekking villages
+      Nepal' rather than 'travel destinations') rather than generic? For a
+      clearly multi-region query, did the searches cover each named region
+      rather than issuing a single combined query? Were any searches redundant
+      or near-duplicate — issuing the same or a very similar query a second time?
 
    Verdict: PASS or FAIL.
    A result can fail due to a single severe issue or multiple moderate ones.
    Critique: if PASS, note what was done well and any dimension that was only
    barely adequate. If FAIL, identify each issue specifically — quote rationales
    that are too generic, name candidates that violate constraints or don't fit,
-   describe what diversity is missing."
+   describe what diversity is missing, or quote search queries that were
+   off-target or redundant."
 ```
 
 ---
@@ -194,6 +204,15 @@ Each scenario feeds the same judge prompt. The "primary stress" column notes whi
 **Candidate representation for judge prompt:**
 
 Present candidates as a list of `name (country) — vibe_tags — rationale`. Source URLs are not needed for the judge — they are not visible to the traveller and don't affect quality scoring.
+
+**Conversation history format for judge prompt:**
+
+Present the tool call log as a numbered list of search queries only:
+```
+1. web_search("query text here")
+2. web_search("second query text")
+```
+Do not include raw result content — the judge evaluates query quality, not result quality.
 
 ---
 

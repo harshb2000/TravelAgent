@@ -86,6 +86,9 @@ One judge prompt across all scenarios. The judge evaluates breakdown quality hol
    Query: '{query}'
    User context: '{user_context}'
 
+   Tool call log (searches, calculations, and conversions issued, in order):
+   {conversation_history}
+
    It produced this breakdown:
    {breakdown}
 
@@ -110,10 +113,20 @@ One judge prompt across all scenarios. The judge evaluates breakdown quality hol
    5. Budget comparison — if a total budget is stated, does the breakdown
       clearly show whether the trip fits within it and by how much?
 
+   6. Tool call accuracy — were web_search queries specific enough to
+      return actionable cost data (e.g. 'mid-range hotel Tokyo per night 2026'
+      rather than 'Tokyo travel cost')? Were calculate expressions correct —
+      cross-check at least one: does the expression in the log match what the
+      breakdown claims (e.g. if accommodation is $840, verify the log shows
+      rate × nights, not an unrelated expression)? Were currency_convert
+      arguments correct — right source and target currency, and the amount
+      passed matches the USD total being converted?
+
    Verdict: PASS or FAIL.
    Critique: if PASS, note what was done well and any dimension that was
    only barely adequate. If FAIL, identify each issue specifically —
-   quote the number that is wrong or the category that is missing."
+   quote the number that is wrong or the category that is missing, or
+   quote the calculate expression or currency_convert call that is incorrect."
 ```
 
 **Scenarios**
@@ -124,6 +137,21 @@ One judge prompt across all scenarios. The judge evaluates breakdown quality hol
 | S2 | "2 people, 5 nights Bali, budget $1500 total" | — | Party size scaling, USD budget comparison |
 | S3 | "1 person, 5 nights Paris, flying from London" | "Home currency GBP" | Flight inclusion, GBP conversion |
 | S4 | "2 people, 10 nights: 5 in Tokyo + 5 in Kyoto" | "Home currency INR" | Multi-destination totalling, no double-count |
+
+---
+
+## Test Data Notes
+
+- Present the tool call log as a numbered list with enough detail for arithmetic verification:
+  ```
+  1. web_search("mid-range hotel Tokyo per night 2026")
+  2. web_search("average meal cost Tokyo per day")
+  3. calculate("130 * 7") → 910
+  4. calculate("45 * 7") → 315
+  5. calculate("910 + 315 + 200") → 1425
+  6. currency_convert(from_currency="USD", to_currency="INR", amount=1425) → rate=84, result=119700
+  ```
+  Include the return value for `calculate` and `currency_convert` calls so the judge can verify the expression matches the breakdown claim.
 
 ---
 

@@ -22,6 +22,7 @@ class GetResearchCompiledTool(BaseTool):
         dk = self._knowledge.destinations.get(destination)
         if not dk or not dk.research:
             return {"result": f"No research data found for {destination}. Call DestinationResearchSpecialist first."}
+        dk.research.stale = False
         r = dk.research
         lines = [f"# Research: {destination} ({r.country})"]
         lines.append(f"**Vibe:** {r.vibe}")
@@ -75,6 +76,7 @@ class GetBudgetCompiledTool(BaseTool):
         dk = self._knowledge.destinations.get(destination)
         if not dk or not dk.budget:
             return {"result": f"No budget data found for {destination}. Call BudgetSpecialist first."}
+        dk.budget.stale = False
         budget = dk.budget
         lines = [f"# Budget: {destination} (all amounts in USD)"]
         for category_name, category in [
@@ -112,14 +114,12 @@ class GetWeatherCompiledTool(BaseTool):
         dk = self._knowledge.destinations.get(destination)
         if not dk or not dk.weather:
             return {"result": f"No weather data found for {destination}. Call WeatherSpecialist first."}
-
         target_dr = DateRange.from_string(date_range_str) if date_range_str else None
         entries = (
             [(target_dr, dk.weather[target_dr])]
             if target_dr and target_dr in dk.weather
             else list(dk.weather.items())
         )
-
         lines = [f"# Weather: {destination}"]
         for dr, wo in entries:
             lines.append(f"## {dr.label} ({wo.mode})")
@@ -182,6 +182,10 @@ class GetRouteCompiledTool(BaseTool):
             level = forward_dist[rk.origin]
             edges_by_level.setdefault(level, []).append(rk)
 
+        for rk_list in edges_by_level.values():
+            for rk in rk_list:
+                self._knowledge.routes[rk].stale = False
+
         lines = [f"# Route: {origin} → {destination} ({date_range.label})"]
         for level in sorted(edges_by_level):
             for rk in edges_by_level[level]:
@@ -214,6 +218,7 @@ class GetCandidatesCompiledTool(BaseTool):
     def execute(self, **kwargs) -> dict:
         if not self._knowledge.candidates:
             return {"result": "No destination candidates found. Call ExplorerSpecialist first."}
+        self._knowledge.candidates_stale = False
         lines = ["# Destination Candidates"]
         for c in self._knowledge.candidates:
             tags = ", ".join(c.vibe_tags) if c.vibe_tags else "—"

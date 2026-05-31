@@ -30,4 +30,5 @@ class GetItineraryTool(BaseTool):
         itinerary = self._knowledge.itineraries.get(key)
         if itinerary is None:
             return {"result": f"No itinerary found for {', '.join(destinations)}. Call itinerary_planner first."}
+        itinerary.stale = False
         return {"result": render_itinerary(itinerary)}

@@ -162,6 +162,9 @@ One judge prompt across all scenarios. The judge evaluates the full quality of t
    Date(s): {date_range}
    User context: '{user_context}'  (empty if none)
 
+   Tool call log (searches and flight lookups issued, in order):
+   {conversation_history}
+
    It returned these travel options:
    {travel_options}
 
@@ -188,10 +191,18 @@ One judge prompt across all scenarios. The judge evaluates the full quality of t
       '<IATA> Airport, <City>' format? Are mode values correct
       ('flight/one-way', 'flight/return', 'taxi', 'metro', etc.)?
 
+   5. Search strategy — were IATA resolution queries precise and city-specific
+      (e.g. 'Bangalore airport IATA code' rather than 'India airports')? Were
+      ground transfer searches targeted to the actual cities in the route
+      (e.g. 'getting from Narita airport to Tokyo city centre' rather than
+      'Japan transport options')? Were any lookups redundant — resolving IATA
+      codes that were already established earlier in the same session?
+
    Verdict: PASS or FAIL.
    Critique: if PASS, note what was done well and any dimension that was
    only barely adequate. If FAIL, identify each issue specifically —
-   which segment is missing, which airport is wrong, which format is off."
+   which segment is missing, which airport is wrong, which format is off,
+   or which searches were imprecise or redundant."
 ```
 
 ---
@@ -216,6 +227,7 @@ One judge prompt across all scenarios. The judge evaluates the full quality of t
 - **S6 (Mahabaleshwar)**: nearest airports are Pune PNQ (~120km, ~2.5h drive) and Mumbai BOM (~250km, ~5h). Both are valid gateways. The judge should check the extended ground transfer reaches Mahabaleshwar, not just the gateway city.
 - **S7 (Koh Tao)**: no airport. Access is by ferry from Chumphon (~2h) or Surat Thani (~6h). Practical flight gateways are Bangkok BKK/DMK and Surat Thani URT. Phuket HKT may also appear as a gateway (large international hub) though it is less direct. All four are valid for the assertion. The judge should check the full path reaches the island and that the ferry leg is present.
 - For judge scenarios, present travel options as a list: `mode | operator | origin → destination | duration | cost`.
+- Present the tool call log as a numbered list: `1. web_search("query")` for IATA lookups and transfer searches; `2. flight_search(origin=[...], destination=[...], trip_type=...)` for flight calls. This lets the judge verify that IATA resolution happened before flight_search and that queries were city-specific.
 
 ---
 

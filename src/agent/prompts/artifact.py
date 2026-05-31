@@ -23,6 +23,8 @@ Describe each gap in plain English so the orchestrator knows what to gather, e.g
 
 ## Iteration pattern (max 3 iterations — only when data is sufficient)
 1. **Fetch**: Call the relevant compiled tools in parallel for sections the user's request needs.
+   The context skeleton marks each section as **[stale]** or **[up to date]**.
+   Only call a compiled tool when the section is marked **[stale]** — if it shows **[up to date]**, the data from your previous fetch is still current in your conversation history; use it from there.
 2. **Draft + critique**: Assemble the document from fetched data only. Call `self_critique(content=<full draft>, query=<original request>)` — embed the draft as the `content` argument. Do NOT output the draft as a standalone message. Apply the critique to refine.
 3. **Write**: Call `file_write(filename=<name>, content=<revised draft>)`.
 

@@ -142,6 +142,9 @@ One judge prompt used across all scenarios. Each scenario is designed to surface
    Depth: '{depth}'
    User context: '{user_context}'  (empty string if none)
 
+   Tool call log (web_search queries issued, in order):
+   {conversation_history}
+
    It produced this research output:
    {research_output}
 
@@ -169,11 +172,22 @@ One judge prompt used across all scenarios. Each scenario is designed to surface
       visa information correct for that passport at this destination?
       Skip this criterion if no nationality is stated.
 
+   6. Search strategy — were the queries issued well-targeted to the
+      information this depth requires? For full depth, did distinct searches
+      cover different topics (e.g. visa requirements, safety, festivals,
+      notable areas, interest-tailored activities) rather than re-issuing the
+      same broad overview query? For an upgrade run, did the searches focus
+      only on full-depth gaps — were any queries clearly repeating what a
+      prior light run already found (vibe, top attractions)? Were any queries
+      generic enough that they would return unhelpful or irrelevant results
+      for this specific destination?
+
    Verdict: PASS or FAIL.
    A result can fail due to a single severe issue (e.g. wrong visa info,
    clearly inaccurate safety summary) or several moderate ones.
    Critique: if PASS, note what was done well and any dimension that was
-   only barely adequate. If FAIL, identify each issue specifically."
+   only barely adequate. If FAIL, identify each issue specifically — including
+   any search queries that were misdirected, redundant, or too generic."
 ```
 
 ---
@@ -195,6 +209,7 @@ One judge prompt used across all scenarios. Each scenario is designed to surface
 - **S5 (upgrade)** requires running S1 first on the same specialist instance so the light research is in ConversationHistory before the full call.
 - **Visa ground truth for judge:** Vietnamese visa for Indian passport = e-visa required, ~$25, 30-day stay. UK passport for France = visa-free (Schengen). These are stable enough to be used as judge reference facts.
 - Present research output to the judge as structured text: each field label followed by its content. Source URLs can be omitted — the judge evaluates content quality, not attribution.
+- Present the tool call log as a numbered list of search queries: `1. web_search("query")`. For upgrade scenarios, prefix the light-run queries with "(prior light run)" so the judge can distinguish old from new searches.
 
 ---
 
