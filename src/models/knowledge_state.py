@@ -139,7 +139,7 @@ class DestinationResearch(BaseModel):
     safety_summary: StringWithAttribution | None = Field(default=None, description="Current safety assessment with source. Null in light mode.")
     festivals: list[str] | None = Field(default=None, description="Notable festivals and busy periods in the travel window that affect crowds or prices. Null in light mode.")
     notable_areas: dict[str, NotableArea] | None = Field(default=None, description="Areas worth exploring as a zone — historic quarters, market districts, scenic towns, temple complexes — keyed by area name. Each entry is a cluster of experiences that cannot be reduced to a single activity. Example: 'Hoi An Old Town' for Da Nang, 'Asakusa' for Tokyo. Null in light mode.")
-    activities: list[Activity] | None = Field(default=None, description="Interest-tailored activities for full-depth research. DestinationResearchSpecialist populates initial names and tags; ItineraryPlannerSpecialist later enriches with duration_min and indoor flag. Should be a non-empty list in full mode when activities are researchable; null in light mode.")
+    activities: list[Activity] | None = Field(default=None, description="Interest-tailored activities for full-depth research, selected based on interests stated in `user context`. Populate fields you can confidently source; leave any field null if unknown — do not hallucinate details. Should be a non-empty list in full mode; null in light mode.")
 
 
 # ---------------------------------------------------------------------------
@@ -250,10 +250,10 @@ class Itinerary(BaseModel):
 class DestinationCandidate(BaseModel):
     name: str = Field(description="Destination city or region name.")
     country: str = Field(description="Country the destination is in.")
-    vibe_tags: list[str] = Field(default_factory=list, description="2–4 short descriptive tags capturing the destination's character, e.g. ['beach', 'budget-friendly', 'nightlife'].")
-    rationale: str = Field(default="", description="One-line reason this destination matches the user's query.")
-    source_url: str = Field(default="", description="URL of the web search result that surfaced this candidate.")
-    query: str = Field(default="", description="The user query string that generated this candidate. Preserved so the Orchestrator can reason about relevance if intent shifts mid-session.")
+    vibe_tags: list[str] = Field(default_factory=list, description="2–4 short tags specific to this destination's character, e.g. ['beach', 'budget-friendly', 'nightlife']. Avoid generic labels like 'travel', 'destination', 'popular'.")
+    rationale: str = Field(default="", description="One-line reason this destination specifically fits this query — explain what makes it the right match, not generic praise.")
+    source_url: str = Field(default="", description="URL from a web_search result that surfaced this candidate. Must be a real URL from search results — never fabricate.")
+    query: str = Field(default="", description="Set to the `query` value from your task inputs. Lets the calling system reason about candidate relevance if the user's intent shifts mid-session.")
     # Both fields below are system-managed — excluded from model_json_schema()
     # so the LLM never sees or sets them.
     #
@@ -391,7 +391,7 @@ class KnowledgeState:
         rk = RouteKey(origin, destination)
         if rk not in self.routes:
             self.routes[rk] = RouteKnowledge()
-        self.routes[rk].options[date_range].extend(options)
+        self.routes[rk].options.setdefault(date_range, []).extend(options)
         self.routes[rk].stale = True
 
     def update_destination_budget(

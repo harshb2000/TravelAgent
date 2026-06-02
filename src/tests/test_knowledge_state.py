@@ -364,13 +364,14 @@ def test_update_route_populates_route_knowledge():
     assert ks.routes[rk].options[dr][0].cost_usd == 300.0
 
 
-def test_update_route_overwrites_same_key():
+def test_update_route_accumulates_options_for_same_key():
     ks = KnowledgeState()
     dr = DateRange.from_string("2026-07-13")
     ks.update_route("Mumbai", "Tokyo", dr, [TravelOption(mode="flight/one-way", origin="Mumbai", destination="Tokyo", cost_usd=300.0)])
     ks.update_route("Mumbai", "Tokyo", dr, [TravelOption(mode="flight/one-way", origin="Mumbai", destination="Tokyo", cost_usd=250.0)])
     rk = RouteKey("Mumbai", "Tokyo")
-    assert ks.routes[rk].options[dr][0].cost_usd == 250.0
+    assert len(ks.routes[rk].options[dr]) == 2
+    assert {o.cost_usd for o in ks.routes[rk].options[dr]} == {300.0, 250.0}
 
 
 def test_update_destination_budget_populates():
