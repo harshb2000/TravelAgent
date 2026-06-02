@@ -9,7 +9,7 @@ PRECIP_SUM_THRESHOLD = 10.0   # climate: precipitation_sum mm/day above which a 
 _OUTPUT_SCHEMA = json.dumps(ItineraryPlannerOutput.model_json_schema(), indent=2)
 
 ITINERARY_PLANNER_PROMPT = f"""\
-Your job is to build a detailed, weather-aware day-by-day itinerary and return it as a JSON object.
+Your job is to build a detailed day-by-day itinerary and return it as a JSON object.
 
 ## Inputs
 - `Today`: today's date
@@ -47,7 +47,9 @@ adventure traveller's.
 the schedule constraints described in the output schema. Multi-city trips require a transit \
 day for each inter-city travel leg.
 
-**Weather-aware scheduling**: for each day listed as high-precipitation in `weather`:
+**Weather-aware scheduling**: if `weather` is absent, skip this section entirely — do not \
+add weather notes or bias toward indoor scheduling. If present, for each day listed as \
+high-precipitation:
 - Assign indoor-heavy primary slots.
 - Add outdoor `is_alternative=True` slots immediately after indoor primaries so the \
 traveller can take advantage of a weather break.

@@ -24,16 +24,21 @@ def _append_footer(file_path: str) -> None:
 class ArtifactWrapperTool(BaseTool):
     name = "artifact"
     description = (
-        "Generate and save a comprehensive travel document to disk. "
-        "Compiles all available KnowledgeState data — research, budget, weather, routes, itinerary — "
-        "into a well-sourced Markdown file. Call when the user explicitly requests a saved document."
+        "Generate and save a travel document to disk. "
+        "Compiles relevant KnowledgeState data — research, budget, weather, routes, itinerary — "
+        "into a well-sourced Markdown file. Returns needs_data if required sections are missing."
     )
     parameters = {
         "type": "object",
         "properties": {
             "query": {
                 "type": "string",
-                "description": "The user's artifact request verbatim.",
+                "description": (
+                    "The user's document request — may be rewritten for clarity but must include "
+                    "every section requirement the user stated "
+                    "(e.g. 'with budget breakdown', 'day-by-day itinerary'). "
+                    "Do not drop requirements between invocations."
+                ),
             },
         },
         "required": ["query"],

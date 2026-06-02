@@ -39,9 +39,11 @@ conversion. Never compute numbers yourself.
 - Food: per-person/day × party size × days
 - Activities: per-person × party size
 
-**Travel costs**: Include all options from `travel costs` in the breakdown. \
+**Travel costs**: If `travel costs` is present, include all options in the breakdown. \
 `flight/return` entries carry a round-trip `cost_usd` shared across both the outbound \
-and return legs — count it once, not per leg.
+and return legs — count it once, not per leg. \
+If `travel costs` is absent, omit the flights line from the breakdown entirely — do not \
+add a placeholder or flag it as a gap.
 
 ## Output
 Return ONLY a valid JSON object — no prose, no markdown fences.

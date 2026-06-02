@@ -6,10 +6,9 @@ from tools.base import BaseTool
 class BudgetWrapperTool(BaseTool):
     name = "budget"
     description = (
-        "Calculate a detailed trip budget including flights, accommodation, food, "
-        "local transport, and activities. Returns a formatted cost breakdown with "
-        "totals in USD and home currency. Call when the user asks about costs, "
-        "budget feasibility, or destination cost comparisons."
+        "Calculate a detailed trip budget — accommodation, food, local transport, and activities — "
+        "incorporating any flight costs already researched this session. "
+        "Returns a formatted cost breakdown with totals in USD and home currency."
     )
     parameters = {
         "type": "object",
@@ -17,14 +16,16 @@ class BudgetWrapperTool(BaseTool):
             "query": {
                 "type": "string",
                 "description": (
-                    "Free-form trip configuration string, e.g. "
-                    "'2 people, 7 nights Tokyo late June, flying Mumbai round-trip, "
+                    "Free-form trip configuration string. "
+                    "Include traveller count, trip duration, accommodation tier, home currency or budget "
+                    "target, and origin city for flights. "
+                    "Example: '2 people, 7 nights Tokyo late June, flying Mumbai round-trip, "
                     "mid-range hotel, budget ₹2.5L/person'."
                 ),
             },
             "destination": {
                 "type": "string",
-                "description": "Primary destination city name for KnowledgeState lookup and update.",
+                "description": "Entity-level destination name.",
             },
         },
         "required": ["query", "destination"],

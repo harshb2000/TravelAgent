@@ -6,28 +6,22 @@ from tools.base import BaseTool
 
 class ItineraryPlannerWrapperTool(BaseTool):
     name = "itinerary_planner"
-    description = (
-        "Build or refine a day-by-day itinerary for one or more destinations. "
-        "Requires full-depth destination research and weather data to be present. "
-        "Automatically incorporates weather-aware scheduling and activity enrichment. "
-        "Call when approximate dates and destination research (full depth) are both available and the "
-        "user asks for a day-by-day plan."
-    )
+    description = "Build or refine a day-by-day itinerary for one or more destinations, with weather-aware scheduling."
     parameters = {
         "type": "object",
         "properties": {
             "query": {
                 "type": "string",
                 "description": (
-                    "Free-form trip intent and structure, e.g. "
-                    "'10 days Tokyo + 3 days Kyoto, June 20 arrival. "
+                    "Free-form trip intent and structure. "
+                    "Example: '10 days Tokyo + 3 days Kyoto, June 20 arrival. "
                     "User prefers cultural and food experiences, mid-pace.'"
                 ),
             },
             "destinations": {
                 "type": "array",
                 "items": {"type": "string"},
-                "description": "Ordered list of destination city names for this itinerary.",
+                "description": "Ordered list of entity-level destination names in travel order.",
             },
         },
         "required": ["query", "destinations"],

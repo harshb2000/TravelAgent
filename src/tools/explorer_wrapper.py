@@ -11,22 +11,14 @@ from tools.base import BaseTool
 class ExplorerWrapperTool(BaseTool):
     name = "explorer"
     description = (
-        "Discover destination candidates that match the user's travel intent. "
-        "Call this when the answer space is unknown — the right destination is itself the question."
+        "Discover destination candidates that match the user's travel intent."
     )
     parameters = {
         "type": "object",
         "properties": {
             "query": {
                 "type": "string",
-                "description": (
-                    "Positive-intent exploration query derived from UserContext. "
-                    "Rewrite the user's intent in clean, affirmative terms — include all relevant positive signals "
-                    "(activity type, budget tier, geography, travel style) and omit negations entirely. "
-                    "Negatives are conveyed to the specialist via user_context and must not appear here. "
-                    "Example: user says 'trip in SEA, not too heavy on nightlife, more nature focused' → "
-                    "pass 'nature focused trip in South East Asia'."
-                ),
+                "description": "Affirmative-terms exploration query — no negative contstraints.",
             },
             "max_results": {
                 "type": "integer",

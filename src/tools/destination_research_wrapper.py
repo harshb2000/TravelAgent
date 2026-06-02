@@ -7,16 +7,14 @@ class DestinationResearchWrapperTool(BaseTool):
     name = "destination_research"
     description = (
         "Research a destination — vibe, attractions, safety, visa requirements, "
-        "notable areas, and activities. Use depth='light' for shortlisting comparisons; "
-        "depth='full' before building an itinerary, generating an artifact, or answering "
-        "specific questions about a place."
+        "notable areas, and activities."
     )
     parameters = {
         "type": "object",
         "properties": {
             "destination": {
                 "type": "string",
-                "description": "City or destination name.",
+                "description": "Entity-level name — a region, island, or named area as the user thinks of it (e.g. 'Sikkim', 'Bali', 'Kyoto').",
             },
             "depth": {
                 "type": "string",

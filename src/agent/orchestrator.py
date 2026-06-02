@@ -47,6 +47,6 @@ class Orchestrator:
             f"Today: {date.today().isoformat()}\n"
             f"UserContext:\n{self._user_context.context}\n\n"
             f"KnowledgeState:\n{self._knowledge.to_prompt_context(self._user_context)}\n\n"
-            f"User: {user_input}"
+            f"User message: {user_input}"
         )
         return self._agent.run(task)

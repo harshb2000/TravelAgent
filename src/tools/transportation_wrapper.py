@@ -331,19 +331,18 @@ class TransportationWrapperTool(BaseTool):
     description = (
         "Find flight and ground transfer options for a single city-to-city route. "
         "The specialist resolves IATA codes, searches flights, and finds transfers "
-        "to compose a complete departure-airport-flight-airport-arrival path. "
-        "Call once per route; call in parallel for multiple independent routes."
+        "to compose a complete path."
     )
     parameters = {
         "type": "object",
         "properties": {
             "origin": {
                 "type": "string",
-                "description": "Origin city name",
+                "description": "City-level — a specific routeable city, not a region or country.",
             },
             "destination": {
                 "type": "string",
-                "description": "Destination city name",
+                "description": "City-level — a specific routeable city, not a region or country.",
             },
             "date_range": {
                 "type": "string",

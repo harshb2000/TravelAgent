@@ -7,15 +7,14 @@ from tools.base import BaseTool
 class WeatherWrapperTool(BaseTool):
     name = "weather"
     description = (
-        "Get weather forecast or historical climate summary for a destination and date range. "
-        "Use for trip planning, weather-aware itinerary scheduling, and seasonal comparisons."
+        "Get weather forecast or historical climate summary for a destination and date range."
     )
     parameters = {
         "type": "object",
         "properties": {
             "destination": {
                 "type": "string",
-                "description": "City or destination name.",
+                "description": "City-level — a specific geocodable city, not a region or country.",
             },
             "date_range": {
                 "type": "string",
