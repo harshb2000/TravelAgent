@@ -7,6 +7,7 @@ from pydantic import ValidationError
 from agent.harness import SimpleReActAgent
 from agent.prompts.budget import BUDGET_PROMPT
 from clients.llm_client import LLMClient
+from models.knowledge_state import DestinationBudget
 from models.specialist_outputs import BudgetSpecialistOutput
 from tools.base import BaseTool
 
@@ -51,19 +52,30 @@ class BudgetSpecialist:
             reasoning_effort=reasoning_effort,
         )
         self._last_run_max_iterations: int | None = None
-        self._last_run_context: str | None = None
+        self._last_run_task: str | None = None
 
     def run(
         self,
         query: str,
-        context: str = "",
+        user_context: str = "",
+        existing_budget: DestinationBudget | None = None,
+        travel_costs: str | None = None,
         max_iterations: int = 5,
     ) -> BudgetSpecialistOutput:
         self._last_run_max_iterations = max_iterations
-        self._last_run_context = context
         self._agent._max_iterations = max_iterations
 
-        task = f"Today: {date.today().isoformat()}\n\n" + (query if not context else f"{query}\n\n{context}")
+        lines = [
+            f"Today: {date.today().isoformat()}",
+            f"query: {query}",
+        ]
+        if user_context:
+            lines.append(f"user context: {user_context}")
+        if existing_budget is not None:
+            lines.append(f"existing budget:\n{existing_budget.model_dump_json(indent=2)}")
+        if travel_costs:
+            lines.append(f"travel costs:\n{travel_costs}")
 
-        raw = self._agent.run(task)
+        self._last_run_task = "\n".join(lines)
+        raw = self._agent.run(self._last_run_task)
         return _parse_budget_output(raw)

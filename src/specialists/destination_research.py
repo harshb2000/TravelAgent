@@ -52,19 +52,16 @@ class DestinationResearchSpecialist:
         self._last_run_max_iterations = max_iterations
         self._agent._max_iterations = max_iterations
 
-        existing_block = ""
+        task = (
+            f"destination: {destination}\n"
+            f"depth: {depth}\n"
+            f"user context: {user_context or '(none)'}"
+        )
         if existing_research is not None:
-            existing_block = (
-                f"\n\nEXISTING RESEARCH (already stored — see upgrade instructions):\n"
+            task += (
+                f"\nexisting research:\n"
                 f"{existing_research.model_dump_json(indent=2)}"
             )
-
-        task = (
-            f"Research {destination} at depth='{depth}'.\n\n"
-            f"UserContext: {user_context or '(none provided)'}"
-            f"{existing_block}\n\n"
-            f"Return a JSON object matching the DestinationResearch schema."
-        )
         response = self._agent.run(task)
 
         try:

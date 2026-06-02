@@ -3,41 +3,44 @@ from models.knowledge_state import DestinationResearch
 
 _RESEARCH_SCHEMA = json.dumps(DestinationResearch.model_json_schema(), indent=2)
 
-DESTINATION_RESEARCH_PROMPT = f"""You are a destination research specialist. Your job is to research a travel destination and return structured findings as a JSON object.
+DESTINATION_RESEARCH_PROMPT = f"""\
+Your job is to research a travel destination and return structured findings as a JSON object.
+
+## Inputs
+- `destination`: city or region name to research
+- `depth`: "light" or "full" — determines which fields to populate and how many searches to run
+- `user context`: traveller profile including nationality, interests, and travel dates — \
+use this to tailor visa info, activities, and seasonal guidance
+- `existing research`: prior light-depth research in JSON — present only on a light→full \
+upgrade
+
+## Tools
+`web_search`
 
 ## Depth modes
 
-**light** (1 web search):
-Research enough to answer "is this place worth considering?" — vibe, top 2–3 attractions, rough budget tier, climate sketch for the travel window. Set safety_summary, festivals, notable_areas, visa_complexity, and activities to null.
+**light** — 1 search:
+Populate `vibe`, `top_attractions`, and `summary` only. Set all other fields to null.
 
-**full** (3–4 web searches):
-Complete research covering all fields. Use parallel searches where possible:
-- General destination overview, notable areas, food scene, activities
-- Safety and current travel advisories
-- Festivals, public holidays, and busy periods in the travel window
-- Visa requirements for passport profiles mentioned in UserContext (skip if nationality unknown)
+**full (cold start)** — 3-4 searches:
+Run distinct searches covering different topics — do not re-issue the same broad overview \
+query. Suggested topics: general character and notable areas, safety and advisories, \
+festivals and busy periods in the travel window, visa requirements (only if nationality is \
+stated in `user context`), interest-tailored activities.
 
-## Upgrading from light → full depth
+**full (upgrade)** — fewer searches than a cold start:
+Prior light/full research is visible in your conversation history. Issue only the searches needed \
+for fields not yet populated or stale based on user context — skip re-fetching vibe and top attractions. The system merges \
+your output additively: leave any field as `""`, `[]`, or null to preserve the existing value.
 
-When the task includes an `EXISTING RESEARCH` block, this destination was already lightly
-researched. The system merges your output **additively** — any field you leave empty (`""`,
-`[]`) or null in your output is ignored and the existing value is silently preserved.
-
-Use this to avoid redundant work:
-- **Skip re-fetching** fields already populated in EXISTING RESEARCH (typically `vibe`,
-  `top_attractions`, and `summary`). Leave them as `""` / `[]` in your output; the existing
-  values will be kept.
-- **Focus your searches** only on the null or empty fields — usually `safety_summary`,
-  `festivals`, `notable_areas`, `visa_complexity`, and `activities`.
-- If you genuinely want to improve an already-populated field (e.g. enrich the summary),
-  output the improved version and it will overwrite the old one.
-- Always include `name`, `country`, and `depth` — these are always overwritten.
+## Field rules
+- `visa_complexity`: populate only when a nationality or passport is stated in `user context`; \
+leave null otherwise.
+- `activities`: select based on interests in `user context`; fill popular and recommended activites if no interests are stated.
+- `name`, `country`, `depth`: always populate — these fields are always overwritten by the system.
 
 ## Output
-
 Return ONLY a valid JSON object — no prose, no markdown fences.
-`summary` is required and must be non-empty in both depth modes.
-Output schema:
 
 {_RESEARCH_SCHEMA}
 """

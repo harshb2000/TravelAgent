@@ -243,9 +243,9 @@ def test_artifact_wrapper_injects_context_no_ks_write():
     result = wrapper.execute(query="Save a Tokyo travel guide")
 
     assert result["status"] == "ok"
-    assert specialist._last_run_context is not None
-    assert "DESTINATIONS" in specialist._last_run_context
-    assert "Tokyo" in specialist._last_run_context
+    assert specialist._last_run_task is not None
+    assert "DESTINATIONS" in specialist._last_run_task
+    assert "Tokyo" in specialist._last_run_task
 
     assert len(ks.routes) == n_routes
     assert len(ks.candidates) == n_candidates

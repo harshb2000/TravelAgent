@@ -213,7 +213,7 @@ class TimeSlot(BaseModel):
     activity: Activity = Field(description="The activity or transit leg for this slot.")
     location: str | None = Field(default=None, description="Specific venue or location name, e.g. 'Senso-ji Temple, Asakusa'. Null when not applicable.")
     notes: str | None = Field(default=None, description="Booking tips, access notes, opening hours caveats, or anything the traveller should know.")
-    is_alternative: bool = Field(default=False, description="True when this slot is a weather-contingency alternative to the preceding non-alternative slot in the day's list. At most 2 alternatives per primary slot; at most 3 alternative slots per day total.")
+    is_alternative: bool = Field(default=False, description="True when this slot is a weather-contingency alternative to the preceding primary slot. Never place an alternative as the first slot in a day. At most 2 alternatives per primary slot; at most 3 alternative slots per day total.")
 
 
 class ItineraryDay(BaseModel):

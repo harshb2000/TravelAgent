@@ -79,13 +79,15 @@ class ExplorerSpecialist:
         self._last_run_query = query
         self._last_run_user_context = user_context
 
-        lines = [f"Find up to {max_results} destination candidates for: {query}"]
+        lines = [
+            f"query: {query}",
+            f"max results: {max_results}",
+        ]
         if user_context:
-            lines.append(f"\nUser context: {user_context}")
+            lines.append(f"user context: {user_context}")
         if existing_candidates:
             names = [c.name for c in existing_candidates]
-            lines.append(f"Already suggested (do not repeat): {', '.join(names)}")
-        lines.append(f"\nReturn a JSON array of up to {max_results} candidates.")
+            lines.append(f"already suggested: {', '.join(names)}")
 
         response = self._agent.run("\n".join(lines))
         return _parse_candidates(response)

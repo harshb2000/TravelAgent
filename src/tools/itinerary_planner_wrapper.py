@@ -58,10 +58,16 @@ class ItineraryPlannerWrapperTool(BaseTool):
                 ),
             }
 
-        context = _build_context(destinations, self._user_context.context, self._knowledge)
+        destination_research = _build_research_context(destinations, self._knowledge)
+        weather = _build_weather_context(destinations, self._knowledge)
 
         try:
-            result = self._specialist.run(query, context)
+            result = self._specialist.run(
+                query,
+                user_context=self._user_context.context,
+                destination_research=destination_research,
+                weather=weather,
+            )
         except Exception as e:
             return {"status": "error", "summary": f"ItineraryPlannerSpecialist failed: {e}"}
 
@@ -102,66 +108,60 @@ def _missing_full_research(destinations: list[str], knowledge: KnowledgeState) -
     return missing
 
 
-def _build_context(
-    destinations: list[str],
-    user_context: str,
-    knowledge: KnowledgeState,
-) -> str:
+def _build_research_context(destinations: list[str], knowledge: KnowledgeState) -> str | None:
     lines: list[str] = []
-
-    if user_context:
-        lines.append(f"UserContext: {user_context}")
-
     for destination in destinations:
         dk = knowledge.destinations.get(destination)
-        if not dk:
+        if not dk or not dk.research:
             continue
+        r = dk.research
+        lines.append(f"{destination}:")
+        lines.append(f"  vibe: {r.vibe}")
+        if r.top_attractions:
+            lines.append(f"  top_attractions: {', '.join(r.top_attractions)}")
+        if r.summary:
+            lines.append(f"  summary: {r.summary}")
+        if r.festivals:
+            lines.append(f"  festivals: {', '.join(r.festivals)}")
+        if r.notable_areas:
+            lines.append("  notable_areas:")
+            for name, na in r.notable_areas.items():
+                highlights = ", ".join(na.highlights) if na.highlights else "—"
+                lines.append(f"    {name}: {na.description} | highlights: {highlights}")
+        if r.activities:
+            lines.append("  activities:")
+            for act in r.activities:
+                tags = ", ".join(act.tags) if act.tags else "—"
+                indoor = "indoor" if act.indoor else "outdoor"
+                dur = f"{act.duration_min}min" if act.duration_min else "duration unknown"
+                lines.append(f"    {act.name} [{tags}] ({indoor}, {dur})")
+    return "\n".join(lines) if lines else None
 
-        if dk.research:
-            r = dk.research
-            lines.append(f"\nDestinationResearch for {destination}:")
-            lines.append(f"  depth: {r.depth}")
-            lines.append(f"  vibe: {r.vibe}")
-            if r.top_attractions:
-                lines.append(f"  top_attractions: {', '.join(r.top_attractions)}")
-            if r.summary:
-                lines.append(f"  summary: {r.summary}")
-            if r.festivals:
-                lines.append(f"  festivals: {', '.join(r.festivals)}")
-            if r.notable_areas:
-                lines.append("  notable_areas:")
-                for name, na in r.notable_areas.items():
-                    highlights = ", ".join(na.highlights) if na.highlights else "—"
-                    lines.append(f"    {name}: {na.description} | highlights: {highlights}")
-            if r.activities:
-                lines.append("  activities:")
-                for act in r.activities:
-                    tags = ", ".join(act.tags) if act.tags else "—"
-                    indoor = "indoor" if act.indoor else "outdoor"
-                    dur = f"{act.duration_min}min" if act.duration_min else "duration unknown"
-                    lines.append(f"    {act.name} [{tags}] ({indoor}, {dur})")
 
-        if dk.weather:
-            lines.append(f"\nWeather for {destination}:")
-            for dr, wo in dk.weather.items():
-                if not wo.days:
-                    continue
-                avg_high = sum(d.temp_max for d in wo.days) / len(wo.days)
-                avg_low = sum(d.temp_min for d in wo.days) / len(wo.days)
-                mode_label = "forecast" if wo.mode == "forecast" else "historical avg"
-                lines.append(
-                    f"  {dr.label} ({mode_label}): "
-                    f"avg high {avg_high:.0f}°C / low {avg_low:.0f}°C"
-                )
-                rainy = [
-                    d.date for d in wo.days
-                    if (d.precipitation_prob is not None and d.precipitation_prob > PRECIP_PROB_THRESHOLD)
-                    or (d.precipitation_sum is not None and d.precipitation_sum > PRECIP_SUM_THRESHOLD)
-                ]
-                if rainy:
-                    lines.append(f"    high-precip days: {', '.join(rainy)}")
-
-    return "\n".join(lines)
+def _build_weather_context(destinations: list[str], knowledge: KnowledgeState) -> str | None:
+    lines: list[str] = []
+    for destination in destinations:
+        dk = knowledge.destinations.get(destination)
+        if not dk or not dk.weather:
+            continue
+        for dr, wo in dk.weather.items():
+            if not wo.days:
+                continue
+            avg_high = sum(d.temp_max for d in wo.days) / len(wo.days)
+            avg_low = sum(d.temp_min for d in wo.days) / len(wo.days)
+            mode_label = "forecast" if wo.mode == "forecast" else "historical avg"
+            lines.append(
+                f"{destination} ({dr.label}, {mode_label}): "
+                f"avg high {avg_high:.0f}°C / low {avg_low:.0f}°C"
+            )
+            rainy = [
+                d.date for d in wo.days
+                if (d.precipitation_prob is not None and d.precipitation_prob > PRECIP_PROB_THRESHOLD)
+                or (d.precipitation_sum is not None and d.precipitation_sum > PRECIP_SUM_THRESHOLD)
+            ]
+            if rainy:
+                lines.append(f"  high-precip days: {', '.join(rainy)}")
+    return "\n".join(lines) if lines else None
 
 
 def render_itinerary(itinerary: Itinerary) -> str:

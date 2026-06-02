@@ -50,16 +50,26 @@ class ItineraryPlannerSpecialist:
             debug=debug,
             reasoning_effort=reasoning_effort,
         )
-        self._last_run_context: str | None = None
-
     def run(
         self,
         query: str,
-        context: str = "",
+        user_context: str = "",
+        destination_research: str | None = None,
+        weather: str | None = None,
         max_iterations: int = 6,
     ) -> ItineraryPlannerOutput:
-        self._last_run_context = context
         self._agent._max_iterations = max_iterations
-        task = f"Today: {date.today().isoformat()}\n\n" + (query if not context else f"{query}\n\n{context}")
-        raw = self._agent.run(task)
+
+        lines = [
+            f"Today: {date.today().isoformat()}",
+            f"query: {query}",
+        ]
+        if user_context:
+            lines.append(f"user context: {user_context}")
+        if destination_research:
+            lines.append(f"destination research:\n{destination_research}")
+        if weather:
+            lines.append(f"weather:\n{weather}")
+
+        raw = self._agent.run("\n".join(lines))
         return _parse_itinerary_output(raw)

@@ -49,10 +49,12 @@ class ArtifactSpecialist:
             debug=debug,
             reasoning_effort=reasoning_effort,
         )
-        self._last_run_context: str | None = None
+        self._last_run_task: str | None = None
 
-    def run(self, query: str, context: str = "") -> ArtifactOutput:
-        self._last_run_context = context
-        task = query if not context else f"{query}\n\n{context}"
-        raw = self._agent.run(task)
+    def run(self, query: str, knowledge: str = "") -> ArtifactOutput:
+        lines = [f"query: {query}"]
+        if knowledge:
+            lines.append(f"knowledge:\n{knowledge}")
+        self._last_run_task = "\n".join(lines)
+        raw = self._agent.run(self._last_run_task)
         return _parse_artifact_output(raw)

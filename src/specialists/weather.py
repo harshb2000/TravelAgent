@@ -44,9 +44,13 @@ class WeatherSpecialist:
         """
         target_dr = DateRange.from_string(date_range)
 
-        task = f"Today: {date.today().isoformat()}\n\nGet weather for {destination} for date range: {date_range}"
+        task = (
+            f"Today: {date.today().isoformat()}\n"
+            f"destination: {destination}\n"
+            f"date range: {date_range}"
+        )
         if existing_entries:
-            task += "\n\nExisting entries (use slice_weather_range to avoid redundant API calls):"
+            task += "\nexisting entries:"
             for label, summary in existing_entries.items():
                 task += f"\n  {label}: {summary}"
 

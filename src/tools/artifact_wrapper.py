@@ -51,10 +51,10 @@ class ArtifactWrapperTool(BaseTool):
 
     def execute(self, **kwargs) -> dict:
         query: str = kwargs["query"]
-        context = self._knowledge.to_prompt_context(self._user_context, artifact_mode=True)
+        knowledge = self._knowledge.to_prompt_context(self._user_context, artifact_mode=True)
 
         try:
-            result = self._specialist.run(query, context)
+            result = self._specialist.run(query, knowledge)
         except Exception as e:
             return {"status": "error", "summary": f"ArtifactSpecialist failed: {e}"}
 

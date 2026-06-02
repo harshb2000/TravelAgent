@@ -85,10 +85,10 @@ def test_budget_wrapper_skips_update_when_no_new_data():
 def test_budget_wrapper_passes_existing_budget_in_context():
     wrapper, specialist, _, _ = _make_wrapper(with_existing_budget=True)
     wrapper.execute(query="Tokyo 7 nights", destination="Tokyo", )
-    context = specialist._last_run_context
-    assert context is not None
-    assert "hostel dorm" in context
-    assert "street food" in context
+    task = specialist._last_run_task
+    assert task is not None
+    assert "hostel dorm" in task
+    assert "street food" in task
 
 
 def test_budget_wrapper_travel_options_show_price_range_per_route_and_mode():
@@ -107,15 +107,15 @@ def test_budget_wrapper_travel_options_show_price_range_per_route_and_mode():
     wrapper, specialist, _, _ = _make_wrapper(ks=ks)
     wrapper.execute(query="Tokyo budget", destination="Tokyo")
 
-    context = specialist._last_run_context
+    task = specialist._last_run_task
     # All modes included — flight/return present with round-trip note
-    assert "flight/return" in context
-    assert "round-trip price, count once" in context
-    assert "flight/one-way" in context
-    assert "metro" in context
+    assert "flight/return" in task
+    assert "round-trip price, count once" in task
+    assert "flight/one-way" in task
+    assert "metro" in task
     # One-way options collapsed to a price range, not listed individually
-    assert "$450–$520" in context
-    assert "820" in context
+    assert "$450–$520" in task
+    assert "820" in task
 
 
 def test_budget_wrapper_returns_breakdown_verbatim():

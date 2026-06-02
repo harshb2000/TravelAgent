@@ -81,26 +81,25 @@ class TransportationSpecialist:
         self._last_run_max_iterations = max_iterations
         self._agent._max_iterations = max_iterations
 
+        entry = routes[0]
+        if isinstance(entry, tuple) and len(entry) == 2:
+            rk, dr = entry
+            route_str = f"{rk.origin} → {rk.destination} ({dr.label})"
+        else:
+            route_str = str(entry)
+
         lines = [
             f"Today: {date.today().isoformat()}",
             f"trip_type: {trip_type}",
-            "Find transportation options for the following routes:",
+            f"route: {route_str}",
         ]
-        for entry in routes:
-            if isinstance(entry, tuple) and len(entry) == 2:
-                rk, dr = entry
-                lines.append(f"  {rk.origin} → {rk.destination} ({dr.label})")
-            else:
-                lines.append(f"  {entry}")
-
-        if existing_edges:
-            lines.append("\nExisting partial edges (build on these, do not duplicate):")
-            lines.append(existing_edges)
 
         if user_context:
-            lines.append(f"\nUserContext: {user_context}")
+            lines.append(f"user context: {user_context}")
 
-        lines.append("\nReturn a JSON array of TravelOption objects covering the complete path(s).")
+        if existing_edges:
+            lines.append("existing edges:")
+            lines.append(existing_edges)
 
         response = self._agent.run("\n".join(lines))
         return _parse_travel_options(response)

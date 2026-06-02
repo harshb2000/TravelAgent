@@ -1,7 +1,12 @@
+import datetime
 import re
 from pathlib import Path
 from tools.base import BaseTool
 from models.file_write import FileWriteOutput
+
+
+def _to_snake_case(subject: str) -> str:
+    return re.sub(r"[^a-z0-9]+", "_", subject.lower()).strip("_")
 
 
 def _resolve_path(filename: str) -> Path:
@@ -29,22 +34,31 @@ def _resolve_path(filename: str) -> Path:
 
 class FileWriteTool(BaseTool):
     name = "file_write"
-    description = "Write content to a Markdown file on disk. Use for saving itineraries, comparisons, and trip summaries."
+    description = (
+        "Write content to a Markdown file on disk. "
+        "Constructs the filename as {subject}_{YYYY-MM-DD}_v1.md using today's date. "
+        "If that file already exists, only the version suffix is incremented (v2, v3, …). "
+        "Returns the actual path written."
+    )
     output_model = FileWriteOutput
     parameters = {
         "type": "object",
         "properties": {
-            "filename": {"type": "string", "description": "Desired filename, e.g. 'itinerary_tokyo_2026-06-20_v1.md'"},
+            "subject": {
+                "type": "string",
+                "description": "Short descriptive slug for the document, e.g. 'tokyo_solo_trip', 'bali_vs_portugal_comparison'. Snake_case, no spaces.",
+            },
             "content": {"type": "string", "description": "Full Markdown content to write"},
         },
-        "required": ["filename", "content"],
+        "required": ["subject", "content"],
     }
 
     def execute(self, **kwargs) -> dict:
-        filename: str = kwargs["filename"]
+        subject: str = kwargs["subject"]
         content: str = kwargs["content"]
 
         try:
+            filename = f"{_to_snake_case(subject)}_{datetime.date.today().isoformat()}_v1.md"
             path = _resolve_path(filename)
             path.write_text(content, encoding="utf-8")
             return self._validated_output({"status": "ok", "path": str(path)})
