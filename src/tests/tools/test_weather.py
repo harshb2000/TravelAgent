@@ -64,7 +64,8 @@ def test_climate_tool_returns_mode_city_and_days():
     fixture = load_fixture("openmeteo_climate_tokyo_june.json")
     with patch("clients.weather_client.httpx.get") as mock_get:
         mock_get.side_effect = [mock_response(GEO_TOKYO), mock_response(fixture)]
-        result = ClimateSummaryTool(WeatherClient()).execute(city="Tokyo", month="June", year=2026)
+        result = ClimateSummaryTool(WeatherClient()).execute(
+            city="Tokyo", start_date="2026-06-01", end_date="2026-06-30")
     assert result["mode"] == "climate"
     assert result["city"] == "Tokyo"
     assert "note" not in result
@@ -76,7 +77,8 @@ def test_climate_tool_day_shape():
     fixture = load_fixture("openmeteo_climate_tokyo_june.json")
     with patch("clients.weather_client.httpx.get") as mock_get:
         mock_get.side_effect = [mock_response(GEO_TOKYO), mock_response(fixture)]
-        result = ClimateSummaryTool(WeatherClient()).execute(city="Tokyo", month="June", year=2026)
+        result = ClimateSummaryTool(WeatherClient()).execute(
+            city="Tokyo", start_date="2026-06-01", end_date="2026-06-30")
     day0 = result["days"][0]
     assert day0["date"] == fixture["daily"]["time"][0]
     assert day0["temp_max"] == fixture["daily"]["temperature_2m_max"][0]
@@ -99,17 +101,9 @@ def test_weather_and_climate_tools_share_output_schema():
 def test_climate_tool_geocoding_failure_returns_error():
     with patch("clients.weather_client.httpx.get") as mock_get:
         mock_get.return_value = mock_response(GEO_EMPTY)
-        result = ClimateSummaryTool(WeatherClient()).execute(city="Nowhere", month="June")
+        result = ClimateSummaryTool(WeatherClient()).execute(
+            city="Nowhere", start_date="2026-06-01", end_date="2026-06-30")
     assert result["status"] == "error"
-
-
-def test_climate_tool_accepts_month_as_number():
-    fixture = load_fixture("openmeteo_climate_tokyo_june.json")
-    with patch("clients.weather_client.httpx.get") as mock_get:
-        mock_get.side_effect = [mock_response(GEO_TOKYO), mock_response(fixture)]
-        result = ClimateSummaryTool(WeatherClient()).execute(city="Tokyo", month="6", year=2026)
-    assert result["mode"] == "climate"
-    assert len(result["days"]) == 30
 
 
 # ---------------------------------------------------------------------------

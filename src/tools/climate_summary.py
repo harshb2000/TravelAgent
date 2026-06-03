@@ -6,8 +6,8 @@ from clients.weather_client import WeatherClient, _month_to_date_range
 class ClimateSummaryTool(BaseTool):
     name = "climate_summary"
     description = (
-        "Get historical climate averages for a city for a given month "
-        "(use for trips more than 16 days out or when only a month is known). "
+        "Get historical climate averages for a city over a date range "
+        "(use for trips more than 16 days out or when only a month/season is known). "
         "Output is a historical average, not a live forecast — label it as such when presenting to the user."
     )
     output_model = WeatherOutput
@@ -15,10 +15,10 @@ class ClimateSummaryTool(BaseTool):
         "type": "object",
         "properties": {
             "city": {"type": "string", "description": "City name"},
-            "month": {"type": "string", "description": "Month name or number (e.g. 'June' or '6')"},
-            "year": {"type": "integer", "description": "Year (e.g. 2026); defaults to next occurrence of the month"},
+            "start_date": {"type": "string", "description": "Start date ISO 8601 (YYYY-MM-DD)"},
+            "end_date": {"type": "string", "description": "End date ISO 8601 (YYYY-MM-DD)"},
         },
-        "required": ["city", "month"],
+        "required": ["city", "start_date", "end_date"],
     }
 
     def __init__(self, weather_client: WeatherClient):
@@ -26,15 +26,14 @@ class ClimateSummaryTool(BaseTool):
 
     def execute(self, **kwargs) -> dict:
         city: str = kwargs["city"]
-        month: str = kwargs["month"]
-        year: int | None = kwargs.get("year")
+        start_date: str = kwargs["start_date"]
+        end_date: str = kwargs["end_date"]
 
         try:
             lat, lon, _ = self._client.geocode(city)
         except ValueError as e:
             return {"status": "error", "error": str(e), "fallback": ""}
 
-        start_date, end_date = _month_to_date_range(month, year)
         daily = self._client.get_climate_average(lat, lon, start_date, end_date)
 
         days = [

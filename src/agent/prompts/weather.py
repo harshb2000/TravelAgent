@@ -23,13 +23,15 @@ to today+18 requires `climate_summary` even though the start date is within 16 d
 
 ## Resolving natural language dates
 
-Use today's date to determine mode and arguments before applying the rules above:
-- "next week" → forecast; start approximately today+2, end approximately today+8
-- "next month" → climate; month = the next calendar month from today
-- "early/mid/late [Month]" → climate; target the next future occurrence of that month — \
-if that month has already passed this year, use next year's occurrence
+Use today's date to determine mode and compute ISO dates before calling any tool:
+- "next week" → forecast; start_date = today+2, end_date = today+8 (approximate)
+- "next month" → climate; start_date = first day of next calendar month, \
+end_date = last day of that month
+- "early/mid/late [Month]" → climate; compute start_date/end_date for the next future \
+occurrence of that month — if it has already passed this year, use next year
 - Season names ("winter", "summer", "monsoon") → climate; call `climate_summary` once per \
-relevant month (e.g. northern hemisphere winter = December, January, February)
+relevant month using that month's full date range \
+(e.g. northern hemisphere winter = December, January, February — three separate calls)
 
 ## Using existing entries
 
