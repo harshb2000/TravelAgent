@@ -27,3 +27,6 @@ memory/
 
 # Throwaway scripts
 src/scripts/
+
+# Eval result artefacts
+src/eval/results/
