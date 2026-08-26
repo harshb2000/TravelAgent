@@ -38,6 +38,7 @@ from clients.search_client import SearchClient
 from clients.serpapi_client import SerpApiClient
 from clients.weather_client import WeatherClient
 from config.settings import settings
+from config.specialist_tuning import resolve_model_config
 from models.knowledge_state import (
     Activity,
     DateRange,
@@ -157,19 +158,16 @@ def _make_orchestrator(
     file_write = FileWriteTool()
 
     specialists = {
-        "explorer": ExplorerSpecialist(llm, [web_search], reasoning_effort="none"),
-        "weather": WeatherSpecialist(
-            llm, [weather_forecast, climate_summary, slice_weather], knowledge, reasoning_effort="none"
-        ),
-        "destination_research": DestinationResearchSpecialist(llm, [web_search], reasoning_effort="low"),
-        "transportation": TransportationSpecialist(llm, [web_search, flight_search], reasoning_effort="none"),
-        "budget": BudgetSpecialist(llm, [web_search, currency_convert, calculate], reasoning_effort="low"),
-        "itinerary_planner": ItineraryPlannerSpecialist(llm, [web_search], reasoning_effort="medium"),
+        "explorer": ExplorerSpecialist(llm, [web_search]),
+        "weather": WeatherSpecialist(llm, [weather_forecast, climate_summary, slice_weather], knowledge),
+        "destination_research": DestinationResearchSpecialist(llm, [web_search]),
+        "transportation": TransportationSpecialist(llm, [web_search, flight_search]),
+        "budget": BudgetSpecialist(llm, [web_search, currency_convert, calculate]),
+        "itinerary_planner": ItineraryPlannerSpecialist(llm, [web_search]),
         "artifact": ArtifactSpecialist(
             llm,
             [get_research, get_budget, get_weather_compiled, get_route, get_candidates,
              get_itinerary, self_critique, file_write],
-            reasoning_effort="low",
         ),
     }
 
@@ -1409,7 +1407,7 @@ def main():
         base_url=settings.llm_base_url,
         api_key=settings.llm_api_key,
         model=settings.llm_model,
-        extra_headers=settings.llm_extra_headers,
+        extra_headers=resolve_model_config(settings.llm_model).extra_headers,
     )
     search_client = SearchClient(api_key=settings.tavily_api_key)
     serpapi_client = SerpApiClient(settings.serpapi_api_key)

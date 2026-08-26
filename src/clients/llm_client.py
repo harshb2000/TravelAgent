@@ -1,25 +1,13 @@
 import re
 import time
 import uuid
+from typing import Any
+
 import httpx
 
 
 class LLMError(Exception):
     pass
-
-
-# Models that accept a `reasoning_effort` parameter in the request body.
-# Checked by prefix so variants like "qwen3:8b" and "qwen3:32b" both match "qwen3".
-_REASONING_EFFORT_MODELS: frozenset[str] = frozenset({
-    "qwen3",
-    "o1",
-    "o3",
-    "o4",
-})
-
-
-def _supports_reasoning_effort(model: str) -> bool:
-    return any(model.startswith(prefix) for prefix in _REASONING_EFFORT_MODELS)
 
 
 _RATE_LIMIT_RETRIES = 3
@@ -48,7 +36,13 @@ def _parse_failed_generation(failed_generation: str) -> dict:
 
 
 class LLMClient:
-    def __init__(self, base_url: str, api_key: str, model: str, extra_headers: dict = {}):
+    def __init__(
+        self,
+        base_url: str,
+        api_key: str,
+        model: str,
+        extra_headers: dict = {},
+    ):
         self.base_url = base_url.rstrip("/")
         self.api_key = api_key
         self.model = model
@@ -57,32 +51,38 @@ class LLMClient:
     def chat(
         self,
         messages: list[dict],
+        timeout: float,
         tools: list[dict] | None = None,
-        reasoning_effort: str | None = None,
+        extra_body: dict[str, Any] | None = None,
+        retries: int | None = None,
     ) -> dict:
         headers = {
             "Authorization": f"Bearer {self.api_key}",
             "Content-Type": "application/json",
             **self.extra_headers,
         }
-        body: dict = {"model": self.model, "messages": messages, "max_tokens": 4096}
+        body: dict = {
+            "model": self.model,
+            "messages": messages,
+        }
         if tools:
             body["tools"] = tools
             body["tool_choice"] = "auto"
-        if reasoning_effort is not None and _supports_reasoning_effort(self.model):
-            body["reasoning_effort"] = reasoning_effort
+        if extra_body:
+            body.update(extra_body)
 
-        for attempt in range(_RATE_LIMIT_RETRIES + 1):
+        max_retries = retries if retries is not None else _RATE_LIMIT_RETRIES
+        for attempt in range(max_retries + 1):
             response = httpx.post(
                 f"{self.base_url}/chat/completions",
                 headers=headers,
                 json=body,
-                timeout=120.0,
+                timeout=timeout,
             )
             if response.status_code != 429:
                 break
-            if attempt == _RATE_LIMIT_RETRIES:
-                raise LLMError(f"LLM request failed (429) after {_RATE_LIMIT_RETRIES} retries: {response.text}")
+            if attempt == max_retries:
+                raise LLMError(f"LLM request failed (429) after {max_retries} retries: {response.text}")
             wait = _retry_after(response.text)
             time.sleep(wait)
 

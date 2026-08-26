@@ -4,6 +4,7 @@ import re
 from agent.harness import SimpleReActAgent
 from agent.prompts.explorer import EXPLORER_PROMPT
 from clients.llm_client import LLMClient
+from config.specialist_tuning import resolve_tuning
 from models.knowledge_state import DestinationCandidate
 from tools.base import BaseTool
 
@@ -54,14 +55,16 @@ def _parse_candidates(text: str) -> list[DestinationCandidate]:
 
 
 class ExplorerSpecialist:
-    def __init__(self, llm_client: LLMClient, tools: list[BaseTool], debug: bool = False, reasoning_effort: str | None = None):
+    def __init__(self, llm_client: LLMClient, tools: list[BaseTool], debug: bool = False):
+        tuning = resolve_tuning("explorer", llm_client.model)
         self._agent = SimpleReActAgent(
             llm_client=llm_client,
             tools=tools,
             system_prompt=EXPLORER_PROMPT,
-            max_iterations=3,
+            max_iterations=tuning.max_iterations,
             debug=debug,
-            reasoning_effort=reasoning_effort,
+            extra_body=tuning.extra_body,
+            timeout=tuning.timeout_s,
         )
         # Exposed for wrapper tests — record what was passed on the last run
         self._last_run_max_results: int | None = None

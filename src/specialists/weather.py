@@ -1,9 +1,11 @@
 import json
+import sys
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import date
 
 from agent.prompts.weather import WEATHER_PROMPT
 from clients.llm_client import LLMClient
+from config.specialist_tuning import resolve_tuning
 from models.knowledge_state import KnowledgeState, DateRange
 from models.weather import WeatherOutput, DailyWeather
 from tools.base import BaseTool
@@ -24,13 +26,14 @@ class WeatherSpecialist:
         llm_client: LLMClient,
         tools: list[BaseTool],
         knowledge: KnowledgeState,
-        reasoning_effort: str | None = None,
+        debug: bool = False,
     ):
         self._llm = llm_client
         self._knowledge = knowledge
         self._tool_map = {t.name: t for t in tools}
         self._tool_defs = [t.to_llm_definition() for t in tools] or None
-        self._reasoning_effort = reasoning_effort
+        self._debug = debug
+        self._tuning = resolve_tuning("weather", llm_client.model)
 
     def run(
         self,
@@ -58,7 +61,12 @@ class WeatherSpecialist:
             {"role": "system", "content": WEATHER_PROMPT},
             {"role": "user", "content": task},
         ]
-        msg = self._llm.chat(messages, tools=self._tool_defs, reasoning_effort=self._reasoning_effort)
+        msg = self._llm.chat(
+            messages,
+            tools=self._tool_defs,
+            extra_body=self._tuning.extra_body,
+            timeout=self._tuning.timeout_s,
+        )
 
         tool_calls = msg.get("tool_calls") or []
         if not tool_calls:
@@ -101,6 +109,8 @@ class WeatherSpecialist:
                 args = json.loads(tc["function"]["arguments"])
             except (json.JSONDecodeError, KeyError):
                 args = {}
+            if self._debug:
+                print(f"[debug] → {name}({tc['function'].get('arguments', '')[:120]})", file=sys.stderr)
             tool = self._tool_map.get(name)
             if tool is None:
                 result = {"status": "error", "error": f"unknown tool: {name}"}
@@ -109,7 +119,10 @@ class WeatherSpecialist:
                     result = tool.execute(**args)
                 except Exception as e:
                     result = {"status": "error", "error": str(e)}
-            return call_id, json.dumps(result)
+            content = json.dumps(result)
+            if self._debug:
+                print(f"[debug] ← {name}: {content[:200]}", file=sys.stderr)
+            return call_id, content
 
         if len(tool_calls) == 1:
             return [run_one(tool_calls[0])]

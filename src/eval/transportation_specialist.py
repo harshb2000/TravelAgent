@@ -25,6 +25,7 @@ from clients.llm_client import LLMClient
 from clients.search_client import SearchClient
 from clients.serpapi_client import SerpApiClient
 from config.settings import settings
+from config.specialist_tuning import resolve_model_config
 from models.knowledge_state import DateRange, RouteKey, TravelOption
 from specialists.transportation import TransportationSpecialist
 from tools.flight_search import FlightSearchTool
@@ -56,7 +57,7 @@ def _make_llm() -> LLMClient:
         base_url=settings.llm_base_url,
         api_key=settings.llm_api_key,
         model=settings.llm_model,
-        extra_headers=settings.llm_extra_headers,
+        extra_headers=resolve_model_config(settings.llm_model).extra_headers,
     )
 
 

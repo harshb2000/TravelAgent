@@ -24,6 +24,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 from clients.llm_client import LLMClient
 from clients.weather_client import WeatherClient
 from config.settings import settings
+from config.specialist_tuning import resolve_model_config
 from models.knowledge_state import KnowledgeState, DateRange
 from models.weather import DailyWeather, WeatherOutput
 from specialists.weather import WeatherSpecialist
@@ -44,10 +45,13 @@ class _CapturingLLM:
     """
     def __init__(self, real: LLMClient):
         self._real = real
+        self.model = real.model
         self.last_tool_calls: list[dict] = []
 
-    def chat(self, messages, tools=None, reasoning_effort=None):
-        resp = self._real.chat(messages, tools=tools, reasoning_effort=reasoning_effort)
+    def chat(self, messages, tools=None, extra_body=None, timeout=None, retries=None):
+        resp = self._real.chat(
+            messages, tools=tools, extra_body=extra_body, timeout=timeout, retries=retries
+        )
         self.last_tool_calls = resp.get("tool_calls") or []
         return resp
 
@@ -61,7 +65,7 @@ def _make_llm() -> LLMClient:
         base_url=settings.llm_base_url,
         api_key=settings.llm_api_key,
         model=settings.llm_model,
-        extra_headers=settings.llm_extra_headers,
+        extra_headers=resolve_model_config(settings.llm_model).extra_headers,
     )
 
 

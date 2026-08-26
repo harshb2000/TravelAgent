@@ -25,6 +25,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from clients.llm_client import LLMClient
 from config.settings import settings
+from config.specialist_tuning import resolve_model_config
 from models.knowledge_state import (
     Activity,
     CostWithAttribution,
@@ -132,7 +133,7 @@ def _make_llm() -> LLMClient:
         base_url=settings.llm_base_url,
         api_key=settings.llm_api_key,
         model=settings.llm_model,
-        extra_headers=settings.llm_extra_headers,
+        extra_headers=resolve_model_config(settings.llm_model).extra_headers,
     )
 
 

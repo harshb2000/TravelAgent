@@ -6,6 +6,7 @@ from rich.console import Console
 from rich.markdown import Markdown
 
 from config.settings import settings
+from config.specialist_tuning import resolve_model_config
 from clients.currency_client import CurrencyClient
 from clients.llm_client import LLMClient
 from clients.search_client import SearchClient
@@ -77,7 +78,7 @@ def main() -> None:
         base_url=settings.llm_base_url,
         api_key=settings.llm_api_key,
         model=settings.llm_model,
-        extra_headers=settings.llm_extra_headers,
+        extra_headers=resolve_model_config(settings.llm_model).extra_headers,
     )
     serpapi_client = SerpApiClient(settings.serpapi_api_key)
     weather_client = WeatherClient()
@@ -109,22 +110,23 @@ def main() -> None:
 
     # Specialists
     specialists = {
-        "explorer": ExplorerSpecialist(llm_client, [web_search], debug=args.debug, reasoning_effort="none"),
-        "weather": WeatherSpecialist(llm_client, [weather_forecast, climate_summary, slice_weather], knowledge, reasoning_effort="none"),
-        "destination_research": DestinationResearchSpecialist(llm_client, [web_search], debug=args.debug, reasoning_effort="low"),
-        "transportation": TransportationSpecialist(llm_client, [web_search, flight_search], debug=args.debug, reasoning_effort="none"),
-        "budget": BudgetSpecialist(llm_client, [web_search, currency_convert, calculate], debug=args.debug, reasoning_effort="low"),
-        "itinerary_planner": ItineraryPlannerSpecialist(llm_client, [web_search], debug=args.debug, reasoning_effort="medium"),
+        "explorer": ExplorerSpecialist(llm_client, [web_search], debug=args.debug),
+        "weather": WeatherSpecialist(llm_client, [weather_forecast, climate_summary, slice_weather], knowledge, debug=args.debug),
+        "destination_research": DestinationResearchSpecialist(llm_client, [web_search], debug=args.debug),
+        "transportation": TransportationSpecialist(llm_client, [web_search, flight_search], debug=args.debug),
+        "budget": BudgetSpecialist(llm_client, [web_search, currency_convert, calculate], debug=args.debug),
+        "itinerary_planner": ItineraryPlannerSpecialist(llm_client, [web_search], debug=args.debug),
         "artifact": ArtifactSpecialist(
             llm_client,
             [get_research, get_budget, get_weather_compiled, get_route, get_candidates,
              get_itinerary, self_critique, file_write],
             debug=args.debug,
-            reasoning_effort="low",
         ),
     }
 
-    orchestrator = Orchestrator(llm_client, user_context, knowledge, specialists, debug=args.debug)
+    orchestrator = Orchestrator(
+        llm_client, user_context, knowledge, specialists, debug=args.debug,
+    )
 
     console.print("[bold]TravelAgent[/bold] — type your message, Ctrl-C to quit.\n")
 

@@ -3,6 +3,7 @@ from datetime import date
 from agent.harness import SimpleReActAgent
 from agent.prompts.orchestrator import ORCHESTRATOR_PROMPT
 from clients.llm_client import LLMClient
+from config.specialist_tuning import resolve_tuning
 from models.knowledge_state import KnowledgeState, UserContext
 from tools.artifact_wrapper import ArtifactWrapperTool
 from tools.budget_wrapper import BudgetWrapperTool
@@ -25,6 +26,7 @@ class Orchestrator:
     ):
         self._user_context = user_context
         self._knowledge = knowledge
+        tuning = resolve_tuning("orchestrator", llm_client.model)
 
         wrapper_tools = [
             ExplorerWrapperTool(specialists["explorer"], knowledge, user_context),
@@ -38,8 +40,8 @@ class Orchestrator:
         ]
 
         self._agent = SimpleReActAgent(
-            llm_client, wrapper_tools, ORCHESTRATOR_PROMPT, max_iterations=8, debug=debug,
-            reasoning_effort="none",
+            llm_client, wrapper_tools, ORCHESTRATOR_PROMPT, max_iterations=tuning.max_iterations, debug=debug,
+            extra_body=tuning.extra_body, timeout=tuning.timeout_s,
         )
 
     def turn(self, user_input: str) -> str:

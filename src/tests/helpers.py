@@ -5,7 +5,9 @@ from clients.llm_client import LLMClient
 
 
 def make_llm() -> MagicMock:
-    return MagicMock(spec=LLMClient)
+    llm = MagicMock(spec=LLMClient)
+    llm.model = "test-model"
+    return llm
 
 
 def stop_msg(content: str) -> dict:

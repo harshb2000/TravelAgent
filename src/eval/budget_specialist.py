@@ -27,6 +27,7 @@ from clients.currency_client import CurrencyClient
 from clients.llm_client import LLMClient
 from clients.search_client import SearchClient
 from config.settings import settings
+from config.specialist_tuning import resolve_model_config
 from models.specialist_outputs import BudgetSpecialistOutput
 from specialists.budget import BudgetSpecialist
 from tools.calculate import CalculateTool
@@ -54,7 +55,7 @@ def _make_llm() -> LLMClient:
         base_url=settings.llm_base_url,
         api_key=settings.llm_api_key,
         model=settings.llm_model,
-        extra_headers=settings.llm_extra_headers,
+        extra_headers=resolve_model_config(settings.llm_model).extra_headers,
     )
 
 

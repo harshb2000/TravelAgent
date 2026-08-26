@@ -7,6 +7,7 @@ from pydantic import ValidationError
 from agent.harness import SimpleReActAgent
 from agent.prompts.transportation import TRANSPORTATION_PROMPT
 from clients.llm_client import LLMClient
+from config.specialist_tuning import resolve_tuning
 from models.knowledge_state import DateRange, RouteKey, TravelOption
 from tools.base import BaseTool
 
@@ -59,14 +60,17 @@ def _parse_travel_options(text: str) -> list[TravelOption]:
 
 
 class TransportationSpecialist:
-    def __init__(self, llm_client: LLMClient, tools: list[BaseTool], debug: bool = False, reasoning_effort: str | None = None):
+    def __init__(self, llm_client: LLMClient, tools: list[BaseTool], debug: bool = False):
+        tuning = resolve_tuning("transportation", llm_client.model)
+        self._default_max_iterations = tuning.max_iterations
         self._agent = SimpleReActAgent(
             llm_client=llm_client,
             tools=tools,
             system_prompt=TRANSPORTATION_PROMPT,
-            max_iterations=5,
+            max_iterations=tuning.max_iterations,
             debug=debug,
-            reasoning_effort=reasoning_effort,
+            extra_body=tuning.extra_body,
+            timeout=tuning.timeout_s,
         )
         self._last_run_max_iterations: int | None = None
 
@@ -76,9 +80,10 @@ class TransportationSpecialist:
         date_range: DateRange,
         user_context: str = "",
         existing_edges: str | None = None,
-        max_iterations: int = 5,
+        max_iterations: int | None = None,
         trip_type: str = "one_way",
     ) -> list[TravelOption]:
+        max_iterations = max_iterations if max_iterations is not None else self._default_max_iterations
         self._last_run_max_iterations = max_iterations
         self._agent._max_iterations = max_iterations
 

@@ -6,6 +6,7 @@ from pydantic import ValidationError
 from agent.harness import SimpleReActAgent
 from agent.prompts.artifact import ARTIFACT_PROMPT
 from clients.llm_client import LLMClient
+from config.specialist_tuning import resolve_tuning
 from models.specialist_outputs import ArtifactOutput
 from tools.base import BaseTool
 
@@ -40,14 +41,16 @@ def _parse_artifact_output(text: str) -> ArtifactOutput:
 
 
 class ArtifactSpecialist:
-    def __init__(self, llm_client: LLMClient, tools: list[BaseTool], debug: bool = False, reasoning_effort: str | None = None):
+    def __init__(self, llm_client: LLMClient, tools: list[BaseTool], debug: bool = False):
+        tuning = resolve_tuning("artifact", llm_client.model)
         self._agent = SimpleReActAgent(
             llm_client=llm_client,
             tools=tools,
             system_prompt=ARTIFACT_PROMPT,
-            max_iterations=3,
+            max_iterations=tuning.max_iterations,
             debug=debug,
-            reasoning_effort=reasoning_effort,
+            extra_body=tuning.extra_body,
+            timeout=tuning.timeout_s,
         )
         self._last_run_task: str | None = None
 

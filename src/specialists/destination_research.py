@@ -4,6 +4,7 @@ import re
 from agent.harness import SimpleReActAgent
 from agent.prompts.destination_research import DESTINATION_RESEARCH_PROMPT
 from clients.llm_client import LLMClient
+from config.specialist_tuning import resolve_tuning
 from models.knowledge_state import DestinationResearch
 from tools.base import BaseTool
 
@@ -30,14 +31,17 @@ class DestinationResearchSpecialist:
     upgrading from light to full depth without re-fetching basic info).
     """
 
-    def __init__(self, llm_client: LLMClient, tools: list[BaseTool], debug: bool = False, reasoning_effort: str | None = None):
+    def __init__(self, llm_client: LLMClient, tools: list[BaseTool], debug: bool = False):
+        tuning = resolve_tuning("destination_research", llm_client.model)
+        self._default_max_iterations = tuning.max_iterations
         self._agent = SimpleReActAgent(
             llm_client=llm_client,
             tools=tools,
             system_prompt=DESTINATION_RESEARCH_PROMPT,
-            max_iterations=4,
+            max_iterations=tuning.max_iterations,
             debug=debug,
-            reasoning_effort=reasoning_effort,
+            extra_body=tuning.extra_body,
+            timeout=tuning.timeout_s,
         )
         self._last_run_max_iterations: int | None = None
 
@@ -46,9 +50,10 @@ class DestinationResearchSpecialist:
         destination: str,
         depth: str,
         user_context: str,
-        max_iterations: int = 4,
+        max_iterations: int | None = None,
         existing_research: DestinationResearch | None = None,
     ) -> DestinationResearch:
+        max_iterations = max_iterations if max_iterations is not None else self._default_max_iterations
         self._last_run_max_iterations = max_iterations
         self._agent._max_iterations = max_iterations
 
