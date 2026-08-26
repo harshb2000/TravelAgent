@@ -131,7 +131,7 @@ def test_transportation_run_raises_with_details_on_malformed_items():
     ])
     specialist, _ = _make_specialist(stop_msg(bad_json))
     with pytest.raises(ValueError) as exc_info:
-        specialist.run([RouteKey("Mumbai", "Tokyo")], "")
+        specialist.run(RouteKey("Mumbai", "Tokyo"), DateRange("any"), "")
     msg = str(exc_info.value)
     assert "failed to parse" in msg
     assert "flight/one-way" in msg

@@ -7,7 +7,7 @@ from pydantic import ValidationError
 from agent.harness import SimpleReActAgent
 from agent.prompts.transportation import TRANSPORTATION_PROMPT
 from clients.llm_client import LLMClient
-from models.knowledge_state import TravelOption
+from models.knowledge_state import DateRange, RouteKey, TravelOption
 from tools.base import BaseTool
 
 
@@ -72,7 +72,8 @@ class TransportationSpecialist:
 
     def run(
         self,
-        routes: list,
+        route_key: RouteKey,
+        date_range: DateRange,
         user_context: str = "",
         existing_edges: str | None = None,
         max_iterations: int = 5,
@@ -81,12 +82,7 @@ class TransportationSpecialist:
         self._last_run_max_iterations = max_iterations
         self._agent._max_iterations = max_iterations
 
-        entry = routes[0]
-        if isinstance(entry, tuple) and len(entry) == 2:
-            rk, dr = entry
-            route_str = f"{rk.origin} → {rk.destination} ({dr.label})"
-        else:
-            route_str = str(entry)
+        route_str = f"{route_key.origin} → {route_key.destination} ({date_range.label})"
 
         lines = [
             f"Today: {date.today().isoformat()}",

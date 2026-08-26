@@ -396,7 +396,8 @@ class TransportationWrapperTool(BaseTool):
 
             try:
                 options = self._specialist.run(
-                    routes=[(route_key, date_range)],
+                    route_key=route_key,
+                    date_range=date_range,
                     user_context=user_context,
                     existing_edges=existing_edges,
                     max_iterations=3,
