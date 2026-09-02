@@ -30,3 +30,6 @@ src/scripts/
 
 # Eval result artefacts
 src/eval/results/
+
+# Internal docs
+docs/v1/readme_philosophy.md
