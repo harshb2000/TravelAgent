@@ -5,7 +5,7 @@
 **Agentic AI that plans real trips — flights, weather, budget, and day-by-day itineraries — through natural conversation.**
 
 ![Python 3.13](https://img.shields.io/badge/python-3.13-blue)
-![ReAct Multi-Agent](https://img.shields.io/badge/Multi%20agent-8%20ReAct%20agents-orange)
+![Tool-Using Multi-Agent](https://img.shields.io/badge/Multi%20agent-8%20tool--using%20agents-orange)
 ![RAG](https://img.shields.io/badge/RAG-flights%20%C2%B7%20weather%20%C2%B7%20search-yellow)
 ![Parallel Tool Calling](https://img.shields.io/badge/Agentic-parallel%20tool%20calling-green)
 ![Any LLM](https://img.shields.io/badge/LLM-Claude%20%C2%B7%20GPT%20%C2%B7%20Llama%20%C2%B7%20Ollama-informational)
@@ -62,19 +62,16 @@ flowchart TD
 - **State that survives the conversation** — constraints accumulate and get revised turn over turn, not reset on every message.
 - **Failure as a first-class outcome** — a failed tool call comes back as a typed result the orchestrator can react to, not an exception that ends the turn.
 
-**→ *Deep dive: Agent Architecture*** *(coming soon)*
-
 ## Architecture
 
-> **TODO (hero diagram):** a clean, high-level system diagram — legible in ~10 seconds — showing: CLI → Orchestrator (holding `UserContext` + `KnowledgeState`) → the 7 specialists fanning out → their external tools/APIs at the edges (SerpApi, Open-Meteo, Tavily, Frankfurter) → results flowing back through `KnowledgeState`. This is the hero technical asset of the README — worth commissioning as a real designed graphic rather than a code-generated flowchart.
+![TravelAgent architecture: orchestrator dynamically delegating to 7 specialist agents, each backed by external tools, reading and writing a shared KnowledgeState](resources/architecture_diagram.png)
 
-- **Specialists are isolated, not shared context** — each one runs its own system prompt, tool set, and conversation history. Raw API responses never reach the orchestrator; it only ever sees structured summaries.
-- **Every specialist is a wrapper, not a direct call** — the orchestrator never touches an external API itself. Each wrapper checks existing state first, invokes the specialist only for what's missing, writes results back, and turns failures into a message the orchestrator can react to instead of a crash.
-- **State is two-tier, and ownership is scoped, not shared** — `UserContext` (free-text, conversational) belongs solely to the Orchestrator. `KnowledgeState` (typed, structured) belongs to the specialists: each writes only the slice it's responsible for — weather writes weather, budget writes budget — through typed update methods, never free-form. The Orchestrator only ever reads a compact overview of it.
-- **Grounding isn't one retrieval step bolted in front — it's built into every specialist's own tools.** Web search for research and visas, live flight search for routes, live forecasts for weather, live rates for currency: each specialist reaches for its source of truth mid-reasoning, as needed, rather than the system fetching everything up front and hoping it's relevant.
-- **The reliability boundary sits at the tool call** — every tool returns a typed result or a typed error, never an exception. That's the one contract all 8 agents and every external integration are held to.
-
-**→ *Deep dive: Architecture & Design Decisions*** *(coming soon)*
+- **One orchestrator, seven specialists.** The orchestrator breaks a request into sub-tasks and hands each to the specialist built for it — flights, weather, budget, and so on — instead of answering everything itself.
+- **The orchestrator remembers you.** It builds up `UserContext` — your preferences, constraints, and budget — as the conversation goes, and keeps it updated turn over turn instead of resetting each message.
+- **Specialists work independently.** Each keeps its own memory, calls its own tools, and reasons on its own — fetching only what it doesn't already have — then hands back a compact result, not raw data, for the orchestrator to use.
+- **Built for parallelism.** Independent specialists run at once, and so do the tools within a single specialist — not one call after another.
+- **One shared memory, checked before every call.** Every specialist reads and writes into a single structured knowledge store. Before a specialist runs, a wrapper checks whether the answer's already there — pulling only the relevant slice for that specialist and request — so nothing gets fetched twice.
+- **Nothing is fixed in advance.** The orchestrator decides what to call, in what order, and replans as results come in — not a hardcoded pipeline.
 
 ## See It In Action
 
@@ -118,9 +115,7 @@ sequenceDiagram
     O->>U: final reply
 ```
 
-**What happened:** one message, three independent unknowns fired at once (route, weather, destination) instead of asked one at a time. Budget didn't run until real flight and destination numbers existed to check it against. The itinerary didn't run until the weather was known — so it could route around a rainy day 4 with an indoor alternative, not guess. Three ReAct iterations, one reply.
-
-**→ *Deep dive: Example Agent Trajectory*** *(coming soon)*
+**What happened:** one message, three independent unknowns fired at once (route, weather, destination) instead of asked one at a time. Budget didn't run until real flight and destination numbers existed to check it against. The itinerary didn't run until the weather was known — so it could route around a rainy day 4 with an indoor alternative, not guess. Three agent iterations, one reply.
 
 ## Evaluation
 
@@ -136,9 +131,6 @@ Unit tests check that the code runs. Evaluation checks that the agent *decides* 
 
 > **TODO (test coverage table):** a table or diagram breaking down test count by kind (unit / assertion-eval / LLM-as-judge) per specialist and the orchestrator — what's covered, what isn't yet.
 
-**→ *Deep dive: Evaluation Methodology*** *(coming soon)*
-**→ *Deep dive: Model & Reasoning Experiments*** *(coming soon)*
-
 ## Production Thinking
 
 **Reliability**
@@ -146,19 +138,16 @@ Unit tests check that the code runs. Evaluation checks that the agent *decides* 
 - Orchestrator suite includes error-injection tests — wrapper tools patched to fail on demand, verifying graceful degradation rather than a crash
 
 **Performance**
-- Parallel tool execution — the same ReAct harness parallelizes independent calls at every level: the orchestrator dispatching specialists, and a specialist dispatching its own tools (e.g. Weather fetching multiple date ranges at once)
+- Parallel tool execution — the same agent harness parallelizes independent calls at every level: the orchestrator dispatching specialists, and a specialist dispatching its own tools (e.g. Weather fetching multiple date ranges at once)
 - Bounded iteration cap (3–10, tuned per specialist) + per-specialist timeout — a stuck reasoning loop fails closed instead of running away on cost or latency
 
 **Safety**
 - `KnowledgeState` writes are typed and scoped per specialist — no free-form field, so one specialist can't corrupt another's slice of state
 - *TODO — prompt-injection handling and input-boundary hardening not yet implemented*
 
-**→ *Deep dive: Reliability & Failure Modes*** *(coming soon)*
-**→ *Deep dive: Observability & Performance*** *(coming soon)*
-
 ## Engineering Decisions
 
-**ReAct orchestrator loop, not a fixed pipeline**
+**Tool-calling orchestrator loop, not a fixed pipeline**
 > **Why:** real requests are partial, arrive in any order, and shift mid-conversation — a fixed sequence can't skip what's already known or ask for what's still missing.
 > **Tradeoff:** harder to exhaustively test every path than a pipeline guarantees by construction.
 
@@ -178,13 +167,11 @@ Unit tests check that the code runs. Evaluation checks that the agent *decides* 
 > **Why:** assertion checks catch deterministic decision regressions cheaply in CI; LLM-as-judge catches semantic quality regressions assertions structurally can't express.
 > **Tradeoff:** judge runs cost money and time per run, and are only as trustworthy as the judge model itself.
 
-**→ *Deep dive: Design Decisions & Tradeoffs*** *(coming soon)*
-
 ## Tech Stack
 
 | | |
 |---|---|
-| **AI** | Hand-rolled ReAct agent loop · any OpenAI-compatible LLM — Claude, GPT, local Ollama models |
+| **AI** | Hand-rolled tool-using agent loop · any OpenAI-compatible LLM — Claude, GPT, local Ollama models |
 | **Backend** | Python 3.13 · httpx · Pydantic + pydantic-settings |
 | **Grounding** | SerpApi (flights) · Open-Meteo (weather & climate) · Tavily (web search) · Frankfurter (currency) |
 | **Evaluation** | pytest · custom assertion + LLM-as-judge harness |
