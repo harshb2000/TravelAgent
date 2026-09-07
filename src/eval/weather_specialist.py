@@ -287,15 +287,21 @@ def subset_of_existing_range_slices_only(real_llm, capture):
 
     KnowledgeState has Paris Jun 20–30. Request is Jun 22–25 (fully contained).
     """
+    today = date.today()
+    seed_start = today + timedelta(days=3)
     ks = KnowledgeState()
-    days = _forecast_days(date(2026, 6, 20), 11)
+    days = _forecast_days(seed_start, 11)
     ks.update_weather(
         "Paris",
-        DateRange.from_string("2026-06-20 to 2026-06-30"),
+        DateRange.from_string(f"{seed_start.isoformat()} to {(seed_start + timedelta(days=10)).isoformat()}"),
         WeatherOutput(mode="forecast", city="Paris", days=days),
     )
     existing = _build_existing_entries(ks, "Paris")
-    _make_specialist(ks, capture).run("Paris", "2026-06-22 to 2026-06-25", existing_entries=existing)
+    request_start = today + timedelta(days=5)
+    request_end = today + timedelta(days=8)
+    _make_specialist(ks, capture).run(
+        "Paris", f"{request_start.isoformat()} to {request_end.isoformat()}", existing_entries=existing
+    )
     names = _tool_names(capture.last_tool_calls)
     assert "slice_weather_range" in names, f"expected slice_weather_range, got {names}"
     assert "weather_forecast" not in names, f"weather_forecast must not be called, got {names}"
@@ -339,8 +345,10 @@ def same_mode_extension_slices_and_fetches_gap(real_llm, capture):
 
 def no_existing_entry_fetches_directly(real_llm, capture):
     """No existing entry: direct fetch (forecast or climate), no slice."""
+    today = date.today()
+    dr = f"{(today + timedelta(days=30)).isoformat()} to {(today + timedelta(days=35)).isoformat()}"
     ks = KnowledgeState()  # empty — no weather data for Dubai
-    _make_specialist(ks, capture).run("Dubai", "2026-06-20 to 2026-06-25")
+    _make_specialist(ks, capture).run("Dubai", dr)
     names = _tool_names(capture.last_tool_calls)
     assert "slice_weather_range" not in names, \
         f"slice_weather_range must not be called when no entry exists, got {names}"

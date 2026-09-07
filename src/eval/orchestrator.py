@@ -178,11 +178,27 @@ def _make_orchestrator(
 # KnowledgeState builders
 # ---------------------------------------------------------------------------
 
-def _minimal_weather(dest: str, label: str = "June 2026") -> WeatherOutput:
+def _future_month_range(months_ahead: int, start_day: int = 5, end_day: int = 15) -> tuple[date, date]:
+    """Same-month date pair `months_ahead` months out — keeps eval dates perpetually future."""
+    today = date.today()
+    month_index = today.month - 1 + months_ahead
+    year = today.year + month_index // 12
+    month = month_index % 12 + 1
+    return date(year, month, start_day), date(year, month, end_day)
+
+
+def _future_month_label(months_ahead: int) -> str:
+    """'<Month> <year>' label a few months out, e.g. 'March 2027'."""
+    start, _ = _future_month_range(months_ahead)
+    return start.strftime("%B %Y")
+
+
+def _minimal_weather(dest: str, label: str | None = None) -> WeatherOutput:
+    start, _ = _future_month_range(6)
     return WeatherOutput(
         mode="climate", city=dest,
         days=[DailyWeather(
-            date="2026-06-15", temp_max=28.0, temp_min=22.0,
+            date=start.isoformat(), temp_max=28.0, temp_min=22.0,
             precipitation_prob=None, precipitation_sum=2.0, weather_description="",
         )],
     )
@@ -221,11 +237,12 @@ def _ks_with_full_research(dest: str, country: str = "Japan") -> KnowledgeState:
 
 def _ks_with_full_research_and_weather(dest: str, country: str = "Japan") -> KnowledgeState:
     ks = _ks_with_full_research(dest, country)
-    ks.update_weather(dest, DateRange.from_string("June 2026"), _minimal_weather(dest))
+    ks.update_weather(dest, DateRange.from_string(_future_month_label(6)), _minimal_weather(dest))
     return ks
 
 
-def _ks_with_weather_only(dest: str, label: str = "June 2026") -> KnowledgeState:
+def _ks_with_weather_only(dest: str, label: str | None = None) -> KnowledgeState:
+    label = label or _future_month_label(6)
     ks = KnowledgeState()
     ks.update_weather(dest, DateRange.from_string(label), _minimal_weather(dest, label))
     return ks
@@ -248,10 +265,11 @@ def _ks_with_ground_route(origin: str, dest: str) -> KnowledgeState:
 
 def _weather_ok(dest: str, date_range_str: str, ks: KnowledgeState) -> dict:
     """Update KS and return a response matching WeatherWrapperTool._template_summary (climate)."""
+    start, _ = _future_month_range(6)
     wo = WeatherOutput(
         mode="climate", city=dest,
         days=[DailyWeather(
-            date="2026-05-15", temp_max=35.0, temp_min=23.0,
+            date=start.isoformat(), temp_max=35.0, temp_min=23.0,
             precipitation_prob=None, precipitation_sum=8.5, weather_description="",
         )],
     )
@@ -291,7 +309,8 @@ def _itinerary_ok(destinations: list[str], ks: KnowledgeState) -> dict:
             )],
         ),
     ]
-    itinerary = Itinerary(destinations=destinations, start_date="2026-03-10", days=days)
+    start, _ = _future_month_range(6)
+    itinerary = Itinerary(destinations=destinations, start_date=start.isoformat(), days=days)
     ks.update_itinerary(frozenset(destinations), itinerary)
     return {"status": "ok", "summary": render_itinerary(itinerary)}
 
@@ -796,8 +815,12 @@ def weather_city_level_not_region_for_sikkim(llm, sc, sa, wc, cc, run):
 
 def weather_specific_date_range_when_dates_known(llm, sc, sa, wc, cc, run):
     """When user provides exact dates, date_range must be specific not month-only (W2)."""
+    start, end = _future_month_range(6, start_day=20, end_day=28)
+    month_name = start.strftime("%B")
     run.orchestrator = _make_orchestrator(llm, sc, sa, wc, cc)
-    run.response = run.orchestrator.turn("Plan my trip to Bali from June 20 to June 30 2026")
+    run.response = run.orchestrator.turn(
+        f"Plan my trip to Bali from {month_name} {start.day} to {month_name} {end.day} {start.year}"
+    )
     msgs = _messages(run.orchestrator)
 
     weather_calls = _get_tool_calls(msgs, "weather")
@@ -806,7 +829,9 @@ def weather_specific_date_range_when_dates_known(llm, sc, sa, wc, cc, run):
 
     assert weather_calls, "no weather call"
     specific = any(
-        "2026-06-20" in dr or "june 20" in dr.lower() or "20 june" in dr.lower()
+        start.isoformat() in dr
+        or f"{month_name.lower()} {start.day}" in dr.lower()
+        or f"{start.day} {month_name.lower()}" in dr.lower()
         for dr in date_ranges
     )
     assert specific, (

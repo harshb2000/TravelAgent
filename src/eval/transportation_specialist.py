@@ -17,6 +17,7 @@ Results saved to:
 import json
 import re
 import sys
+from datetime import date, timedelta
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -35,6 +36,11 @@ from tools.web_search import WebSearchTool
 _IATA_RE = re.compile(r"^[A-Z]{3}$")
 _AIRPORT_FORMAT_RE = re.compile(r".+Airport.+", re.IGNORECASE)
 _FLIGHT_MODES = {"flight/one-way", "flight/return"}
+
+
+def _future_date(days_ahead: int) -> str:
+    """ISO date `days_ahead` days from today — keeps eval dates perpetually in the future."""
+    return (date.today() + timedelta(days=days_ahead)).isoformat()
 
 
 # ---------------------------------------------------------------------------
@@ -171,7 +177,7 @@ def run_test(fn, llm, search_client, serpapi_client) -> dict:
 def multi_airport_city_uses_all_relevant_codes(llm, search_client, serpapi_client, run):
     """Bangkok has two major airports (BKK, DMK) — both must appear in flight_search (A1)."""
     run.specialist = _make_specialist(llm, search_client, serpapi_client)
-    run.options = run.specialist.run(RouteKey("Delhi", "Bangkok"), DateRange.from_string("2026-07-15"))
+    run.options = run.specialist.run(RouteKey("Delhi", "Bangkok"), DateRange.from_string(_future_date(30)))
     msgs = _history_messages(run.specialist)
     flight_calls = _get_tool_calls(msgs, "flight_search")
     assert flight_calls, "no flight_search call found"
@@ -194,11 +200,11 @@ def no_iata_re_resolution_when_already_in_history(llm, search_client, serpapi_cl
     run.specialist = _make_specialist(llm, search_client, serpapi_client)
 
     # First call — seeds BOM/NRT in history
-    run.specialist.run(RouteKey("Mumbai", "Tokyo"), DateRange.from_string("2026-07-01"))
+    run.specialist.run(RouteKey("Mumbai", "Tokyo"), DateRange.from_string(_future_date(30)))
     queries_after_first = _web_queries(_history_messages(run.specialist))
 
     # Second call — same city pair, different date
-    run.options = run.specialist.run(RouteKey("Mumbai", "Tokyo"), DateRange.from_string("2026-08-10"))
+    run.options = run.specialist.run(RouteKey("Mumbai", "Tokyo"), DateRange.from_string(_future_date(60)))
     queries_after_second = _web_queries(_history_messages(run.specialist))
 
     new_queries = queries_after_second[len(queries_after_first):]
@@ -225,7 +231,7 @@ def no_iata_re_resolution_when_already_in_history(llm, search_client, serpapi_cl
 def flight_search_uses_valid_iata_codes(llm, search_client, serpapi_client, run):
     """All codes passed to flight_search must match [A-Z]{3} — no city names or lowercase (A3)."""
     run.specialist = _make_specialist(llm, search_client, serpapi_client)
-    run.options = run.specialist.run(RouteKey("London", "Paris"), DateRange.from_string("2026-07-20"))
+    run.options = run.specialist.run(RouteKey("London", "Paris"), DateRange.from_string(_future_date(30)))
     msgs = _history_messages(run.specialist)
     flight_calls = _get_tool_calls(msgs, "flight_search")
     assert flight_calls, "no flight_search call found"
@@ -242,7 +248,7 @@ def flight_search_uses_valid_iata_codes(llm, search_client, serpapi_client, run)
 def single_airport_city_uses_exactly_one_code(llm, search_client, serpapi_client, run):
     """Singapore (SIN) and Dubai (DXB) each have one airport — no padding with spurious codes (A4)."""
     run.specialist = _make_specialist(llm, search_client, serpapi_client)
-    run.options = run.specialist.run(RouteKey("Singapore", "Dubai"), DateRange.from_string("2026-07-20"))
+    run.options = run.specialist.run(RouteKey("Singapore", "Dubai"), DateRange.from_string(_future_date(30)))
     msgs = _history_messages(run.specialist)
     flight_calls = _get_tool_calls(msgs, "flight_search")
     assert flight_calls, "no flight_search call found"
@@ -258,7 +264,7 @@ def no_airport_destination_routes_via_gateway_with_onward_transfer(llm, search_c
     """Mahabaleshwar has no airport — specialist must route via nearest gateway (PNQ/BOM)
     and include a ground TravelOption reaching Mahabaleshwar, not terminating at the gateway (A5)."""
     run.specialist = _make_specialist(llm, search_client, serpapi_client)
-    run.options = run.specialist.run(RouteKey("Delhi", "Mahabaleshwar"), DateRange.from_string("2026-07-15"))
+    run.options = run.specialist.run(RouteKey("Delhi", "Mahabaleshwar"), DateRange.from_string(_future_date(30)))
     msgs = _history_messages(run.specialist)
     flight_calls = _get_tool_calls(msgs, "flight_search")
     assert flight_calls, "no flight_search call found — expected flight to nearest gateway"
@@ -283,7 +289,7 @@ def island_destination_routes_via_mainland_gateway_with_ferry(llm, search_client
     """Koh Tao has no airport — specialist must route via a mainland gateway and include a
     ferry leg reaching Koh Tao, not terminating at the gateway city (A6)."""
     run.specialist = _make_specialist(llm, search_client, serpapi_client)
-    run.options = run.specialist.run(RouteKey("Delhi", "Koh Tao"), DateRange.from_string("2026-07-15"))
+    run.options = run.specialist.run(RouteKey("Delhi", "Koh Tao"), DateRange.from_string(_future_date(30)))
     msgs = _history_messages(run.specialist)
     flight_calls = _get_tool_calls(msgs, "flight_search")
     assert flight_calls, "no flight_search call found — expected flight to mainland gateway"
@@ -311,7 +317,7 @@ def island_destination_routes_via_mainland_gateway_with_ferry(llm, search_client
 def output_contains_transfers_at_both_city_endpoints(llm, search_client, serpapi_client, run):
     """Full path must include a ground transfer at the departure city and at the arrival city (B1)."""
     run.specialist = _make_specialist(llm, search_client, serpapi_client)
-    run.options = run.specialist.run(RouteKey("Mumbai", "Tokyo"), DateRange.from_string("2026-07-15"))
+    run.options = run.specialist.run(RouteKey("Mumbai", "Tokyo"), DateRange.from_string(_future_date(30)))
     flight_opts = _flight_options(run.options)
     ground_opts = _ground_options(run.options)
     assert flight_opts, "no flight TravelOption found"
@@ -329,7 +335,7 @@ def output_contains_transfers_at_both_city_endpoints(llm, search_client, serpapi
 def flight_options_use_airport_format(llm, search_client, serpapi_client, run):
     """Flight TravelOption origin/destination must follow '<IATA> Airport, <City>' format (B2)."""
     run.specialist = _make_specialist(llm, search_client, serpapi_client)
-    run.options = run.specialist.run(RouteKey("Mumbai", "Tokyo"), DateRange.from_string("2026-07-15"))
+    run.options = run.specialist.run(RouteKey("Mumbai", "Tokyo"), DateRange.from_string(_future_date(30)))
     flight_opts = _flight_options(run.options)
     assert flight_opts, "no flight TravelOption found"
     bad = []
@@ -346,7 +352,7 @@ def round_trip_uses_correct_modes_without_duplicate_ground_transfers(llm, search
     run.specialist = _make_specialist(llm, search_client, serpapi_client)
     run.options = run.specialist.run(
         RouteKey("Mumbai", "Tokyo"),
-        DateRange.from_string("2026-07-15 to 2026-07-25"),
+        DateRange.from_string(f"{_future_date(30)} to {_future_date(40)}"),
         trip_type="round_trip",
     )
     msgs = _history_messages(run.specialist)
