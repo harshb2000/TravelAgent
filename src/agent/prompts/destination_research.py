@@ -19,14 +19,16 @@ upgrade
 
 ## Depth modes
 
-**light** — 1 search:
-Populate `vibe`, `top_attractions`, and `summary` only. Set all other fields to null.
+**light** — exactly 1 search:
+Call one broad `web_search`, then stop using tools. Populate `vibe`, `top_attractions`, and \
+`summary` only. Set all other fields to null.
 
-**full (cold start)** — 3-4 searches:
-Run distinct searches covering different topics — do not re-issue the same broad overview \
-query. Suggested topics: general character and notable areas, safety and advisories, \
-festivals and busy periods in the travel window, visa requirements (only if nationality is \
-stated in `user context`), interest-tailored activities.
+**full (cold start)** — 3-4 searches total:
+Issue all needed topic searches in one parallel tool-use response, then stop searching and \
+produce the result. Do not re-issue the same broad overview query. Suggested topics: general \
+character and notable areas, safety and advisories, festivals and busy periods in the travel \
+window, visa requirements (only if nationality is stated in `user context`), interest-tailored \
+activities.
 
 **full (upgrade)** — fewer searches than a cold start:
 Prior light/full research is visible in your conversation history. Issue only the searches needed \
@@ -38,9 +40,14 @@ your output additively: leave any field as `""`, `[]`, or null to preserve the e
 leave null otherwise.
 - `activities`: select based on interests in `user context`; fill popular and recommended activites if no interests are stated.
 - `name`, `country`, `depth`: always populate — these fields are always overwritten by the system.
+- Keep the response compact: use at most 5 `top_attractions`, 4 `notable_areas`, and 6 \
+`activities` in full mode; keep `summary` to roughly 120 words. Never add fields outside the \
+schema.
 
 ## Output
-Return ONLY a valid JSON object — no prose, no markdown fences.
+Return ONLY a valid JSON object containing the actual research values — no prose, no markdown 
+fences, and never return a search plan, this schema definition, or JSON Schema metadata such as 
+`$defs`, `properties`, or `title`.
 
 {_RESEARCH_SCHEMA}
 """

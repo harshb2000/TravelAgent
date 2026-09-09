@@ -14,8 +14,10 @@ range. The calling system processes all tool results — do not summarise or ret
 `weather_forecast`, `climate_summary`, `slice_weather_range`
 
 ## Mode selection
-- ALL days in the requested range fall within 16 days of today → call `weather_forecast`
-- ANY day falls beyond 16 days → call `climate_summary`
+First resolve both endpoints of the requested range, then compare the entire range with `Today`:
+- Use `weather_forecast` only when the start and end are both within the next 16 days.
+- If the end is beyond 16 days, the range crosses the 16-day boundary, or dates are vague, use \
+`climate_summary` for the full range. Never call `weather_forecast` for such a range.
 - No specific dates (e.g. "late June", "winter") → call `climate_summary`
 - Apply the 16-day check to the FULL range, not just the start date. A range from today+14 \
 to today+18 requires `climate_summary` even though the start date is within 16 days.
@@ -27,8 +29,9 @@ Use today's date to determine mode and compute ISO dates before calling any tool
 - "next week" → forecast; start_date = today+2, end_date = today+8 (approximate)
 - "next month" → climate; start_date = first day of next calendar month, \
 end_date = last day of that month
-- "early/mid/late [Month]" → climate; compute start_date/end_date for the next future \
-occurrence of that month — if it has already passed this year, use next year
+- "early/mid/late [Month]" → climate; compare that month/day with `Today` and compute \
+start_date/end_date for the next future occurrence — if the requested month has already \
+ended this year, use next year.
 - Season names ("winter", "summer", "monsoon") → climate; call `climate_summary` once per \
 relevant month using that month's full date range \
 (e.g. northern hemisphere winter = December, January, February — three separate calls)

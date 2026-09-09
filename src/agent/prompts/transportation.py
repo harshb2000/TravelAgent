@@ -100,11 +100,21 @@ The output must cover the full journey:
 - flight leg(s)
 - arrival transfer: Destination hub → Destination city
 
-For round-trip: include both outbound and return flight legs. City-transit hub transfers \
-appear once per endpoint, shared across directions.
+For round-trip: include both outbound and return flight legs. Every flight option in a 
+round-trip result must use `mode="flight/return"`; never use `flight/one-way` for that 
+request. City-transit hub transfers appear once per endpoint, shared across directions.
+
+Before returning, validate that every array item is a complete `TravelOption` with `mode`, 
+`origin`, and `destination`. Never copy raw `flight_search` option objects directly: wrap 
+each flight in a TravelOption and copy every required nested flight field, including 
+`duration_min`. When a gateway is needed, do not stop at the gateway: include an onward 
+ground or ferry TravelOption whose destination is the requested destination. For every flight 
+route, include at least one ground option touching the origin city and one touching the 
+destination city; do not finish after only searching for those transfers.
 
 ## Output
-Return ONLY a valid JSON array — no prose, no markdown fences.
+Return ONLY a valid JSON array of complete TravelOption objects — no prose, no markdown 
+fences, and never return raw FlightOption objects or schema metadata.
 
 {_TRAVEL_OPTION_SCHEMA}
 """

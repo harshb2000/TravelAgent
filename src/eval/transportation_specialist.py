@@ -246,9 +246,9 @@ def flight_search_uses_valid_iata_codes(llm, search_client, serpapi_client, run)
 
 
 def single_airport_city_uses_exactly_one_code(llm, search_client, serpapi_client, run):
-    """Singapore (SIN) and Dubai (DXB) each have one airport — no padding with spurious codes (A4)."""
+    """Singapore (SIN) and Doha (DOH) each have one main airport — no padding with spurious codes (A4)."""
     run.specialist = _make_specialist(llm, search_client, serpapi_client)
-    run.options = run.specialist.run(RouteKey("Singapore", "Dubai"), DateRange.from_string(_future_date(30)))
+    run.options = run.specialist.run(RouteKey("Singapore", "Doha"), DateRange.from_string(_future_date(30)))
     msgs = _history_messages(run.specialist)
     flight_calls = _get_tool_calls(msgs, "flight_search")
     assert flight_calls, "no flight_search call found"
@@ -257,7 +257,7 @@ def single_airport_city_uses_exactly_one_code(llm, search_client, serpapi_client
     dests = args.get("destination_airports", [])
     run.extras["flight_search_args"] = {"origin_airports": origins, "destination_airports": dests}
     assert origins == ["SIN"], f"expected exactly ['SIN'] for Singapore, got {origins}"
-    assert dests == ["DXB"], f"expected exactly ['DXB'] for Dubai, got {dests}"
+    assert dests == ["DOH"], f"expected exactly ['DOH'] for Doha, got {dests}"
 
 
 def no_airport_destination_routes_via_gateway_with_onward_transfer(llm, search_client, serpapi_client, run):

@@ -28,6 +28,7 @@ from clients.llm_client import LLMClient
 from clients.search_client import SearchClient
 from config.settings import settings
 from config.specialist_tuning import resolve_model_config
+from models.knowledge_state import CostWithAttribution, DestinationBudget
 from models.specialist_outputs import BudgetSpecialistOutput
 from specialists.budget import BudgetSpecialist
 from tools.calculate import CalculateTool
@@ -59,12 +60,11 @@ def _make_llm() -> LLMClient:
     )
 
 
-def _make_specialist(llm: LLMClient, search_client: SearchClient) -> BudgetSpecialist:
-    return BudgetSpecialist(llm, [
-        WebSearchTool(search_client),
-        CurrencyConvertTool(CurrencyClient()),
-        CalculateTool(),
-    ])
+def _make_specialist(llm: LLMClient, search_client: SearchClient, include_search: bool = True) -> BudgetSpecialist:
+    tools = [CurrencyConvertTool(CurrencyClient()), CalculateTool()]
+    if include_search:
+        tools.insert(0, WebSearchTool(search_client))
+    return BudgetSpecialist(llm, tools)
 
 
 def _history_messages(specialist: BudgetSpecialist) -> list[dict]:
@@ -83,6 +83,17 @@ def _get_tool_calls(messages: list[dict], tool_name: str) -> list[dict]:
 
 def _parse_args(tc: dict) -> dict:
     return json.loads(tc["function"].get("arguments", "{}"))
+
+
+def _complete_budget() -> DestinationBudget:
+    """Seed all categories so focused tests do not spend web-search quota."""
+    cost = CostWithAttribution(amount=10.0)
+    return DestinationBudget(
+        accommodation={"mid-range hotel": cost},
+        food={"food": cost},
+        local_transport={"transit": cost},
+        activities={"sightseeing": cost},
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -155,10 +166,11 @@ def run_test(fn, llm, search_client) -> dict:
 
 def currency_convert_called_when_home_currency_given(llm, search_client, run):
     """currency_convert must be called and target INR when home currency is in user_context (A1)."""
-    run.specialist = _make_specialist(llm, search_client)
+    run.specialist = _make_specialist(llm, search_client, include_search=False)
     run.output = run.specialist.run(
         query="2 people, 7 nights Tokyo, mid-range",
         user_context="Home currency INR, budget ₹2.5L",
+        existing_budget=_complete_budget(),
     )
     msgs = _history_messages(run.specialist)
     cc_calls = _get_tool_calls(msgs, "currency_convert")
@@ -173,10 +185,11 @@ def currency_convert_called_when_home_currency_given(llm, search_client, run):
 
 def currency_convert_not_called_when_no_home_currency(llm, search_client, run):
     """currency_convert must not be called when query and user_context are USD-only (A2)."""
-    run.specialist = _make_specialist(llm, search_client)
+    run.specialist = _make_specialist(llm, search_client, include_search=False)
     run.output = run.specialist.run(
         query="1 person, 5 nights Bali, budget $800",
         user_context="",
+        existing_budget=_complete_budget(),
     )
     msgs = _history_messages(run.specialist)
     cc_calls = _get_tool_calls(msgs, "currency_convert")
@@ -196,9 +209,10 @@ def flight_return_round_trip_counted_once_not_twice(llm, search_client, run):
         "  Mumbai to Tokyo (2026-07-15): flight/return $900 (round-trip price, count once)\n"
         "  Tokyo to Mumbai (2026-07-22): flight/return $900 (round-trip price, count once)"
     )
-    run.specialist = _make_specialist(llm, search_client)
+    run.specialist = _make_specialist(llm, search_client, include_search=False)
     run.output = run.specialist.run(
         query="1 person, 3 nights Tokyo, flying from Mumbai round-trip",
+        existing_budget=_complete_budget(),
         travel_costs=travel_costs,
     )
     msgs = _history_messages(run.specialist)

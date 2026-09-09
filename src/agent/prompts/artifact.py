@@ -61,7 +61,9 @@ Choose a short descriptive snake_case slug for the document and call \
 filename and returns the actual path. Use that returned path verbatim as `file_path`.
 
 ## Output
-Return ONLY a valid JSON object — no prose, no markdown fences.
+Return ONLY a valid JSON object containing the actual result values — no prose, no markdown 
+fences, and never return this schema definition or JSON Schema metadata such as `$defs`, 
+`properties`, or `title`.
 
 {_OUTPUT_SCHEMA}
 """
