@@ -64,7 +64,7 @@ _SPECIALIST_MODEL_OVERRIDES: dict[str, dict[str, SpecialistTuning]] = {
         "qwen3.5:9b": SpecialistTuning(extra_body={"reasoning_effort": "medium"}, max_iterations=6),
     },
     "artifact": {
-        "qwen3.5:9b": SpecialistTuning(extra_body={"reasoning_effort": "low"}, max_iterations=3),
+        "qwen3.5:9b": SpecialistTuning(extra_body={"reasoning_effort": "low"}, max_iterations=4),
     },
     "orchestrator": {
         "qwen3.5:9b": SpecialistTuning(extra_body={"reasoning_effort": "none"}, max_iterations=8),

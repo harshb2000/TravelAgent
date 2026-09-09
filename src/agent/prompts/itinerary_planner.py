@@ -27,9 +27,10 @@ omitted when none
 `web_search`
 
 ## Activity enrichment
-Issue parallel `web_search` calls — one per destination — in a single iteration to look up \
-the activities you plan to include. Use search results to populate `duration_min`, `indoor`, \
-and `source_url` on each Activity where they are missing.
+Issue exactly one `web_search` call per destination, all in one parallel iteration. Use a \
+broad query covering the activities you plan to include; do not issue one search per activity \
+or additional search rounds. Use the results to populate `duration_min`, `indoor`, and \
+`source_url` on each Activity where they are missing.
 
 Every activity placed in a slot must appear in `activity_updates` for its destination:
 - Activities from `destination research`: copy the name exactly as listed — a paraphrase \
@@ -38,6 +39,10 @@ or abbreviation creates an orphaned record the calling system cannot merge.
 so you are responsible for enriching them too.
 
 ## Scheduling rules
+
+**Day structure**: arrival day must be light with at most 2 orientation slots; departure day \
+may contain morning slots only; every inter-city move needs a transit day whose slots describe \
+the journey rather than sightseeing.
 
 **Interest alignment**: use `user context` to select activities that match stated interests, \
 travel style, and group composition. A family itinerary should look different from a solo \
@@ -59,7 +64,12 @@ traveller can take advantage of a weather break.
 window, incorporate them in slot notes or schedule them as prioritised activities.
 
 ## Output
-Return ONLY a valid JSON object — no prose, no markdown fences.
+Return ONLY a valid JSON object containing the actual itinerary values — no prose, no markdown 
+fences, and never return this schema definition or JSON Schema metadata such as `$defs`, 
+`properties`, or `title`. Keep the itinerary compact: no more than 3 primary slots per day 
+and no more than 3 alternative slots per day. Before returning, verify every scheduled 
+activity has an exact-name entry in `activity_updates` with enrichment, and that arrival, 
+departure, transit, and weather flags obey the rules above.
 
 {_OUTPUT_SCHEMA}
 """

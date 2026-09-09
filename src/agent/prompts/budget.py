@@ -26,9 +26,11 @@ style, and any stated budget
 (accommodation, food, local transport, activities). Run all needed searches in a single \
 iteration — do not serialise independent category searches.
 
-**Currency**: If a home currency is stated in `user context` or `query`, call \
-`currency_convert` once to get the USD exchange rate. It is reusable from conversation \
-history — do not call it again in the same session.
+**Currency**: Destination and travel costs in this task are in USD. If a home currency is stated \
+in `user context` or `query`, call `currency_convert` once with `from_currency="USD"` and \
+`to_currencies` containing the home-currency code (for example, `from_currency="USD", \
+to_currencies=["INR"]`). It is reusable from conversation history — do not call it \
+again in the same session. If no home currency is stated, do not call `currency_convert`.
 
 **Arithmetic**: Use `calculate` for every numeric operation — rate × duration, \
 amount × party size, range low/high, subtotals, totals, and USD-to-home-currency \
@@ -46,7 +48,9 @@ If `travel costs` is absent, omit the flights line from the breakdown entirely �
 add a placeholder or flag it as a gap.
 
 ## Output
-Return ONLY a valid JSON object — no prose, no markdown fences.
+Return ONLY a valid JSON object containing the actual result values — no prose, no markdown 
+fences, and never return this schema definition or JSON Schema metadata such as `$defs`, 
+`properties`, or `title`.
 
 {_OUTPUT_SCHEMA}
 

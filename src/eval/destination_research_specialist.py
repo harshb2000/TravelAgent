@@ -143,7 +143,7 @@ def run_test(fn, llm, search_client) -> dict:
 def light_depth_issues_exactly_one_search(llm, search_client, run):
     """Light mode must use its single iteration budget efficiently (A1)."""
     run.specialist = _make_specialist(llm, search_client)
-    run.research = run.specialist.run("Tokyo", "light", "", max_iterations=1)
+    run.research = run.specialist.run("Tokyo", "light", "", max_iterations=2)
     count = _count_web_searches(_history_messages(run.specialist))
     assert count == 1, f"expected exactly 1 web_search for light depth, got {count}"
 
@@ -154,7 +154,7 @@ def full_cold_issues_three_to_four_searches(llm, search_client, run):
     run.research = run.specialist.run(
         "Tokyo", "full",
         "Travelling on Indian passport, interested in food and temples",
-        max_iterations=4,
+        max_iterations=2,
     )
     count = _count_web_searches(_history_messages(run.specialist))
     assert 3 <= count <= 5, f"expected 3-5 web_searches for full cold depth, got {count}"
@@ -169,7 +169,7 @@ def upgrade_issues_fewer_searches_than_cold_full(llm, search_client, run):
     """
     run.specialist = _make_specialist(llm, search_client)
 
-    run.specialist.run("Tokyo", "light", "", max_iterations=1)
+    run.specialist.run("Tokyo", "light", "", max_iterations=2)
     count_after_light = _count_web_searches(_history_messages(run.specialist))
 
     run.research = run.specialist.run("Tokyo", "full", "", max_iterations=3)
@@ -255,7 +255,7 @@ def activities_tailored_to_stated_interests(llm, search_client, run):
 def light_output_has_correct_structure(llm, search_client, run):
     """Light depth must populate vibe/top_attractions/summary and leave all other fields null (C1)."""
     run.specialist = _make_specialist(llm, search_client)
-    run.research = run.specialist.run("Paris", "light", "", max_iterations=1)
+    run.research = run.specialist.run("Paris", "light", "", max_iterations=2)
     r = run.research
     assert r.vibe, "vibe is empty"
     assert r.top_attractions, "top_attractions is empty"

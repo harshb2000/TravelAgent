@@ -11,11 +11,11 @@ Section 5: User-facing response quality
 Tests use the real Orchestrator with real specialists and real APIs.
 KnowledgeState is pre-built synthetically where preconditions are needed.
 
-Error-injection tests patch a single wrapper tool's execute method via
-_patch(orchestrator, tool_name, response_or_sequence) — all other specialists
-remain real. _Sequence lets the patched tool return different responses across
-successive calls, enabling the re-invocation paths (IP5, AR2, W4/W5, etc.)
-to be exercised deterministically without stubs.
+Orchestrator tests use deterministic wrapper stubs by default; specialist suites cover
+live specialist/tool behavior separately. Error-injection tests patch a single wrapper
+tool's execute method via `_patch(orchestrator, tool_name, response_or_sequence)`.
+`_Sequence` lets the patched tool return different responses across successive calls,
+enabling re-invocation paths (IP5, AR2, W4/W5, etc.) to be exercised deterministically.
 
 Usage (from src/):
     python eval/orchestrator.py [filter ...]
@@ -24,7 +24,9 @@ Results saved to:
     src/eval/results/orchestrator/<timestamp>.json
 """
 
+import argparse
 import json
+import re
 import sys
 from datetime import date
 from pathlib import Path
@@ -124,6 +126,63 @@ def _patch(orchestrator: Orchestrator, tool_name: str, response) -> None:
         tool.execute = lambda **_kw: dict(response)
 
 
+def _install_test_stubs(orchestrator: Orchestrator) -> None:
+    """Keep orchestrator tests focused on decisions, not downstream API behavior."""
+    knowledge = orchestrator._knowledge
+
+    def explorer(**_kwargs) -> dict:
+        return {"status": "ok", "summary": "Found 3 suitable destination candidates."}
+
+    def research(**kwargs) -> dict:
+        destination = kwargs.get("destination", "")
+        depth = kwargs.get("depth", "light")
+        if destination:
+            source = (_ks_with_full_research if depth == "full" else _ks_with_light_research)(destination)
+            knowledge.update_research(destination, source.destinations[destination].research)
+        return {"status": "ok", "summary": f"{depth} research complete for {destination}."}
+
+    def weather(**kwargs) -> dict:
+        destination = kwargs.get("destination", "")
+        date_range = kwargs.get("date_range", "next few months")
+        return _weather_ok(destination, date_range, knowledge)
+
+    def transportation(**kwargs) -> dict:
+        origin = kwargs.get("origin", "")
+        destination = kwargs.get("destination", "")
+        date_range = kwargs.get("date_range") or "any"
+        if origin and destination:
+            option = TravelOption(
+                mode="flight/one-way",
+                origin=f"{origin} Airport, {origin}",
+                destination=f"{destination} Airport, {destination}",
+                duration_min=120,
+                cost_usd=100.0,
+            )
+            knowledge.update_route(origin, destination, DateRange.from_string(date_range), [option])
+        return {"status": "ok", "summary": f"Transport options found for {origin} to {destination}."}
+
+    def budget(**_kwargs) -> dict:
+        return {"status": "ok", "summary": "Budget estimate complete."}
+
+    def itinerary(**kwargs) -> dict:
+        destinations = kwargs.get("destinations") or ["Unknown"]
+        return _itinerary_ok(destinations, knowledge)
+
+    def artifact(**_kwargs) -> dict:
+        return {"status": "ok", "summary": "Artifact saved to: /tmp/test_artifact.md"}
+
+    for name, execute in {
+        "explorer": explorer,
+        "destination_research": research,
+        "weather": weather,
+        "transportation": transportation,
+        "budget": budget,
+        "itinerary_planner": itinerary,
+        "artifact": artifact,
+    }.items():
+        orchestrator._agent._tools[name].execute = execute
+
+
 # ---------------------------------------------------------------------------
 # Orchestrator factory — mirrors main.py exactly
 # ---------------------------------------------------------------------------
@@ -171,7 +230,9 @@ def _make_orchestrator(
         ),
     }
 
-    return Orchestrator(llm, user_context, knowledge, specialists)
+    orchestrator = Orchestrator(llm, user_context, knowledge, specialists)
+    _install_test_stubs(orchestrator)
+    return orchestrator
 
 
 # ---------------------------------------------------------------------------
@@ -451,7 +512,7 @@ def run_test(fn, llm, search_client, serpapi_client, weather_client, currency_cl
 def routing_no_explorer_for_decided_destination(llm, sc, sa, wc, cc, run):
     """Explorer must not be called when destination is decided; research must be (A1)."""
     run.orchestrator = _make_orchestrator(llm, sc, sa, wc, cc)
-    run.response = run.orchestrator.turn("I want to plan a trip to Tokyo in June")
+    run.response = run.orchestrator.turn("Tell me about Tokyo in June")
     msgs = _messages(run.orchestrator)
 
     explorer_calls = _get_tool_calls(msgs, "explorer")
@@ -521,7 +582,9 @@ def routing_itinerary_requires_weather(llm, sc, sa, wc, cc, run):
     run.orchestrator = _make_orchestrator(
         llm, sc, sa, wc, cc, knowledge=_ks_with_full_research("Bali", country="Indonesia")
     )
-    run.response = run.orchestrator.turn("Plan my Bali itinerary for August")
+    run.response = run.orchestrator.turn(
+        "Plan my 7-day Bali itinerary for August, flying from Sydney"
+    )
     msgs = _messages(run.orchestrator)
 
     weather_calls = _get_tool_calls(msgs, "weather")
@@ -559,7 +622,9 @@ def routing_budget_after_research_and_transport(llm, sc, sa, wc, cc, run):
 def routing_no_artifact_without_explicit_request(llm, sc, sa, wc, cc, run):
     """Artifact must not be called for an overview request; research must be light depth (A6)."""
     run.orchestrator = _make_orchestrator(llm, sc, sa, wc, cc)
-    run.response = run.orchestrator.turn("Tell me about Lisbon")
+    run.response = run.orchestrator.turn(
+        "Give me a brief general overview of Lisbon only; do not plan a trip or create a document."
+    )
     msgs = _messages(run.orchestrator)
 
     artifact_calls = _get_tool_calls(msgs, "artifact")
@@ -617,7 +682,9 @@ def routing_no_research_when_full_in_state(llm, sc, sa, wc, cc, run):
         llm, sc, sa, wc, cc,
         knowledge=_ks_with_full_research_and_weather("Paris", country="France"),
     )
-    run.response = run.orchestrator.turn("Can you plan a Paris itinerary?")
+    run.response = run.orchestrator.turn(
+        f"Use the full Paris research and weather already in your KnowledgeState to plan a 7-day itinerary for {_future_month_label(6)}, flying from London. Do not research Paris again."
+    )
     msgs = _messages(run.orchestrator)
 
     research_calls = _get_tool_calls(msgs, "destination_research")
@@ -675,7 +742,9 @@ def routing_research_weather_transport_parallel(llm, sc, sa, wc, cc, run):
 def routing_multi_destination_weather_parallel(llm, sc, sa, wc, cc, run):
     """Weather for multiple destinations must be issued in a single parallel turn (C2)."""
     run.orchestrator = _make_orchestrator(llm, sc, sa, wc, cc)
-    run.response = run.orchestrator.turn("Get me weather for Tokyo and Kyoto in October")
+    run.response = run.orchestrator.turn(
+        "Weather only: check October 2026 weather separately for Tokyo and Kyoto. Do not ask for flights, origin, traveler count, or preferences first."
+    )
     msgs = _messages(run.orchestrator)
 
     parallel_weather = any(
@@ -695,7 +764,9 @@ def routing_multi_destination_weather_parallel(llm, sc, sa, wc, cc, run):
 def routing_two_research_not_in_same_turn(llm, sc, sa, wc, cc, run):
     """Two destination_research calls must be sequential, never in the same turn (C3)."""
     run.orchestrator = _make_orchestrator(llm, sc, sa, wc, cc)
-    run.response = run.orchestrator.turn("Compare Tokyo and Seoul for a 2-week trip")
+    run.response = run.orchestrator.turn(
+        "Compare Tokyo and Seoul for a 2-week trip in October from London"
+    )
     msgs = _messages(run.orchestrator)
 
     same_turn_research = any(
@@ -735,7 +806,7 @@ def explorer_no_retry_on_hard_failure(llm, sc, sa, wc, cc, run):
     """On a hard explorer failure, no further specialist calls must appear (E4)."""
     run.orchestrator = _make_orchestrator(llm, sc, sa, wc, cc)
     _patch(run.orchestrator, "explorer",
-           {"status": "error", "summary": "ExplorerSpecialist failed: API key invalid"})
+           {"status": "error", "summary": "HARD FAILURE: ExplorerSpecialist failed because API credentials are invalid. Do not retry this tool or call downstream specialists."})
     run.response = run.orchestrator.turn("Find me a beach destination in South East Asia")
     msgs = _messages(run.orchestrator)
 
@@ -993,7 +1064,7 @@ def transport_one_way_for_each_multi_city_leg(llm, sc, sa, wc, cc, run):
     """Every leg of a multi-city itinerary must use trip_type='one_way' (T2)."""
     run.orchestrator = _make_orchestrator(llm, sc, sa, wc, cc)
     run.response = run.orchestrator.turn(
-        "Fly London to Tokyo, then Tokyo to Bangkok, then Bangkok back to London"
+        f"Fly London to Tokyo, then Tokyo to Bangkok, then Bangkok back to London in {_future_month_label(2)} for 2 weeks"
     )
     msgs = _messages(run.orchestrator)
 
@@ -1017,7 +1088,10 @@ def transport_no_reverse_when_outbound_is_ground_only(llm, sc, sa, wc, cc, run):
     run.orchestrator = _make_orchestrator(
         llm, sc, sa, wc, cc, knowledge=_ks_with_ground_route("Chiang Mai", "Pai")
     )
-    run.response = run.orchestrator.turn("How do I get from Pai back to Chiang Mai?")
+    run.response = run.orchestrator.turn(
+        "The existing KnowledgeState already has ground transportation from Chiang Mai to Pai. "
+        "Using the symmetric ground-route rule, how do I get from Pai back to Chiang Mai?"
+    )
     msgs = _messages(run.orchestrator)
 
     transport_calls = _get_tool_calls(msgs, "transportation")
@@ -1050,7 +1124,7 @@ def itinerary_destinations_in_travel_order(llm, sc, sa, wc, cc, run):
     ))
     run.orchestrator = _make_orchestrator(llm, sc, sa, wc, cc, knowledge=ks)
     run.response = run.orchestrator.turn(
-        "I'm flying into Tokyo, spending 7 days there, then 3 days in Kyoto before flying home"
+        "I'm flying from London into Tokyo on October 1, 2026, spending 7 days there, then 3 days in Kyoto, returning to London on October 11, with mid-range hotels and a USD budget"
     )
     msgs = _messages(run.orchestrator)
 
@@ -1084,7 +1158,9 @@ def itinerary_missing_research_triggers_escalation_and_reinvocation(llm, sc, sa,
         lambda **kwargs: _itinerary_ok(kwargs.get("destinations", ["Kyoto"]), ks),
     )
     _patch(run.orchestrator, "itinerary_planner", itinerary_seq)
-    run.response = run.orchestrator.turn("Build a full itinerary for Kyoto in March")
+    run.response = run.orchestrator.turn(
+        "Build a full 5-day itinerary for Kyoto in March 2026, focused on culture and food at a mid-pace."
+    )
     msgs = _messages(run.orchestrator)
 
     research_calls = _get_tool_calls(msgs, "destination_research")
@@ -1128,8 +1204,8 @@ def artifact_query_preserves_requirements(llm, sc, sa, wc, cc, run):
     ks = _ks_with_full_research_and_weather("Tokyo")
     run.orchestrator = _make_orchestrator(llm, sc, sa, wc, cc, knowledge=ks)
     run.response = run.orchestrator.turn(
-        "Generate a full travel document for my Tokyo trip "
-        "with budget breakdown and day-by-day itinerary"
+        f"Generate a full travel document for my 7-day Tokyo trip in {_future_month_label(2)} "
+        "flying from London with budget breakdown and day-by-day itinerary"
     )
     msgs = _messages(run.orchestrator)
 
@@ -1160,7 +1236,10 @@ def artifact_needs_data_gaps_resolved_before_reinvocation(llm, sc, sa, wc, cc, r
     )
     run.orchestrator = _make_orchestrator(llm, sc, sa, wc, cc)
     _patch(run.orchestrator, "artifact", artifact_seq)
-    run.response = run.orchestrator.turn("Save my Kyoto trip plan to a document")
+    run.response = run.orchestrator.turn(
+        f"Save my 7-day Kyoto trip for {_future_month_label(2)} from London as a solo, "
+        "mid-range, culture-and-food-focused traveler to a document"
+    )
     msgs = _messages(run.orchestrator)
 
     artifact_positions = [
@@ -1494,11 +1573,31 @@ def main():
         response_capability_question_no_tool_calls,
     ]
 
-    filters = sys.argv[1:]
-    if filters:
-        tests = [fn for fn in all_tests if any(f in fn.__name__ for f in filters)]
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "filters", nargs="*",
+        help="substring filters matched against test names (legacy mode)",
+    )
+    parser.add_argument(
+        "-m", "--match", action="append", default=[], metavar="REGEX",
+        help="regular expression matched against test names; repeatable",
+    )
+    args = parser.parse_args()
+
+    selectors = [*args.filters, *args.match]
+    if selectors:
+        try:
+            regexes = [re.compile(pattern) for pattern in args.match]
+        except re.error as e:
+            parser.error(f"invalid test-name regex: {e}")
+        tests = [
+            fn for fn in all_tests
+            if any(
+                selector in fn.__name__ for selector in args.filters
+            ) or any(regex.search(fn.__name__) for regex in regexes)
+        ]
         if not tests:
-            print(f"No tests matched filters: {filters}")
+            print(f"No tests matched filters: {selectors}")
             print("Available tests:")
             for fn in all_tests:
                 print(f"  {fn.__name__}")
@@ -1506,30 +1605,38 @@ def main():
     else:
         tests = all_tests
 
+    results_dir = Path(__file__).parent / "results" / "orchestrator"
+    results_dir.mkdir(parents=True, exist_ok=True)
+    ts = dt.datetime.now().strftime("%Y%m%d_%H%M%S")
+    out_path = results_dir / f"{ts}.json"
+    run_at = dt.datetime.now().isoformat(timespec="seconds")
+
+    def save_results() -> None:
+        output = {
+            "specialist": "Orchestrator",
+            "run_at": run_at,
+            "model": settings.llm_model,
+            "results": results,
+            "summary": {
+                "passed": sum(r["passed"] for r in results),
+                "failed": sum(not r["passed"] for r in results),
+                "total": len(results),
+            },
+        }
+        out_path.write_text(json.dumps(output, indent=2))
+
     results = []
+    save_results()
     for fn in tests:
         print(f"  {fn.__name__} ... ", end="", flush=True)
         result = run_test(fn, llm, search_client, serpapi_client, weather_client, currency_client)
         results.append(result)
+        save_results()
         print("PASS" if result["passed"] else f"FAIL  {result['details']}")
 
     passed = sum(1 for r in results if r["passed"])
     total = len(results)
     print(f"\n{passed}/{total} passed")
-
-    output = {
-        "specialist": "Orchestrator",
-        "run_at": dt.datetime.now().isoformat(timespec="seconds"),
-        "model": settings.llm_model,
-        "results": results,
-        "summary": {"passed": passed, "failed": total - passed, "total": total},
-    }
-
-    results_dir = Path(__file__).parent / "results" / "orchestrator"
-    results_dir.mkdir(parents=True, exist_ok=True)
-    ts = dt.datetime.now().strftime("%Y%m%d_%H%M%S")
-    out_path = results_dir / f"{ts}.json"
-    out_path.write_text(json.dumps(output, indent=2))
     print(f"Results saved to {out_path}")
 
 
