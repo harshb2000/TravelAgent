@@ -9,6 +9,7 @@ from tools.base import BaseTool
 
 
 class ExplorerWrapperTool(BaseTool):
+    progress_level = 1
     name = "explorer"
     description = (
         "Discover destination candidates that match the user's travel intent."
@@ -45,25 +46,26 @@ class ExplorerWrapperTool(BaseTool):
         uc = self._user_context
         ks = self._knowledge
 
-        # Stage 1: drop any cached candidate that should be excluded based on
-        # the user's blocklist (name/country hard match, or tag majority rule).
-        eligible_cached = [c for c in ks.candidates if not c.should_exclude(uc.blocklist)]
+        with self.static_progress("Checking cached destinations"):
+            # Stage 1: drop any cached candidate that should be excluded based on
+            # the user's blocklist (name/country hard match, or tag majority rule).
+            eligible_cached = [c for c in ks.candidates if not c.should_exclude(uc.blocklist)]
 
-        # Stage 2: of the eligible cached candidates, keep only those whose content
-        # is sufficiently relevant to the current query (Jaccard on positive wordsets).
-        # Recency is intentionally not considered here — an older but relevant candidate
-        # is still valid cache data. Recency only affects presentation order in to_prompt_context.
-        query_wordset = build_wordset(query, uc.blocklist)
-        scored_cached: list[tuple[float, DestinationCandidate]] = []
-        for c in eligible_cached:
-            combined = c.wordset | query_wordset
-            if combined:
-                score = len(c.wordset & query_wordset) / len(combined)
-                if score >= EXPLORER_CACHE_THRESHOLD:
-                    scored_cached.append((score, c))
+            # Stage 2: of the eligible cached candidates, keep only those whose content
+            # is sufficiently relevant to the current query (Jaccard on positive wordsets).
+            # Recency is intentionally not considered here — an older but relevant candidate
+            # is still valid cache data. Recency only affects presentation order in to_prompt_context.
+            query_wordset = build_wordset(query, uc.blocklist)
+            scored_cached: list[tuple[float, DestinationCandidate]] = []
+            for c in eligible_cached:
+                combined = c.wordset | query_wordset
+                if combined:
+                    score = len(c.wordset & query_wordset) / len(combined)
+                    if score >= EXPLORER_CACHE_THRESHOLD:
+                        scored_cached.append((score, c))
 
-        # Sort by relevance score so slicing always returns the best matches first
-        scored_cached.sort(key=lambda x: -x[0])
+            # Sort by relevance score so slicing always returns the best matches first
+            scored_cached.sort(key=lambda x: -x[0])
         relevant_cached = [c for _, c in scored_cached]
         n_relevant_cached = len(relevant_cached)
 

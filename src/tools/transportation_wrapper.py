@@ -327,6 +327,7 @@ def _routes_resolved(
 # ---------------------------------------------------------------------------
 
 class TransportationWrapperTool(BaseTool):
+    progress_level = 1
     name = "transportation"
     description = (
         "Find flight and ground transfer options for a single city-to-city route. "
@@ -385,7 +386,9 @@ class TransportationWrapperTool(BaseTool):
         knowledge = self._knowledge
         is_round_trip = trip_type == "round_trip"
 
-        if _routes_resolved(origin, destination, date_range, knowledge, is_round_trip):
+        with self.static_progress("Checking saved routes"):
+            route_found = _routes_resolved(origin, destination, date_range, knowledge, is_round_trip)
+        if route_found:
             return {"status": "ok", "summary": _build_route_summary(route_key, date_range, knowledge, is_new=False, is_round_trip=is_round_trip), "from_cache": True}
 
         any_date_range = DateRange("any")
@@ -415,8 +418,9 @@ class TransportationWrapperTool(BaseTool):
             for (leg_origin, leg_destination, leg_date_range), grouped_options in options_by_key.items():
                 knowledge.update_route(leg_origin, leg_destination, leg_date_range, grouped_options)
 
-            if _routes_resolved(origin, destination, date_range, knowledge, is_round_trip):
-                success = True
+            with self.static_progress("Checking path completion"):
+                success = _routes_resolved(origin, destination, date_range, knowledge, is_round_trip)
+            if success:
                 break
 
         if not success:

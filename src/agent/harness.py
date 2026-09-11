@@ -1,9 +1,11 @@
 import json
 import sys
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from contextlib import nullcontext
 from typing import Any
 
 from clients.llm_client import LLMClient
+from notifications import ProgressNotifier
 from tools.base import BaseTool
 from agent.session import ConversationHistory
 
@@ -24,6 +26,7 @@ class SimpleReActAgent:
         debug: bool = False,
         extra_body: dict[str, Any] | None = None,
         timeout: float | None = None,
+        progress_notifier: ProgressNotifier | None = None,
     ):
         self._llm = llm_client
         self._tools = {t.name: t for t in tools}
@@ -33,6 +36,10 @@ class SimpleReActAgent:
         self._debug = debug
         self._extra_body = extra_body
         self._timeout = timeout
+        self._progress = progress_notifier
+        if self._progress:
+            for tool in self._tools.values():
+                tool.progress_notifier = self._progress
 
     def run(self, task: str) -> str:
         self._history.add_user(task)
@@ -81,6 +88,8 @@ class SimpleReActAgent:
                 return final_msg.get("content") or ""
 
     def _dispatch_tool_calls(self, tool_calls: list[dict]) -> None:
+        parent_id = self._progress.current_parent_id() if self._progress else None
+
         def execute_one(tc: dict) -> tuple[str, str]:
             call_id = tc["id"]
             name = tc["function"]["name"]
@@ -94,13 +103,21 @@ class SimpleReActAgent:
                 print(f"[debug] → {name}({args_raw[:120]})", file=sys.stderr)
 
             tool = self._tools.get(name)
-            if tool is None:
-                result = {"status": "error", "error": f"unknown tool: {name}"}
-            else:
-                try:
-                    result = tool.execute(**args)
-                except Exception as e:
-                    result = {"status": "error", "error": str(e), "fallback": ""}
+            progress_id = None
+            if self._progress and tool is not None:
+                progress_id = tool.start_progress(args)
+            parent = progress_id if self._progress and tool and tool.progress_level == 1 else parent_id
+            with self._progress.parent(parent) if self._progress else nullcontext():
+                if tool is None:
+                    result = {"status": "error", "error": f"unknown tool: {name}"}
+                else:
+                    try:
+                        result = tool.execute(**args)
+                    except Exception as e:
+                        result = {"status": "error", "error": str(e), "fallback": ""}
+                    finally:
+                        if self._progress and progress_id:
+                            self._progress.resolve(progress_id)
 
             content = json.dumps(result)
             if self._debug:

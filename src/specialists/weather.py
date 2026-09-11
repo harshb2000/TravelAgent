@@ -1,6 +1,7 @@
 import json
 import sys
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from contextlib import nullcontext
 from datetime import date
 
 from agent.prompts.weather import WEATHER_PROMPT
@@ -8,6 +9,7 @@ from clients.llm_client import LLMClient
 from config.specialist_tuning import resolve_tuning
 from models.knowledge_state import KnowledgeState, DateRange
 from models.weather import WeatherOutput, DailyWeather
+from notifications import ProgressNotifier
 from tools.base import BaseTool
 
 
@@ -27,12 +29,17 @@ class WeatherSpecialist:
         tools: list[BaseTool],
         knowledge: KnowledgeState,
         debug: bool = False,
+        progress_notifier: ProgressNotifier | None = None,
     ):
         self._llm = llm_client
         self._knowledge = knowledge
         self._tool_map = {t.name: t for t in tools}
         self._tool_defs = [t.to_llm_definition() for t in tools] or None
         self._debug = debug
+        self._progress = progress_notifier
+        if self._progress:
+            for tool in self._tool_map.values():
+                tool.progress_notifier = self._progress
         self._tuning = resolve_tuning("weather", llm_client.model)
 
     def run(
@@ -102,6 +109,8 @@ class WeatherSpecialist:
         self._knowledge.update_weather(destination, target_dr, wo)
 
     def _dispatch(self, tool_calls: list[dict]) -> list[tuple[str, str]]:
+        parent_id = self._progress.current_parent_id() if self._progress else None
+
         def run_one(tc: dict) -> tuple[str, str]:
             call_id = tc["id"]
             name = tc["function"]["name"]
@@ -112,13 +121,20 @@ class WeatherSpecialist:
             if self._debug:
                 print(f"[debug] → {name}({tc['function'].get('arguments', '')[:120]})", file=sys.stderr)
             tool = self._tool_map.get(name)
-            if tool is None:
-                result = {"status": "error", "error": f"unknown tool: {name}"}
-            else:
-                try:
-                    result = tool.execute(**args)
-                except Exception as e:
-                    result = {"status": "error", "error": str(e)}
+            progress_id = None
+            if self._progress and tool is not None:
+                progress_id = tool.start_progress(args)
+            with self._progress.parent(parent_id) if self._progress else nullcontext():
+                if tool is None:
+                    result = {"status": "error", "error": f"unknown tool: {name}"}
+                else:
+                    try:
+                        result = tool.execute(**args)
+                    except Exception as e:
+                        result = {"status": "error", "error": str(e)}
+                    finally:
+                        if self._progress and progress_id:
+                            self._progress.resolve(progress_id)
             content = json.dumps(result)
             if self._debug:
                 print(f"[debug] ← {name}: {content[:200]}", file=sys.stderr)

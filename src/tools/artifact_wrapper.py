@@ -22,6 +22,7 @@ def _append_footer(file_path: str) -> None:
 
 
 class ArtifactWrapperTool(BaseTool):
+    progress_level = 1
     name = "artifact"
     description = (
         "Generate and save a travel document to disk. "
@@ -56,7 +57,8 @@ class ArtifactWrapperTool(BaseTool):
 
     def execute(self, **kwargs) -> dict:
         query: str = kwargs["query"]
-        knowledge = self._knowledge.to_prompt_context(self._user_context, artifact_mode=True)
+        with self.static_progress("Compiling document context"):
+            knowledge = self._knowledge.to_prompt_context(self._user_context, artifact_mode=True)
 
         try:
             result = self._specialist.run(query, knowledge)

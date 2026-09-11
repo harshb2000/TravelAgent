@@ -8,6 +8,7 @@ from agent.harness import SimpleReActAgent
 from agent.prompts.transportation import TRANSPORTATION_PROMPT
 from clients.llm_client import LLMClient
 from config.specialist_tuning import resolve_tuning
+from notifications import ProgressNotifier
 from models.knowledge_state import DateRange, RouteKey, TravelOption
 from tools.base import BaseTool
 
@@ -60,7 +61,7 @@ def _parse_travel_options(text: str) -> list[TravelOption]:
 
 
 class TransportationSpecialist:
-    def __init__(self, llm_client: LLMClient, tools: list[BaseTool], debug: bool = False):
+    def __init__(self, llm_client: LLMClient, tools: list[BaseTool], debug: bool = False, progress_notifier: ProgressNotifier | None = None):
         tuning = resolve_tuning("transportation", llm_client.model)
         self._default_max_iterations = tuning.max_iterations
         self._agent = SimpleReActAgent(
@@ -71,6 +72,7 @@ class TransportationSpecialist:
             debug=debug,
             extra_body=tuning.extra_body,
             timeout=tuning.timeout_s,
+            progress_notifier=progress_notifier,
         )
         self._last_run_max_iterations: int | None = None
 

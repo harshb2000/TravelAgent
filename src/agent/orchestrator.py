@@ -5,6 +5,7 @@ from agent.prompts.orchestrator import ORCHESTRATOR_PROMPT
 from clients.llm_client import LLMClient
 from config.specialist_tuning import resolve_tuning
 from models.knowledge_state import KnowledgeState, UserContext
+from notifications import ProgressNotifier
 from tools.artifact_wrapper import ArtifactWrapperTool
 from tools.budget_wrapper import BudgetWrapperTool
 from tools.destination_research_wrapper import DestinationResearchWrapperTool
@@ -23,6 +24,7 @@ class Orchestrator:
         knowledge: KnowledgeState,
         specialists: dict,
         debug: bool = False,
+        progress_notifier: ProgressNotifier | None = None,
     ):
         self._user_context = user_context
         self._knowledge = knowledge
@@ -42,6 +44,7 @@ class Orchestrator:
         self._agent = SimpleReActAgent(
             llm_client, wrapper_tools, ORCHESTRATOR_PROMPT, max_iterations=tuning.max_iterations, debug=debug,
             extra_body=tuning.extra_body, timeout=tuning.timeout_s,
+            progress_notifier=progress_notifier,
         )
 
     def turn(self, user_input: str) -> str:

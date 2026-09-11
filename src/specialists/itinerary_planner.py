@@ -8,6 +8,7 @@ from agent.harness import SimpleReActAgent
 from agent.prompts.itinerary_planner import ITINERARY_PLANNER_PROMPT
 from clients.llm_client import LLMClient
 from config.specialist_tuning import resolve_tuning
+from notifications import ProgressNotifier
 from models.specialist_outputs import ItineraryPlannerOutput
 from tools.base import BaseTool
 
@@ -42,7 +43,7 @@ def _parse_itinerary_output(text: str) -> ItineraryPlannerOutput:
 
 
 class ItineraryPlannerSpecialist:
-    def __init__(self, llm_client: LLMClient, tools: list[BaseTool], debug: bool = False):
+    def __init__(self, llm_client: LLMClient, tools: list[BaseTool], debug: bool = False, progress_notifier: ProgressNotifier | None = None):
         tuning = resolve_tuning("itinerary_planner", llm_client.model)
         self._default_max_iterations = tuning.max_iterations
         self._agent = SimpleReActAgent(
@@ -53,6 +54,7 @@ class ItineraryPlannerSpecialist:
             debug=debug,
             extra_body=tuning.extra_body,
             timeout=tuning.timeout_s,
+            progress_notifier=progress_notifier,
         )
 
     def run(

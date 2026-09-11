@@ -5,6 +5,7 @@ from tools.base import BaseTool
 
 
 class ItineraryPlannerWrapperTool(BaseTool):
+    progress_level = 1
     name = "itinerary_planner"
     description = "Build or refine a day-by-day itinerary for one or more destinations, with weather-aware scheduling."
     parameters = {
@@ -41,7 +42,8 @@ class ItineraryPlannerWrapperTool(BaseTool):
         query: str = kwargs["query"]
         destinations: list[str] = kwargs["destinations"]
 
-        missing = _missing_full_research(destinations, self._knowledge)
+        with self.static_progress("Checking itinerary inputs"):
+            missing = _missing_full_research(destinations, self._knowledge)
         if missing:
             return {
                 "status": "error",
@@ -52,8 +54,9 @@ class ItineraryPlannerWrapperTool(BaseTool):
                 ),
             }
 
-        destination_research = _build_research_context(destinations, self._knowledge)
-        weather = _build_weather_context(destinations, self._knowledge)
+        with self.static_progress("Compiling itinerary context"):
+            destination_research = _build_research_context(destinations, self._knowledge)
+            weather = _build_weather_context(destinations, self._knowledge)
 
         try:
             result = self._specialist.run(

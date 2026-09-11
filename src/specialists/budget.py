@@ -8,6 +8,7 @@ from agent.harness import SimpleReActAgent
 from agent.prompts.budget import BUDGET_PROMPT
 from clients.llm_client import LLMClient
 from config.specialist_tuning import resolve_tuning
+from notifications import ProgressNotifier
 from models.knowledge_state import DestinationBudget
 from models.specialist_outputs import BudgetSpecialistOutput
 from tools.base import BaseTool
@@ -43,7 +44,7 @@ def _parse_budget_output(text: str) -> BudgetSpecialistOutput:
 
 
 class BudgetSpecialist:
-    def __init__(self, llm_client: LLMClient, tools: list[BaseTool], debug: bool = False):
+    def __init__(self, llm_client: LLMClient, tools: list[BaseTool], debug: bool = False, progress_notifier: ProgressNotifier | None = None):
         tuning = resolve_tuning("budget", llm_client.model)
         self._default_max_iterations = tuning.max_iterations
         self._agent = SimpleReActAgent(
@@ -54,6 +55,7 @@ class BudgetSpecialist:
             debug=debug,
             extra_body=tuning.extra_body,
             timeout=tuning.timeout_s,
+            progress_notifier=progress_notifier,
         )
         self._last_run_max_iterations: int | None = None
         self._last_run_task: str | None = None

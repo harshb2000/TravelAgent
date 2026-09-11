@@ -7,6 +7,7 @@ from agent.harness import SimpleReActAgent
 from agent.prompts.artifact import ARTIFACT_PROMPT
 from clients.llm_client import LLMClient
 from config.specialist_tuning import resolve_tuning
+from notifications import ProgressNotifier
 from models.specialist_outputs import ArtifactOutput
 from tools.base import BaseTool
 
@@ -41,7 +42,7 @@ def _parse_artifact_output(text: str) -> ArtifactOutput:
 
 
 class ArtifactSpecialist:
-    def __init__(self, llm_client: LLMClient, tools: list[BaseTool], debug: bool = False):
+    def __init__(self, llm_client: LLMClient, tools: list[BaseTool], debug: bool = False, progress_notifier: ProgressNotifier | None = None):
         tuning = resolve_tuning("artifact", llm_client.model)
         self._agent = SimpleReActAgent(
             llm_client=llm_client,
@@ -51,6 +52,7 @@ class ArtifactSpecialist:
             debug=debug,
             extra_body=tuning.extra_body,
             timeout=tuning.timeout_s,
+            progress_notifier=progress_notifier,
         )
         self._last_run_task: str | None = None
 

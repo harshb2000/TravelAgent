@@ -5,6 +5,7 @@ from tools.base import BaseTool
 
 
 class WeatherWrapperTool(BaseTool):
+    progress_level = 1
     name = "weather"
     description = (
         "Get weather forecast or historical climate summary for a destination and date range."

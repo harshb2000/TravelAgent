@@ -4,6 +4,7 @@ from tools.base import BaseTool
 
 
 class BudgetWrapperTool(BaseTool):
+    progress_level = 1
     name = "budget"
     description = (
         "Calculate a detailed trip budget — accommodation, food, local transport, and activities — "
@@ -45,9 +46,10 @@ class BudgetWrapperTool(BaseTool):
         query: str = kwargs["query"]
         destination: str = kwargs["destination"]
 
-        dk = self._knowledge.destinations.get(destination)
-        existing_budget = dk.budget if dk else None
-        travel_costs = _build_travel_costs(self._knowledge)
+        with self.static_progress("Checking saved travel costs"):
+            dk = self._knowledge.destinations.get(destination)
+            existing_budget = dk.budget if dk else None
+            travel_costs = _build_travel_costs(self._knowledge)
 
         try:
             result = self._specialist.run(

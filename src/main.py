@@ -1,5 +1,6 @@
 import argparse
 import sys
+import threading
 
 import nltk
 from rich.console import Console
@@ -13,6 +14,7 @@ from clients.search_client import SearchClient
 from clients.serpapi_client import SerpApiClient
 from clients.weather_client import WeatherClient
 from models.knowledge_state import KnowledgeState, UserContext
+from notifications import ProgressNotifier
 from tools.calculate import CalculateTool
 from tools.climate_summary import ClimateSummaryTool
 from tools.currency_convert import CurrencyConvertTool
@@ -80,6 +82,21 @@ def main() -> None:
         model=settings.llm_model,
         extra_headers=resolve_model_config(settings.llm_model).extra_headers,
     )
+    progress = ProgressNotifier(LLMClient(
+        base_url=settings.llm_base_url,
+        api_key=settings.llm_api_key,
+        model="qwen3.5:0.8b",
+    ))
+    progress_events = progress.subscribe()
+
+    def print_progress() -> None:
+        for event in progress.events(progress_events):
+            parent = f" parent={event.parent_id}" if event.parent_id else ""
+            marker = "○" if event.status == "pending" else "✓"
+            style = "dim" if event.status == "pending" else "green"
+            console.print(f"[{style}]{marker} {event.entry_id}{parent} L{event.level}: {event.label}[/{style}]")
+
+    threading.Thread(target=print_progress, daemon=True).start()
     serpapi_client = SerpApiClient(settings.serpapi_api_key)
     weather_client = WeatherClient()
     currency_client = CurrencyClient()
@@ -110,22 +127,23 @@ def main() -> None:
 
     # Specialists
     specialists = {
-        "explorer": ExplorerSpecialist(llm_client, [web_search], debug=args.debug),
-        "weather": WeatherSpecialist(llm_client, [weather_forecast, climate_summary, slice_weather], knowledge, debug=args.debug),
-        "destination_research": DestinationResearchSpecialist(llm_client, [web_search], debug=args.debug),
-        "transportation": TransportationSpecialist(llm_client, [web_search, flight_search], debug=args.debug),
-        "budget": BudgetSpecialist(llm_client, [web_search, currency_convert, calculate], debug=args.debug),
-        "itinerary_planner": ItineraryPlannerSpecialist(llm_client, [web_search], debug=args.debug),
+        "explorer": ExplorerSpecialist(llm_client, [web_search], debug=args.debug, progress_notifier=progress),
+        "weather": WeatherSpecialist(llm_client, [weather_forecast, climate_summary, slice_weather], knowledge, debug=args.debug, progress_notifier=progress),
+        "destination_research": DestinationResearchSpecialist(llm_client, [web_search], debug=args.debug, progress_notifier=progress),
+        "transportation": TransportationSpecialist(llm_client, [web_search, flight_search], debug=args.debug, progress_notifier=progress),
+        "budget": BudgetSpecialist(llm_client, [web_search, currency_convert, calculate], debug=args.debug, progress_notifier=progress),
+        "itinerary_planner": ItineraryPlannerSpecialist(llm_client, [web_search], debug=args.debug, progress_notifier=progress),
         "artifact": ArtifactSpecialist(
             llm_client,
             [get_research, get_budget, get_weather_compiled, get_route, get_candidates,
              get_itinerary, self_critique, file_write],
             debug=args.debug,
+            progress_notifier=progress,
         ),
     }
 
     orchestrator = Orchestrator(
-        llm_client, user_context, knowledge, specialists, debug=args.debug,
+        llm_client, user_context, knowledge, specialists, debug=args.debug, progress_notifier=progress,
     )
 
     console.print("[bold]TravelAgent[/bold] — type your message, Ctrl-C to quit.\n")

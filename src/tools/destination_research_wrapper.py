@@ -4,6 +4,7 @@ from specialists.destination_research import DestinationResearchSpecialist
 
 
 class DestinationResearchWrapperTool(BaseTool):
+    progress_level = 1
     name = "destination_research"
     description = (
         "Research a destination — vibe, attractions, safety, visa requirements, "

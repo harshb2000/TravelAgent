@@ -29,7 +29,7 @@ def test_resolve_tuning_override_replaces_whole_entry_not_merged():
     # override sets max_iterations explicitly even though it matches the default value;
     # the returned object must be the override instance, not a merge of the two
     assert tuning is _SPECIALIST_MODEL_OVERRIDES["itinerary_planner"]["qwen3.5:9b"]
-    assert tuning.extra_body == {"reasoning_effort": "medium"}
+    assert tuning.extra_body == {"reasoning_effort": "none"}
     assert default.extra_body == {}
 
 
