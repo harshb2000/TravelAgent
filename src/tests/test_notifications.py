@@ -44,6 +44,30 @@ def test_progress_log_pairs_generated_pending_and_resolved():
     ]
 
 
+def test_label_llm_can_be_configured_after_notifier_creation():
+    progress = ProgressNotifier()
+    progress.set_llm(SlowLabelLLM())
+    events = progress.subscribe()
+
+    entry_id = progress.generated(level=1, name="weather", description="Weather", arguments={})
+    progress.resolve(entry_id)
+
+    assert events.get(timeout=1).label == "Checking forecast"
+    assert events.get(timeout=1).label == "Checking forecast"
+
+
+def test_replay_is_ordered_and_unsubscribe_stops_delivery():
+    progress = ProgressNotifier()
+    entry_id = progress.static_pending(level=1, label="Planning")
+    progress.resolve(entry_id)
+    events = progress.subscribe(replay=True)
+
+    assert [events.get(timeout=1).status, events.get(timeout=1).status] == ["pending", "resolved"]
+    progress.unsubscribe(events)
+    progress.static_pending(level=1, label="Ignored")
+    assert events.empty()
+
+
 def test_static_pending_resolves_later():
     progress = ProgressNotifier()
     q = progress.subscribe()

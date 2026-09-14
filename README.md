@@ -172,26 +172,57 @@ Unit tests check that the code runs. Evaluation checks that the agent *decides* 
 | | |
 |---|---|
 | **AI** | Hand-rolled tool-using agent loop · any OpenAI-compatible LLM — Claude, GPT, local Ollama models |
-| **Backend** | Python 3.13 · httpx · Pydantic + pydantic-settings |
+| **Backend** | Python 3.13 · FastAPI · httpx · Pydantic + pydantic-settings |
 | **Grounding** | SerpApi (flights) · Open-Meteo (weather & climate) · Tavily (web search) · Frankfurter (currency) |
-| **Evaluation** | pytest · custom assertion + LLM-as-judge harness |
-| **Interface** | CLI — argparse + Rich |
+| **Evaluation** | pytest · Playwright · custom assertion + LLM-as-judge harness |
+| **Interface** | Next.js · React · TypeScript · Tailwind CSS · CLI |
 
 ## Quick Start
 
-**Prerequisites:** Python 3.13 · API keys for an LLM provider, [SerpApi](https://serpapi.com), and [Tavily](https://tavily.com) — Open-Meteo and Frankfurter need no key.
+**Prerequisites:** Python 3.13 · Node.js 20.9+ · API keys for an LLM provider, [SerpApi](https://serpapi.com), and [Tavily](https://tavily.com) — Open-Meteo and Frankfurter need no key.
+
+### Install
 
 ```bash
 git clone https://github.com/harshb2000/TravelAgent.git && cd TravelAgent
-python3.13 -m venv .venv && source .venv/bin/activate
+python3.13 -m venv .venv
+source .venv/bin/activate
 pip install -r src/requirements.txt
+cp src/.env.example src/.env   # configure main, progress-label, SerpApi, and Tavily credentials
+npm --prefix web install
+```
 
-cp src/.env.example src/.env   # add LLM_API_KEY, SERPAPI_API_KEY, TAVILY_API_KEY
+### Run the web app
 
+Start the API and frontend in separate terminals:
+
+```bash
+source .venv/bin/activate
+python -m uvicorn api.app:app --reload --port 8000
+```
+
+```bash
+npm --prefix web run dev
+```
+
+Open http://localhost:3000. Conversations and generated artifacts are temporary and scoped to the browser tab's UUID.
+
+### Run the CLI
+
+```bash
+source .venv/bin/activate
 python src/main.py
 ```
 
-Run a specialist's eval suite:
+### Run checks
+
 ```bash
-cd src && python eval/weather_specialist.py
+source .venv/bin/activate
+pytest -q
+
+npm --prefix web run lint
+npm --prefix web run typecheck
+npm --prefix web run build
+(cd web && npx playwright install chromium)   # first Playwright run only
+npm --prefix web run test:e2e
 ```

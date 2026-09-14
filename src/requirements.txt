@@ -4,6 +4,8 @@ pydantic-settings
 python-dotenv
 tavily-python
 rich
+fastapi
+uvicorn
 pytest
 pytest-mock
 nltk

@@ -5,6 +5,7 @@ from unittest.mock import MagicMock, patch, call
 from clients.llm_client import LLMClient
 from tools.base import BaseTool
 from agent.harness import SimpleReActAgent
+from notifications import ProgressNotifier
 
 
 # ---------------------------------------------------------------------------
@@ -135,6 +136,26 @@ def test_multiple_tool_calls_dispatched_in_parallel():
 
     # Total wall time should be well under two sequential delays
     assert elapsed < DELAY * 1.5, f"Expected parallel execution but took {elapsed:.2f}s"
+
+
+def test_parallel_tool_progress_keeps_parent_id():
+    llm = make_llm_client()
+    llm.chat.side_effect = [
+        tool_call_response([
+            {"id": "c1", "name": "slow", "arguments": {}},
+            {"id": "c2", "name": "slow2", "arguments": {}},
+        ]),
+        stop_response("done"),
+    ]
+    progress = ProgressNotifier()
+    events = progress.subscribe()
+    agent = SimpleReActAgent(llm, [SlowTool(0), Slow2Tool(0)], "sys", progress_notifier=progress)
+
+    with progress.parent("n-parent"):
+        agent.run("go")
+
+    emitted = [events.get(timeout=1) for _ in range(4)]
+    assert {event.parent_id for event in emitted} == {"n-parent"}
 
 
 def test_history_grows_across_multiple_run_calls():

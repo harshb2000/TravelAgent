@@ -27,7 +27,7 @@ def _resolve_path(filename: str) -> Path:
 
     while True:
         n += 1
-        candidate = Path(f"{base}{n}{suffix}")
+        candidate = path.with_name(f"{base}{n}{suffix}")
         if not candidate.exists():
             return candidate
 
@@ -53,13 +53,16 @@ class FileWriteTool(BaseTool):
         "required": ["subject", "content"],
     }
 
+    def __init__(self, directory: str | Path = "."):
+        self.directory = Path(directory)
+
     def execute(self, **kwargs) -> dict:
         subject: str = kwargs["subject"]
         content: str = kwargs["content"]
 
         try:
             filename = f"{_to_snake_case(subject)}_{datetime.date.today().isoformat()}_v1.md"
-            path = _resolve_path(filename)
+            path = _resolve_path(self.directory / filename)
             path.write_text(content, encoding="utf-8")
             return self._validated_output({"status": "ok", "path": str(path)})
         except OSError as e:

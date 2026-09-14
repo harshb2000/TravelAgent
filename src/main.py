@@ -2,49 +2,11 @@ import argparse
 import sys
 import threading
 
-import nltk
 from rich.console import Console
 from rich.markdown import Markdown
 
+from agent.factory import build_orchestrator, create_progress_notifier
 from config.settings import settings
-from config.specialist_tuning import resolve_model_config
-from clients.currency_client import CurrencyClient
-from clients.llm_client import LLMClient
-from clients.search_client import SearchClient
-from clients.serpapi_client import SerpApiClient
-from clients.weather_client import WeatherClient
-from models.knowledge_state import KnowledgeState, UserContext
-from notifications import ProgressNotifier
-from tools.calculate import CalculateTool
-from tools.climate_summary import ClimateSummaryTool
-from tools.currency_convert import CurrencyConvertTool
-from tools.file_write import FileWriteTool
-from tools.flight_search import FlightSearchTool
-from tools.get_compiled import (
-    GetBudgetCompiledTool,
-    GetCandidatesCompiledTool,
-    GetResearchCompiledTool,
-    GetRouteCompiledTool,
-    GetWeatherCompiledTool,
-)
-from tools.get_itinerary import GetItineraryTool
-from tools.self_critique import SelfCritiqueTool
-from tools.slice_weather_range import SliceWeatherRangeTool
-from tools.weather_forecast import WeatherForecastTool
-from tools.web_search import WebSearchTool
-from specialists.artifact import ArtifactSpecialist
-from specialists.budget import BudgetSpecialist
-from specialists.destination_research import DestinationResearchSpecialist
-from specialists.explorer import ExplorerSpecialist
-from specialists.itinerary_planner import ItineraryPlannerSpecialist
-from specialists.transportation import TransportationSpecialist
-from specialists.weather import WeatherSpecialist
-from agent.orchestrator import Orchestrator
-
-
-def ensure_nltk_data() -> None:
-    for resource in ("stopwords", "wordnet", "punkt_tab"):
-        nltk.download(resource, quiet=True)
 
 
 def validate_settings() -> None:
@@ -53,6 +15,9 @@ def validate_settings() -> None:
             ("LLM_BASE_URL", settings.llm_base_url),
             ("LLM_API_KEY", settings.llm_api_key),
             ("LLM_MODEL", settings.llm_model),
+            ("PROGRESS_LLM_BASE_URL", settings.progress_llm_base_url),
+            ("PROGRESS_LLM_API_KEY", settings.progress_llm_api_key),
+            ("PROGRESS_LLM_MODEL", settings.progress_llm_model),
         ] if not val
     ]
     if missing:
@@ -69,24 +34,10 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="TravelAgent CLI")
     parser.add_argument("--debug", action="store_true", help="Print tool calls and results to stderr")
     args = parser.parse_args()
-
-    ensure_nltk_data()
     validate_settings()
 
     console = Console()
-
-    # Clients
-    llm_client = LLMClient(
-        base_url=settings.llm_base_url,
-        api_key=settings.llm_api_key,
-        model=settings.llm_model,
-        extra_headers=resolve_model_config(settings.llm_model).extra_headers,
-    )
-    progress = ProgressNotifier(LLMClient(
-        base_url=settings.llm_base_url,
-        api_key=settings.llm_api_key,
-        model="qwen3.5:0.8b",
-    ))
+    progress = create_progress_notifier()
     progress_events = progress.subscribe()
 
     def print_progress() -> None:
@@ -97,55 +48,7 @@ def main() -> None:
             console.print(f"[{style}]{marker} {event.entry_id}{parent} L{event.level}: {event.label}[/{style}]")
 
     threading.Thread(target=print_progress, daemon=True).start()
-    serpapi_client = SerpApiClient(settings.serpapi_api_key)
-    weather_client = WeatherClient()
-    currency_client = CurrencyClient()
-    search_client = SearchClient(settings.tavily_api_key)
-
-    # Session state
-    knowledge = KnowledgeState()
-    user_context = UserContext()
-
-    # Shared tools
-    web_search = WebSearchTool(search_client)
-    flight_search = FlightSearchTool(serpapi_client)
-    weather_forecast = WeatherForecastTool(weather_client)
-    climate_summary = ClimateSummaryTool(weather_client)
-    currency_convert = CurrencyConvertTool(currency_client)
-    calculate = CalculateTool()
-    file_write = FileWriteTool()
-
-    # KnowledgeState-aware tools
-    slice_weather = SliceWeatherRangeTool(knowledge)
-    get_research = GetResearchCompiledTool(knowledge)
-    get_budget = GetBudgetCompiledTool(knowledge)
-    get_weather_compiled = GetWeatherCompiledTool(knowledge)
-    get_route = GetRouteCompiledTool(knowledge)
-    get_candidates = GetCandidatesCompiledTool(knowledge)
-    get_itinerary = GetItineraryTool(knowledge)
-    self_critique = SelfCritiqueTool(llm_client)
-
-    # Specialists
-    specialists = {
-        "explorer": ExplorerSpecialist(llm_client, [web_search], debug=args.debug, progress_notifier=progress),
-        "weather": WeatherSpecialist(llm_client, [weather_forecast, climate_summary, slice_weather], knowledge, debug=args.debug, progress_notifier=progress),
-        "destination_research": DestinationResearchSpecialist(llm_client, [web_search], debug=args.debug, progress_notifier=progress),
-        "transportation": TransportationSpecialist(llm_client, [web_search, flight_search], debug=args.debug, progress_notifier=progress),
-        "budget": BudgetSpecialist(llm_client, [web_search, currency_convert, calculate], debug=args.debug, progress_notifier=progress),
-        "itinerary_planner": ItineraryPlannerSpecialist(llm_client, [web_search], debug=args.debug, progress_notifier=progress),
-        "artifact": ArtifactSpecialist(
-            llm_client,
-            [get_research, get_budget, get_weather_compiled, get_route, get_candidates,
-             get_itinerary, self_critique, file_write],
-            debug=args.debug,
-            progress_notifier=progress,
-        ),
-    }
-
-    orchestrator = Orchestrator(
-        llm_client, user_context, knowledge, specialists, debug=args.debug, progress_notifier=progress,
-    )
-
+    orchestrator = build_orchestrator(progress=progress, debug=args.debug)
     console.print("[bold]TravelAgent[/bold] — type your message, Ctrl-C to quit.\n")
 
     while True:

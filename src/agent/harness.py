@@ -105,7 +105,8 @@ class SimpleReActAgent:
             tool = self._tools.get(name)
             progress_id = None
             if self._progress and tool is not None:
-                progress_id = tool.start_progress(args)
+                with self._progress.parent(parent_id):
+                    progress_id = tool.start_progress(args)
             parent = progress_id if self._progress and tool and tool.progress_level == 1 else parent_id
             with self._progress.parent(parent) if self._progress else nullcontext():
                 if tool is None:

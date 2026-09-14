@@ -34,15 +34,27 @@ class ProgressNotifier:
         self._timeout_s = timeout_s
         self._ids = itertools.count(1)
         self._states: dict[str, _ProgressState] = {}
+        self._history: list[ProgressEvent] = []
         self._subscribers: list[queue.Queue[ProgressEvent]] = []
         self._lock = Lock()
         self._local = threading.local()
 
-    def subscribe(self) -> queue.Queue[ProgressEvent]:
+    def set_llm(self, llm: LLMClient) -> None:
+        self._llm = llm
+
+    def subscribe(self, *, replay: bool = False) -> queue.Queue[ProgressEvent]:
         q: queue.Queue[ProgressEvent] = queue.Queue()
         with self._lock:
+            if replay:
+                for event in self._history:
+                    q.put(event)
             self._subscribers.append(q)
         return q
+
+    def unsubscribe(self, q: queue.Queue[ProgressEvent]) -> None:
+        with self._lock:
+            if q in self._subscribers:
+                self._subscribers.remove(q)
 
     def events(self, q: queue.Queue[ProgressEvent]) -> Iterator[ProgressEvent]:
         while True:
@@ -111,9 +123,9 @@ class ProgressNotifier:
 
     def _emit(self, event: ProgressEvent) -> None:
         with self._lock:
-            subscribers = list(self._subscribers)
-        for q in subscribers:
-            q.put(event)
+            self._history.append(event)
+            for q in self._subscribers:
+                q.put(event)
 
     def _generate(self, name: str, description: str, arguments: dict) -> str:
         msg = self._llm.chat(

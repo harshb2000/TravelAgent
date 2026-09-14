@@ -1,4 +1,5 @@
 import datetime
+from pathlib import Path
 from unittest.mock import patch
 
 from tools.file_write import FileWriteTool, _to_snake_case
@@ -45,6 +46,12 @@ def test_file_write_increments_version_on_collision(tmp_path, monkeypatch):
     assert result["path"] == "comparison_bali_2026-06-02_v2.md"
     assert (tmp_path / "comparison_bali_2026-06-02_v2.md").read_text() == "second"
     assert (tmp_path / "comparison_bali_2026-06-02_v1.md").read_text() == "first"
+
+
+def test_file_write_can_target_a_directory(tmp_path):
+    result = FileWriteTool(tmp_path).execute(subject="trip", content="plan")
+
+    assert Path(result["path"]).read_text() == "plan"
 
 
 def test_file_write_increments_multiple_times(tmp_path, monkeypatch):
