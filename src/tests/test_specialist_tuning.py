@@ -45,6 +45,11 @@ def test_resolve_model_config_no_match_returns_default():
 def test_resolve_model_config_matches_claude_prefix():
     cfg = resolve_model_config("claude-sonnet-4-6")
     assert cfg.extra_headers == {"anthropic-version": "2023-06-01"}
+    assert cfg.endpoint == "chat_completions"
+
+
+def test_resolve_model_config_uses_responses_for_gpt_luna():
+    assert resolve_model_config("gpt-5.6-luna").endpoint == "responses"
 
 
 def test_resolve_model_config_longest_prefix_wins(monkeypatch):

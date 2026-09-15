@@ -196,6 +196,63 @@ def test_chat_sends_tools_when_provided():
     assert body["tools"] == tools
 
 
+def _make_responses_response(output: list[dict], output_text: str | None = None) -> MagicMock:
+    resp = MagicMock(spec=httpx.Response)
+    resp.status_code = 200
+    body = {"output": output}
+    if output_text is not None:
+        body["output_text"] = output_text
+    resp.json.return_value = body
+    return resp
+
+
+def test_responses_endpoint_translates_request_and_output():
+    client = LLMClient("https://api.example.com/v1", "key", "gpt-5.6-luna")
+    tools = [{"type": "function", "function": {"name": "search", "description": "find", "parameters": {"type": "object"}}}]
+    output = [{"type": "message", "role": "assistant", "content": [{"type": "output_text", "text": "done"}]}]
+    with patch("httpx.post", return_value=_make_responses_response(output)) as mock_post:
+        result = client.chat(
+            [{"role": "system", "content": "rules"}, {"role": "user", "content": "hi"}],
+            timeout=120.0,
+            tools=tools,
+            extra_body={"reasoning_effort": "medium"},
+        )
+
+    assert mock_post.call_args.args[0] == "https://api.example.com/v1/responses"
+    body = mock_post.call_args.kwargs["json"]
+    assert body["instructions"] == "rules"
+    assert body["input"] == [{"role": "user", "content": "hi"}]
+    assert body["tools"] == [{"type": "function", "name": "search", "description": "find", "parameters": {"type": "object"}}]
+    assert body["reasoning"] == {"effort": "medium"}
+    assert result["content"] == "done"
+
+
+def test_responses_tool_round_trip_preserves_model_output():
+    client = LLMClient("https://api.example.com/v1", "key", "gpt-5.6-luna")
+    first = [
+        {"type": "reasoning", "id": "r1", "summary": []},
+        {"type": "function_call", "id": "fc1", "call_id": "call_1", "name": "search", "arguments": '{"q":"x"}'},
+    ]
+    second = [{"type": "message", "role": "assistant", "content": [{"type": "output_text", "text": "done"}]}]
+    with patch("httpx.post", side_effect=[_make_responses_response(first), _make_responses_response(second)]) as mock_post:
+        assistant = client.chat([{"role": "user", "content": "find x"}], timeout=120.0, tools=[])
+        client.chat(
+            [
+                {"role": "user", "content": "find x"},
+                assistant,
+                {"role": "tool", "tool_call_id": "call_1", "content": '{"ok":true}'},
+            ],
+            timeout=120.0,
+        )
+
+    assert assistant["tool_calls"][0]["id"] == "call_1"
+    second_body = mock_post.call_args_list[1].kwargs["json"]
+    assert second_body["input"][-3:] == [
+        *first,
+        {"type": "function_call_output", "call_id": "call_1", "output": '{"ok":true}'},
+    ]
+
+
 # ---------------------------------------------------------------------------
 # ConversationHistory tests
 # ---------------------------------------------------------------------------

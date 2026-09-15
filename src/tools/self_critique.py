@@ -42,6 +42,6 @@ class SelfCritiqueTool(BaseTool):
                 ),
             }
         ]
-        response = self._llm.chat(messages)
+        response = self._llm.chat(messages, timeout=300.0)
         critique = response.get("content") or ""
         return {"critique": critique}

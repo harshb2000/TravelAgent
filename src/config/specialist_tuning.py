@@ -5,12 +5,14 @@ from typing import Any
 @dataclass(frozen=True)
 class ModelConfig:
     extra_headers: dict[str, str] = field(default_factory=dict)
+    endpoint: str = "chat_completions"
 
 
 # Prefix-matched: headers are a model-family property, e.g. any "claude-*" model
 # needs the same Anthropic version header regardless of specialist.
 _MODEL_CONFIGS: dict[str, ModelConfig] = {
     "claude": ModelConfig(extra_headers={"anthropic-version": "2023-06-01"}),
+    "gpt-5.6-luna": ModelConfig(endpoint="responses"),
 }
 _DEFAULT_MODEL_CONFIG = ModelConfig()
 
@@ -47,24 +49,34 @@ _SPECIALIST_DEFAULTS: dict[str, SpecialistTuning] = {
 _SPECIALIST_MODEL_OVERRIDES: dict[str, dict[str, SpecialistTuning]] = {
     "explorer": {
         "qwen3.5:9b": SpecialistTuning(extra_body={"reasoning_effort": "none"}, max_iterations=3),
+        "gpt-5.6-luna": SpecialistTuning(extra_body={"reasoning": {"effort": "low"}}, max_iterations=3),
     },
     "weather": {
         "qwen3.5:9b": SpecialistTuning(extra_body={"reasoning_effort": "none"}, max_iterations=10),
+        "gpt-5.6-luna": SpecialistTuning(extra_body={"reasoning": {"effort": "medium"}}, max_iterations=5),
     },
     "destination_research": {
         "qwen3.5:9b": SpecialistTuning(extra_body={"reasoning_effort": "none"}, max_iterations=4),
+        "gpt-5.6-luna": SpecialistTuning(extra_body={"reasoning": {"effort": "medium"}}, max_iterations=4),
     },
     "transportation": {
         "qwen3.5:9b": SpecialistTuning(extra_body={"reasoning_effort": "none"}, max_iterations=5),
+        "gpt-5.6-luna": SpecialistTuning(extra_body={"reasoning": {"effort": "high"}}, max_iterations=5),
     },
     "budget": {
         "qwen3.5:9b": SpecialistTuning(extra_body={"reasoning_effort": "none"}, max_iterations=5),
+        "gpt-5.6-luna": SpecialistTuning(extra_body={"reasoning": {"effort": "medium"}}, max_iterations=5),
     },
     "itinerary_planner": {
         "qwen3.5:9b": SpecialistTuning(extra_body={"reasoning_effort": "none"}, max_iterations=6),
+        "gpt-5.6-luna": SpecialistTuning(extra_body={"reasoning": {"effort": "high"}}, max_iterations=6),
+    },
+    "artifact": {
+        "gpt-5.6-luna": SpecialistTuning(extra_body={"reasoning": {"effort": "medium"}}, max_iterations=5),
     },
     "orchestrator": {
         "qwen3.5:9b": SpecialistTuning(extra_body={"reasoning_effort": "none"}, max_iterations=8),
+        "gpt-5.6-luna": SpecialistTuning(extra_body={"reasoning": {"effort": "high"}}, max_iterations=8),
     },
 }
 

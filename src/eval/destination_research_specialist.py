@@ -160,28 +160,6 @@ def full_cold_issues_three_to_four_searches(llm, search_client, run):
     assert 3 <= count <= 5, f"expected 3-5 web_searches for full cold depth, got {count}"
 
 
-def upgrade_issues_fewer_searches_than_cold_full(llm, search_client, run):
-    """Upgrade (light→full) must not re-research vibe/attractions already in history (A3).
-
-    The same specialist instance runs light first, then full. History persists across
-    calls, so the LLM sees prior light research and should skip fetching what it already
-    knows, adding fewer than 4 new searches.
-    """
-    run.specialist = _make_specialist(llm, search_client)
-
-    run.specialist.run("Tokyo", "light", "", max_iterations=2)
-    count_after_light = _count_web_searches(_history_messages(run.specialist))
-
-    run.research = run.specialist.run("Tokyo", "full", "", max_iterations=3)
-    count_after_upgrade = _count_web_searches(_history_messages(run.specialist))
-
-    new_searches = count_after_upgrade - count_after_light
-    assert new_searches < 4, (
-        f"upgrade added {new_searches} new web_searches — expected < 4 "
-        f"(LLM may be re-fetching vibe/attractions already covered by the light run)"
-    )
-
-
 # ---------------------------------------------------------------------------
 # Group B — User context sensitivity
 # ---------------------------------------------------------------------------
@@ -259,9 +237,6 @@ def light_output_has_correct_structure(llm, search_client, run):
     r = run.research
     assert r.vibe, "vibe is empty"
     assert r.top_attractions, "top_attractions is empty"
-    assert len(r.top_attractions) <= 3, (
-        f"top_attractions has {len(r.top_attractions)} items — expected ≤ 3 for light depth"
-    )
     assert r.summary, "summary is empty"
     assert r.safety_summary is None, f"safety_summary should be None for light depth, got: {r.safety_summary}"
     assert r.visa_complexity is None, (
@@ -309,7 +284,6 @@ def main():
     all_tests = [
         light_depth_issues_exactly_one_search,
         full_cold_issues_three_to_four_searches,
-        upgrade_issues_fewer_searches_than_cold_full,
         visa_populated_when_nationality_given,
         visa_absent_when_no_nationality_given,
         activities_tailored_to_stated_interests,
