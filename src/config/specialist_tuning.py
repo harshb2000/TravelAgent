@@ -38,7 +38,7 @@ _SPECIALIST_DEFAULTS: dict[str, SpecialistTuning] = {
     "transportation": SpecialistTuning(max_iterations=5),
     "budget": SpecialistTuning(max_iterations=5),
     "itinerary_planner": SpecialistTuning(max_iterations=6),
-    "artifact": SpecialistTuning(max_iterations=3),
+    "artifact": SpecialistTuning(max_iterations=5),
     "orchestrator": SpecialistTuning(max_iterations=8),
 }
 
@@ -62,9 +62,6 @@ _SPECIALIST_MODEL_OVERRIDES: dict[str, dict[str, SpecialistTuning]] = {
     },
     "itinerary_planner": {
         "qwen3.5:9b": SpecialistTuning(extra_body={"reasoning_effort": "none"}, max_iterations=6),
-    },
-    "artifact": {
-        "qwen3.5:9b": SpecialistTuning(extra_body={"reasoning_effort": "none"}, max_iterations=4),
     },
     "orchestrator": {
         "qwen3.5:9b": SpecialistTuning(extra_body={"reasoning_effort": "none"}, max_iterations=8),
