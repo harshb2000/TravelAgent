@@ -101,7 +101,7 @@ class CostWithAttribution(BaseModel):
 
 
 class Activity(BaseModel):
-    name: str = Field(description="Activity or attraction name, e.g. 'Senso-ji Temple'.")
+    name: str = Field(description="Activity or attraction name, e.g. `Senso-ji Temple`.")
     tags: list[str] = Field(default_factory=list, description="Category tags, e.g. ['outdoor', 'cultural', 'nightlife'].")
     indoor: bool = Field(default=False, description="True if the activity is indoors. Used for weather-aware itinerary scheduling.")
     duration_min: int | None = Field(default=None, description="Typical visit or activity duration in minutes. Null when unknown.")
@@ -110,7 +110,7 @@ class Activity(BaseModel):
 
 class NotableArea(BaseModel):
     description: str = Field(description="What makes this area worth exploring as a zone — its character, why a traveller should spend dedicated time here.")
-    highlights: list[str] = Field(default_factory=list, description="Key sub-spots, streets, or experiences within the area, e.g. ['Japanese Covered Bridge', 'Lantern-lit alleyways', 'Silk shops'].")
+    highlights: list[str] = Field(default_factory=list, description="Key sub-spots, streets, or experiences within the area, e.g. [`Japanese Covered Bridge`, `Lantern-lit alleyways`, `Silk shops`].")
     source_url: str | None = Field(default=None, description="URL of the source describing this area.")
 
 
@@ -135,10 +135,10 @@ class DestinationResearch(BaseModel):
     vibe: str = Field(default="", description="1–2 sentence character sketch of the destination. Brief in light mode, richer in full mode.")
     top_attractions: list[str] = Field(default_factory=list, description="Names of notable attractions or experiences. Keep the list concise in light mode; expand it in full mode.")
     summary: str = Field(description="Required in both light and full mode. LLM-generated narrative that adds context the structured fields cannot express — do not restate vibe, top_attractions, or other fields in prose form. Light mode: what makes this destination worth considering right now, and any seasonal or practical nuance a traveller comparing options needs to know. Full mode: additionally covers which festivals or busy periods to target or avoid, what gives the destination its particular character, and anything that shapes the travel experience but doesn't fit a structured field.")
-    visa_complexity: dict[str, StringWithAttribution] | None = Field(default=None, description="Visa info keyed by passport/profile, e.g. {'Indian passport': {text: 'e-visa $25, 3–5 days', source_url: '...'}}. Null in light mode or when nationality unknown.")
+    visa_complexity: dict[str, StringWithAttribution] | None = Field(default=None, description="Visa info keyed by passport/profile, e.g. {`Indian passport`: {text: 'e-visa $25, 3–5 days', source_url: '...'}}. Null in light mode or when nationality unknown.")
     safety_summary: StringWithAttribution | None = Field(default=None, description="Current safety assessment with source. Null in light mode.")
     festivals: list[str] | None = Field(default=None, description="Notable festivals and busy periods in the travel window that affect crowds or prices. Null in light mode.")
-    notable_areas: dict[str, NotableArea] | None = Field(default=None, description="Areas worth exploring as a zone — historic quarters, market districts, scenic towns, temple complexes — keyed by area name. Each entry is a cluster of experiences that cannot be reduced to a single activity. Example: 'Hoi An Old Town' for Da Nang, 'Asakusa' for Tokyo. Null in light mode.")
+    notable_areas: dict[str, NotableArea] | None = Field(default=None, description="Areas worth exploring as a zone — historic quarters, market districts, scenic towns, temple complexes — keyed by area name. Each entry is a cluster of experiences that cannot be reduced to a single activity. Example: `Hoi An Old Town` for `Da Nang`, `Asakusa` for `Tokyo`. Null in light mode.")
     activities: list[Activity] | None = Field(default=None, description="Interest-tailored activities for full-depth research, selected based on interests stated in `user context`. Populate fields you can confidently source; leave any field null if unknown — do not hallucinate details. Should be a non-empty list in full mode; null in light mode.")
 
 
@@ -172,9 +172,9 @@ from models.flights import FlightOption  # noqa: E402
 
 class TravelOption(BaseModel):
     mode: str = Field(description="Transport mode. Use 'flight/one-way' or 'flight/return' for flights; 'train', 'bus', 'ferry', 'taxi', 'metro' for ground/sea.")
-    operator: str | None = Field(default=None, description="Carrier or operator name, e.g. 'Air India', 'Shinkansen', 'Grab'. Null when not applicable.")
-    origin: str = Field(description="Granular origin, e.g. 'BOM Airport, Mumbai', 'Shinjuku Station, Tokyo', or city name for city-level transfers.")
-    destination: str = Field(description="Granular destination, e.g. 'NRT Airport, Tokyo'. Match format of origin.")
+    operator: str | None = Field(default=None, description="Carrier or operator name, e.g. `Air India`, `Shinkansen`, `Grab`. Null when not applicable.")
+    origin: str = Field(description="Granular origin, e.g. `BOM Airport, Mumbai`, `Shinjuku Station, Tokyo`, or city name for city-level transfers.")
+    destination: str = Field(description="Granular destination, e.g. `NRT Airport, Tokyo`. Match format of origin.")
     duration_min: int | None = Field(default=None, description="Travel time in minutes. Null when unknown.")
     cost_usd: float | None = Field(default=None, description="Cost in USD. For flight/return: round-trip total (count once in budget, not per leg). Null when unknown.")
     flight: FlightOption | None = Field(default=None, description="Structured flight details. Populated only for mode='flight/*'; null for all other modes.")
@@ -211,7 +211,7 @@ class RouteKnowledge:
 class TimeSlot(BaseModel):
     start_time: str = Field(description="Start time in 'HH:MM' 24-hour format, or a loose label like 'morning', 'afternoon', 'evening'.")
     activity: Activity = Field(description="The activity or transit leg for this slot.")
-    location: str | None = Field(default=None, description="Specific venue or location name, e.g. 'Senso-ji Temple, Asakusa'. Null when not applicable.")
+    location: str | None = Field(default=None, description="Specific venue or location name, e.g. `Senso-ji Temple, Asakusa`. Null when not applicable.")
     notes: str | None = Field(default=None, description="Booking tips, access notes, opening hours caveats, or anything the traveller should know.")
     is_alternative: bool = Field(default=False, description="True when this slot is a weather-contingency alternative to the preceding primary slot. Never place an alternative as the first slot in a day. At most 2 alternatives per primary slot; at most 3 alternative slots per day total.")
 
@@ -237,7 +237,7 @@ class Itinerary(BaseModel):
     def stale(self, value: bool) -> None:
         self._stale = value
 
-    destinations: list[str] = Field(default_factory=list, description="Ordered list of cities/destinations. Single entry for one-city trips; multiple for multi-city routes.")
+    destinations: list[str] = Field(default_factory=list, description="Ordered list of exact entity-level destination keys copied character-for-character from the itinerary_planner input. Single entry for one-city trips; multiple for multi-city routes.")
     start_date: str | None = Field(default=None, description="Arrival date in ISO format YYYY-MM-DD. Null when dates are not yet confirmed.")
     days: list[ItineraryDay] = Field(default_factory=list, description="One entry per day in trip order, starting from day 1 (arrival day).")
     notes: str | None = Field(default=None, description="Trip-level notes applicable to the whole trip, e.g. visa reminders, packing tips, currency advice.")
@@ -494,18 +494,18 @@ class KnowledgeState:
             lines = [header]
             for c in top:
                 tags = ", ".join(c.vibe_tags) if c.vibe_tags else "—"
-                lines.append(f'  {c.name} ({c.country}) [{tags} · "{c.query}"]')
+                lines.append(f'  `{c.name}` (`{c.country}`) [{tags} · "{c.query}"]')
             sections.append("\n".join(lines))
 
         # DESTINATIONS section
         if self.destinations:
-            lines = ["DESTINATIONS"]
+            lines = ["DESTINATIONS (backtick-quoted names are exact keys; copy them verbatim)"]
             for name, dk in self.destinations.items():
                 depth = dk.research.depth if dk.research else "—"
                 if artifact_mode and dk.research:
-                    lines.append(f"  {name}  [{depth}, research:{self._fetch_stale_tag(dk.research.stale, artifact_mode)}]")
+                    lines.append(f"  `{name}`  [{depth}, research:{self._fetch_stale_tag(dk.research.stale, artifact_mode)}]")
                 else:
-                    lines.append(f"  {name}  [{depth}]")
+                    lines.append(f"  `{name}`  [{depth}]")
                 if dk.weather:
                     for dr, wo in dk.weather.items():
                         lines.append(f"    weather ({dr.label}): ✓ ({wo.mode})")
@@ -536,7 +536,7 @@ class KnowledgeState:
 
         # ROUTES section
         if self.routes:
-            lines = ["ROUTES"]
+            lines = ["ROUTES (backtick-quoted endpoints are exact keys; copy them verbatim)"]
             for rk, rk_knowledge in self.routes.items():
                 for dr, opts in rk_knowledge.options.items():
                     flight_opts = [
@@ -546,17 +546,17 @@ class KnowledgeState:
                     if flight_opts:
                         min_cost = min(o.cost_usd for o in flight_opts)
                         lines.append(
-                            f"  {rk.origin} → {rk.destination} ({dr.label}): ✓ from ${min_cost:.0f}{r_tag}"
+                            f"  `{rk.origin}` → `{rk.destination}` ({dr.label}): ✓ from ${min_cost:.0f}{r_tag}"
                         )
                     elif opts:
-                        lines.append(f"  {rk.origin} → {rk.destination} ({dr.label}): ✓{r_tag}")
+                        lines.append(f"  `{rk.origin}` → `{rk.destination}` ({dr.label}): ✓{r_tag}")
             sections.append("\n".join(lines))
 
         # ITINERARIES section (artifact mode only)
         if artifact_mode and self.itineraries:
-            lines = ["ITINERARIES"]
+            lines = ["ITINERARIES (backtick-quoted names are exact destination keys; copy them verbatim)"]
             for dest_key, itinerary in self.itineraries.items():
-                label = " + ".join(sorted(dest_key))
+                label = " + ".join(f"`{name}`" for name in sorted(dest_key))
                 n_days = len(itinerary.days)
                 lines.append(f"  {label}: ✓ ({n_days} days){self._fetch_stale_tag(itinerary.stale, artifact_mode)}")
             sections.append("\n".join(lines))

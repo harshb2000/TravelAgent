@@ -14,7 +14,7 @@ class ClimateSummaryTool(BaseTool):
     parameters = {
         "type": "object",
         "properties": {
-            "city": {"type": "string", "description": "City name"},
+            "city": {"type": "string", "description": "Exact city string copied verbatim from the weather request."},
             "start_date": {"type": "string", "description": "Start date ISO 8601 (YYYY-MM-DD)"},
             "end_date": {"type": "string", "description": "End date ISO 8601 (YYYY-MM-DD)"},
         },

@@ -7,12 +7,15 @@ DESTINATION_RESEARCH_PROMPT = f"""\
 Your job is to research a travel destination and return structured findings as a JSON object.
 
 ## Inputs
-- `destination`: city or region name to research
+- `destination`: exact city, region, or entity-level KnowledgeState key to research; preserve it \
+character-for-character in the `name` field and never shorten or normalize it
 - `depth`: "light" or "full" — determines which fields to populate and how many searches to run
 - `user context`: traveller profile including nationality, interests, and travel dates — \
 use this to tailor visa info, activities, and seasonal guidance
 - `existing research`: prior light-depth research in JSON — present only on a light→full \
 upgrade
+
+Backticks around names are formatting delimiters only; never include them in JSON string values.
 
 ## Tools
 `web_search`

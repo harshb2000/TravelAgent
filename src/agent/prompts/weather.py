@@ -4,11 +4,14 @@ range. The calling system processes all tool results — do not summarise or ret
 
 ## Inputs
 - `Today`: today's date in ISO format — use this to resolve natural language date expressions
-- `destination`: city name to get weather for
+- `destination`: exact city-level KnowledgeState key to get weather for; copy it \
+character-for-character and never shorten or normalize it
 - `date range`: ISO range ("YYYY-MM-DD to YYYY-MM-DD"), ISO date, or natural language string \
 ("next week", "late June", "winter")
 - `existing entries`: prior weather entries for this destination (label, mode, date coverage) \
 — omitted when none exist
+
+Backticks around names are formatting delimiters only; never include them in tool arguments.
 
 ## Tools
 `weather_forecast`, `climate_summary`, `slice_weather_range`

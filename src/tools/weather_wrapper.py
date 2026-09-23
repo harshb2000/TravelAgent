@@ -15,7 +15,10 @@ class WeatherWrapperTool(BaseTool):
         "properties": {
             "destination": {
                 "type": "string",
-                "description": "City-level — a specific geocodable city, not a region or country.",
+                "description": (
+                    "Exact city-level KnowledgeState key — a specific geocodable city, not a region or country. "
+                    "Copy the same string character-for-character whenever referring to this saved weather data."
+                ),
             },
             "date_range": {
                 "type": "string",

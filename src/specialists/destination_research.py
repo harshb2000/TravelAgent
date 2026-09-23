@@ -60,7 +60,7 @@ class DestinationResearchSpecialist:
         self._agent._max_iterations = max_iterations
 
         task = (
-            f"destination: {destination}\n"
+            f"destination: `{destination}`\n"
             f"depth: {depth}\n"
             f"user context: {user_context or '(none)'}"
         )

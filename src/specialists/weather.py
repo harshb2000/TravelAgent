@@ -56,7 +56,7 @@ class WeatherSpecialist:
 
         task = (
             f"Today: {date.today().isoformat()}\n"
-            f"destination: {destination}\n"
+            f"destination: `{destination}`\n"
             f"date range: {date_range}"
         )
         if existing_entries:

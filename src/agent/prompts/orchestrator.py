@@ -59,7 +59,7 @@ before it; the complete accumulated context must reach all specialists before th
 
 Write the complete accumulated intent from all turns, not just the current delta; the tool \
 is a full replace, not an append. Express all negative constraints as explicit phrases: \
-"not Thailand", "avoid beaches", "no nightlife" — not buried in prose (they are extracted \
+"not `Thailand`", "avoid beaches", "no nightlife" — not buried in prose (they are extracted \
 for hard exclusion and relevance scoring).
 
 Do NOT call it for greetings, thanks, capability questions, or follow-ups that contain no \
@@ -69,14 +69,19 @@ new trip information.
 Two granularities apply — be consistent within a session:
 
 **Entity-level** — used for `destination_research`, `budget`, and `itinerary_planner`: the \
-destination as the user thinks of it — a region, island, or named area (e.g. "Sikkim", \
-"Bali", "Kyoto"). The exact string from `destination_research` must be reused for `budget` \
-and `itinerary_planner` — these look up data by exact string match.
+destination as the user thinks of it — a region, island, or named area (e.g. `Sikkim`, \
+`Bali`, `Kyoto`). This value is an exact session key. The exact string from \
+`destination_research` must be reused character-for-character for `budget` and \
+`itinerary_planner` — these look up data by exact string match. Never shorten a qualified \
+key such as `Tokyo, Japan` to `Tokyo`, add a qualifier, or substitute an alias.
+
+When `KnowledgeState` shows a destination in backticks, copy the text inside the backticks \
+verbatim as the tool argument; the backticks are formatting, not part of the value.
 
 **City-level** — used for `weather` and `transportation`: a specific geocodable city. \
-For region destinations, derive the main city from the research context (e.g. "Sikkim" \
-research lists Gangtok → pass "Gangtok" to `weather` and `transportation`). Never pass a \
-region such as `Sikkim` directly to `weather`; use its named city (Gangtok).
+For region destinations, derive the main city from the research context (e.g. `Sikkim` \
+research lists `Gangtok` → pass `Gangtok` to `weather` and `transportation`). Never pass a \
+region such as `Sikkim` directly to `weather`; use its named city (`Gangtok`).
 
 ## Clarification
 Ask only for gaps that would materially change which specialists are called or how. A \
@@ -118,8 +123,8 @@ Call when destination is undecided and the answer space is unknown.
 activity type, travel style, budget tier) and strip all negations entirely. Negatives reach \
 the specialist via `UserContext`, not the query string. Never put `not`, `no`, `avoid`, or \
 `nightlife` in the explorer query, including phrases such as `minimal nightlife`. Example: \
-"trip in SEA, not too heavy on nightlife, more nature focused" → pass "nature focused trip \
-in South East Asia". Do this after updating UserContext with "no nightlife" so that the \
+"trip in `SEA`, not too heavy on nightlife, more nature focused" → pass "nature focused trip \
+in `South East Asia`". Do this after updating UserContext with "no nightlife" so that the \
 negative constraint is factored in.
 
 **Errors**: if zero candidates are returned — including a successful response whose summary \
@@ -133,8 +138,7 @@ invalid credentials or another hard failure, do not retry it or call downstream 
 
 ### destination_research
 Call when a destination is known and information is needed about it. A named country, \
-region, island, or city is a known destination; a general question such as "Tell me about \
-Japan" is actionable and should receive light research.
+region, island, or city is a known destination; a general question such as "Tell me about `Japan`" is actionable and should receive light research.
 
 **Depth**:
 - `"light"`: overview, shortlisting, or any question that does not need full detail. The \
@@ -188,7 +192,8 @@ first — flight costs are then included automatically. If no origin city is kno
 and transportation was skipped, proceed without it — the breakdown will omit flights. \
 Round-trip flight prices cover both directions — count each purchase once in totals.
 
-**destination**: must exactly match the string used in the `destination_research` call.
+**destination**: must exactly match the string used in the `destination_research` call. Copy it \
+character-for-character, including any country or other qualifier.
 
 ---
 
@@ -198,7 +203,7 @@ weather first and treat it as a prerequisite. If dates are completely unknown or
 failed, proceed without weather only when there is enough information to build a useful plan.
 
 **destinations**: each string must exactly match the corresponding `destination_research` call \
-(entity-level name).
+(entity-level name), copied character-for-character without shortening or normalization.
 
 **Missing-research error**: if the wrapper returns an error citing missing or incomplete \
 research for a destination, call `destination_research` with `depth="full"` for that \
@@ -226,7 +231,7 @@ same destination, or `weather` for multiple destinations simultaneously.
 **Must be sequential**: the same non-weather tool more than once (two `destination_research` \
 calls must run one per turn, never in the same assistant response); any tool whose input \
 depends on a prior tool's output; `budget` and `itinerary_planner` must follow their \
-prerequisites. In particular, comparing Tokyo and Seoul requires one research call, wait for \
+prerequisites. In particular, comparing `Tokyo` and `Seoul` requires one research call, wait for \
 its result, then the other research call — never emit both research calls together.
 
 ## Response style

@@ -92,7 +92,7 @@ class ExplorerSpecialist:
             lines.append(f"user context: {user_context}")
         if existing_candidates:
             names = [c.name for c in existing_candidates]
-            lines.append(f"already suggested: {', '.join(names)}")
+            lines.append(f"already suggested: {', '.join(f'`{name}`' for name in names)}")
 
         response = self._agent.run("\n".join(lines))
         return _parse_candidates(response)

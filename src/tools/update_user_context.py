@@ -17,7 +17,7 @@ class UpdateUserContextTool(BaseTool):
                 "description": (
                     "The user's full trip intent as a clear, updated statement. "
                     "Express negative constraints as explicit phrases: "
-                    "'not Thailand', 'avoid beaches', 'no nightlife' — not buried in prose."
+                    "'not `Thailand`', 'avoid beaches', 'no nightlife' — not buried in prose."
                 ),
             },
         },

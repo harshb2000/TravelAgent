@@ -13,6 +13,7 @@ class ModelConfig:
 _MODEL_CONFIGS: dict[str, ModelConfig] = {
     "claude": ModelConfig(extra_headers={"anthropic-version": "2023-06-01"}),
     "gpt-5.6-luna": ModelConfig(endpoint="responses"),
+    "gpt-5.6-terra": ModelConfig(endpoint="responses"),
 }
 _DEFAULT_MODEL_CONFIG = ModelConfig()
 
@@ -50,33 +51,42 @@ _SPECIALIST_MODEL_OVERRIDES: dict[str, dict[str, SpecialistTuning]] = {
     "explorer": {
         "qwen3.5:9b": SpecialistTuning(extra_body={"reasoning_effort": "none"}, max_iterations=3),
         "gpt-5.6-luna": SpecialistTuning(extra_body={"reasoning": {"effort": "low"}}, max_iterations=3),
+        "gpt-5.6-terra": SpecialistTuning(extra_body={"reasoning": {"effort": "low"}}, max_iterations=3, timeout_s=180.0),
     },
     "weather": {
         "qwen3.5:9b": SpecialistTuning(extra_body={"reasoning_effort": "none"}, max_iterations=10),
         "gpt-5.6-luna": SpecialistTuning(extra_body={"reasoning": {"effort": "medium"}}, max_iterations=5),
+        "gpt-5.6-terra": SpecialistTuning(extra_body={"reasoning": {"effort": "medium"}}, max_iterations=5, timeout_s=180.0),
     },
     "destination_research": {
         "qwen3.5:9b": SpecialistTuning(extra_body={"reasoning_effort": "none"}, max_iterations=4),
         "gpt-5.6-luna": SpecialistTuning(extra_body={"reasoning": {"effort": "medium"}}, max_iterations=4),
+        "gpt-5.6-terra": SpecialistTuning(extra_body={"reasoning": {"effort": "medium"}}, max_iterations=4, timeout_s=180.0),
     },
     "transportation": {
         "qwen3.5:9b": SpecialistTuning(extra_body={"reasoning_effort": "none"}, max_iterations=5),
         "gpt-5.6-luna": SpecialistTuning(extra_body={"reasoning": {"effort": "high"}}, max_iterations=5),
+        "gpt-5.6-terra": SpecialistTuning(extra_body={"reasoning": {"effort": "high"}}, max_iterations=5, timeout_s=180.0),
     },
     "budget": {
         "qwen3.5:9b": SpecialistTuning(extra_body={"reasoning_effort": "none"}, max_iterations=5),
         "gpt-5.6-luna": SpecialistTuning(extra_body={"reasoning": {"effort": "medium"}}, max_iterations=5),
+        "gpt-5.6-terra": SpecialistTuning(extra_body={"reasoning": {"effort": "medium"}}, max_iterations=5, timeout_s=180.0),
     },
     "itinerary_planner": {
         "qwen3.5:9b": SpecialistTuning(extra_body={"reasoning_effort": "none"}, max_iterations=6),
         "gpt-5.6-luna": SpecialistTuning(extra_body={"reasoning": {"effort": "high"}}, max_iterations=6),
+        "gpt-5.6-terra": SpecialistTuning(extra_body={"reasoning": {"effort": "high"}}, max_iterations=6, timeout_s=180.0),
+        "qwen3.8:27b": SpecialistTuning(extra_body={"reasoning_effort": "none"}, max_iterations=6),
     },
     "artifact": {
         "gpt-5.6-luna": SpecialistTuning(extra_body={"reasoning": {"effort": "medium"}}, max_iterations=5),
+        "gpt-5.6-terra": SpecialistTuning(extra_body={"reasoning": {"effort": "medium"}}, max_iterations=5, timeout_s=180.0),
     },
     "orchestrator": {
         "qwen3.5:9b": SpecialistTuning(extra_body={"reasoning_effort": "none"}, max_iterations=8),
         "gpt-5.6-luna": SpecialistTuning(extra_body={"reasoning": {"effort": "high"}}, max_iterations=8),
+        "gpt-5.6-terra": SpecialistTuning(extra_body={"reasoning": {"effort": "high"}}, max_iterations=8, timeout_s=180.0),
     },
 }
 

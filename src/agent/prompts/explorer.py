@@ -12,7 +12,10 @@ JSON array.
 in `user context`)
 - `max results`: maximum number of candidates to return
 - `user context`: full traveller context including negative constraints — omitted when empty
-- `already suggested`: destination names already in the shortlist — omitted when none
+- `already suggested`: destination names already in the shortlist, shown as exact backtick-quoted \
+entity names — omitted when none
+
+Backticks around names are formatting delimiters only; never include them in candidate values.
 
 ## Tools
 `web_search`
@@ -26,7 +29,7 @@ calls in a single response to give each area equal coverage.
 
 ## Output rules
 - Return up to `max results` candidates.
-- Do not suggest any destination whose name is listed in `already suggested` \
+- Do not suggest any destination whose exact name is listed in `already suggested` \
 (case-insensitive).
 - No candidate may match a destination or destination type excluded in `user context`.
 - No two candidates may share the same destination name (case-insensitive).

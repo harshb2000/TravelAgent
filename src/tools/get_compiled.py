@@ -5,11 +5,17 @@ from tools.transportation_wrapper import bfs_find_path, bfs_distances
 
 class GetResearchCompiledTool(BaseTool):
     name = "get_research_compiled"
-    description = "Fetch full compiled research for a destination from KnowledgeState, with inline source links."
+    description = (
+        "Fetch full compiled research from KnowledgeState. The `destination` must be copied "
+        "character-for-character from a backtick-quoted DESTINATIONS key; do not shorten or normalize it."
+    )
     parameters = {
         "type": "object",
         "properties": {
-            "destination": {"type": "string", "description": "Destination city name."},
+            "destination": {
+                "type": "string",
+                "description": "Exact backtick-quoted DESTINATIONS key, copied verbatim including country or other qualifiers.",
+            },
         },
         "required": ["destination"],
     }
@@ -59,11 +65,17 @@ class GetResearchCompiledTool(BaseTool):
 
 class GetBudgetCompiledTool(BaseTool):
     name = "get_budget_compiled"
-    description = "Fetch full compiled budget data for a destination from KnowledgeState, with inline source links."
+    description = (
+        "Fetch full compiled budget data from KnowledgeState. The `destination` must be copied "
+        "character-for-character from a backtick-quoted DESTINATIONS key; do not shorten or normalize it."
+    )
     parameters = {
         "type": "object",
         "properties": {
-            "destination": {"type": "string", "description": "Destination city name."},
+            "destination": {
+                "type": "string",
+                "description": "Exact backtick-quoted DESTINATIONS key, copied verbatim including country or other qualifiers.",
+            },
         },
         "required": ["destination"],
     }
@@ -95,11 +107,17 @@ class GetBudgetCompiledTool(BaseTool):
 
 class GetWeatherCompiledTool(BaseTool):
     name = "get_weather_compiled"
-    description = "Fetch weather data for a destination and date range from KnowledgeState."
+    description = (
+        "Fetch weather data from KnowledgeState. The `destination` must be copied "
+        "character-for-character from a backtick-quoted DESTINATIONS key; do not shorten or normalize it."
+    )
     parameters = {
         "type": "object",
         "properties": {
-            "destination": {"type": "string", "description": "Destination city name."},
+            "destination": {
+                "type": "string",
+                "description": "Exact backtick-quoted DESTINATIONS key, copied verbatim including country or other qualifiers.",
+            },
             "date_range": {"type": "string", "description": "Date range label, e.g. 'June 2026'."},
         },
         "required": ["destination"],
@@ -136,12 +154,21 @@ class GetWeatherCompiledTool(BaseTool):
 
 class GetRouteCompiledTool(BaseTool):
     name = "get_route_compiled"
-    description = "Fetch all travel options for a composed path from origin to destination from KnowledgeState."
+    description = (
+        "Fetch all travel options for a path from KnowledgeState. Both endpoints must be "
+        "copied character-for-character from backtick-quoted ROUTES keys; do not shorten or normalize them."
+    )
     parameters = {
         "type": "object",
         "properties": {
-            "origin": {"type": "string", "description": "Origin city or airport name."},
-            "destination": {"type": "string", "description": "Destination city or airport name."},
+            "origin": {
+                "type": "string",
+                "description": "Exact backtick-quoted ROUTES origin key, copied verbatim.",
+            },
+            "destination": {
+                "type": "string",
+                "description": "Exact backtick-quoted ROUTES destination key, copied verbatim.",
+            },
             "date_range": {"type": "string", "description": "Date range label, e.g. 'Jul 2026'."},
         },
         "required": ["origin", "destination"],

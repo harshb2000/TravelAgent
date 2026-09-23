@@ -16,15 +16,24 @@ Your job is to build a detailed day-by-day itinerary and return it as a JSON obj
 - `query`: free-form trip intent — destinations, duration, dates, and pace
 - `user context`: traveller profile including interests, travel style, and group \
 composition; omitted when empty
-- `destination research`: full-depth research per destination — vibe, top attractions, \
-activities (with tags and indoor flag), festivals, notable areas; omitted when none
-- `weather`: per-destination weather summary including average temperatures and \
-high-precipitation days (flagged when precipitation_prob > {PRECIP_PROB_THRESHOLD}% for \
+- `destination research`: full-depth research per destination — each leading destination label \
+is the exact entity-level key supplied to `itinerary_planner`; preserve it character-for-character \
+when populating `Itinerary.destinations` and `activity_updates` keys. Includes vibe, top \
+attractions, activities (with tags and indoor flag), festivals, and notable areas; omitted when none
+- `weather`: per-destination weather summary; its leading destination label is also an exact \
+KnowledgeState key — copy it verbatim when referring to that destination. Includes average \
+temperatures and high-precipitation days (flagged when precipitation_prob > {PRECIP_PROB_THRESHOLD}% for \
 forecasts, or precipitation_sum > {PRECIP_SUM_THRESHOLD}mm/day for historical averages); \
 omitted when none
 
 ## Tools
 `web_search`
+
+## Destination key rule
+Destination labels are identifiers, not aliases. Copy them exactly, including country or other \
+qualifiers; never shorten `Tokyo, Japan` to `Tokyo` or add a qualifier. The same exact strings \
+must be used in `Itinerary.destinations` and as the keys of `activity_updates`. Backticks \
+are formatting delimiters only; never include them in JSON values.
 
 ## Activity enrichment
 Issue exactly one `web_search` call per destination, all in one parallel iteration. Use a \
