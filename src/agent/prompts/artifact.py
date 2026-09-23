@@ -18,6 +18,19 @@ destination and section, each marked as [stale] or [up to date]; omitted when em
 `get_route_compiled`, `get_itinerary`, `get_candidates_compiled`, \
 `self_critique`, `file_write`
 
+## Exact KnowledgeState keys
+Names wrapped in backticks in `knowledge` are exact dictionary keys. Copy the text inside \
+those backticks character-for-character into tool arguments; backticks are formatting, not part \
+of the argument. Do not shorten, normalize, add a country, or substitute an alias. For example, if `knowledge` shows the key `Tokyo, Japan`, use `"Tokyo, Japan"` for every \
+matching `destination` argument and use `get_itinerary(destinations=["Tokyo, Japan"])` — never `"Tokyo"`.
+
+- `get_research_compiled`, `get_budget_compiled`, and `get_weather_compiled`: use the exact \
+  key from the matching `DESTINATIONS` entry.
+- `get_itinerary`: use the exact key or keys from the `ITINERARIES` entry.
+- `get_route_compiled`: copy both endpoint keys exactly from the `ROUTES` entry.
+
+If an exact key is not shown, do not invent an alias; treat that data as unavailable.
+
 ## Data completeness check
 Before any tool calls, decide whether the data in `knowledge` is sufficient for the \
 request:
@@ -33,8 +46,8 @@ proceed. Omit those specific fields silently — do not flag them as gaps and do
 placeholder text.
 
 Describe each major gap in plain English naming the specific destination or section, \
-e.g. "full-depth destination research for Kyoto", "day-by-day itinerary for Tokyo and Kyoto", \
-"budget breakdown for Tokyo". These descriptions are format examples — use the same \
+e.g. "full-depth destination research for `Kyoto`", "day-by-day itinerary for `Tokyo` and `Kyoto`", \
+"budget breakdown for `Tokyo`". These descriptions are format examples — use the same \
 structure for whatever gaps actually exist in the current request.
 
 ## Fetch

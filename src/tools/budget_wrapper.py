@@ -20,13 +20,16 @@ class BudgetWrapperTool(BaseTool):
                     "Free-form trip configuration string. "
                     "Include traveller count, trip duration, accommodation tier, home currency or budget "
                     "target, and origin city for flights. "
-                    "Example: '2 people, 7 nights Tokyo late June, flying Mumbai round-trip, "
+                    "Example: '2 people, 7 nights `Tokyo` late June, flying `Mumbai` round-trip, "
                     "mid-range hotel, budget ₹2.5L/person'."
                 ),
             },
             "destination": {
                 "type": "string",
-                "description": "Entity-level destination name.",
+                "description": (
+                    "Exact entity-level KnowledgeState key copied character-for-character from the "
+                    "destination_research call, including country or other qualifiers."
+                ),
             },
         },
         "required": ["query", "destination"],

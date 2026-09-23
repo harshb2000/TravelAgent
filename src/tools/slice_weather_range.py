@@ -18,7 +18,7 @@ class SliceWeatherRangeTool(BaseTool):
         "properties": {
             "destination": {
                 "type": "string",
-                "description": "City name exactly as stored in KnowledgeState.",
+                "description": "Exact city key copied character-for-character as stored in KnowledgeState.",
             },
             "source_range": {
                 "type": "string",

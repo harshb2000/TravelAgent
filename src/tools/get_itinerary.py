@@ -6,8 +6,10 @@ from tools.itinerary_planner_wrapper import render_itinerary
 class GetItineraryTool(BaseTool):
     name = "get_itinerary"
     description = (
-        "Fetch the saved itinerary for a set of destinations from KnowledgeState. "
-        "Returns a full day-by-day itinerary with all slots including weather-contingency alternatives."
+        "Fetch the saved itinerary from KnowledgeState. The `destinations` values must be copied "
+        "character-for-character from the backtick-quoted ITINERARIES or DESTINATIONS keys; "
+        "do not shorten or normalize them. Returns a full day-by-day itinerary with all slots "
+        "including weather-contingency alternatives."
     )
     parameters = {
         "type": "object",
@@ -15,7 +17,7 @@ class GetItineraryTool(BaseTool):
             "destinations": {
                 "type": "array",
                 "items": {"type": "string"},
-                "description": "List of destination city names.",
+                "description": "List of exact backtick-quoted ITINERARIES/DESTINATIONS keys, copied verbatim.",
             },
         },
         "required": ["destinations"],

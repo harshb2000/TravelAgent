@@ -21,7 +21,7 @@ class WeatherOutput(BaseModel):
     mode: Literal["forecast", "climate"] = Field(
         description="'forecast': live prediction up to 16 days ahead. 'climate': 30-year historical monthly average."
     )
-    city: str = Field(description="City name exactly as provided to the tool.")
+    city: str = Field(description="Exact city key copied character-for-character as provided to the weather tool.")
     days: list[DailyWeather] = Field(
         description="Per-day weather data. Forecast: one entry per requested day. Climate: one entry per calendar day of the month."
     )

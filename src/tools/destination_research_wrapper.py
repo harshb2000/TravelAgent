@@ -15,7 +15,10 @@ class DestinationResearchWrapperTool(BaseTool):
         "properties": {
             "destination": {
                 "type": "string",
-                "description": "Entity-level name — a region, island, or named area as the user thinks of it (e.g. 'Sikkim', 'Bali', 'Kyoto').",
+                "description": (
+                    "Exact entity-level KnowledgeState key — a region, island, or named area as the user thinks of it. "
+                    "Reuse the same string character-for-character for budget and itinerary_planner; do not shorten or normalize it."
+                ),
             },
             "depth": {
                 "type": "string",

@@ -7,7 +7,11 @@ from tools.base import BaseTool
 class ItineraryPlannerWrapperTool(BaseTool):
     progress_level = 1
     name = "itinerary_planner"
-    description = "Build or refine a day-by-day itinerary for one or more destinations, with weather-aware scheduling."
+    description = (
+        "Build or refine a day-by-day itinerary for one or more destinations, with weather-aware scheduling. "
+        "Each `destinations` value must exactly match the corresponding destination_research key; "
+        "copy it character-for-character and do not shorten or normalize it."
+    )
     parameters = {
         "type": "object",
         "properties": {
@@ -15,14 +19,18 @@ class ItineraryPlannerWrapperTool(BaseTool):
                 "type": "string",
                 "description": (
                     "Free-form trip intent and structure. "
-                    "Example: '10 days Tokyo + 3 days Kyoto, June 20 arrival. "
+                    "Example: '10 days `Tokyo` + 3 days `Kyoto`, June 20 arrival. "
                     "User prefers cultural and food experiences, mid-pace.'"
                 ),
             },
             "destinations": {
                 "type": "array",
                 "items": {"type": "string"},
-                "description": "Ordered list of entity-level destination names in travel order.",
+                "description": (
+                    "Ordered list of exact entity-level destination keys in travel order. "
+                    "Copy each string character-for-character from the destination_research call, "
+                    "including country or other qualifiers."
+                ),
             },
         },
         "required": ["query", "destinations"],
@@ -112,7 +120,7 @@ def _build_research_context(destinations: list[str], knowledge: KnowledgeState) 
         if not dk or not dk.research:
             continue
         r = dk.research
-        lines.append(f"{destination}:")
+        lines.append(f"`{destination}`:")
         lines.append(f"  vibe: {r.vibe}")
         if r.top_attractions:
             lines.append(f"  top_attractions: {', '.join(r.top_attractions)}")
@@ -148,7 +156,7 @@ def _build_weather_context(destinations: list[str], knowledge: KnowledgeState) -
             avg_low = sum(d.temp_min for d in wo.days) / len(wo.days)
             mode_label = "forecast" if wo.mode == "forecast" else "historical avg"
             lines.append(
-                f"{destination} ({dr.label}, {mode_label}): "
+                f"`{destination}` ({dr.label}, {mode_label}): "
                 f"avg high {avg_high:.0f}°C / low {avg_low:.0f}°C"
             )
             rainy = [

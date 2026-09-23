@@ -89,7 +89,7 @@ class TransportationSpecialist:
         self._last_run_max_iterations = max_iterations
         self._agent._max_iterations = max_iterations
 
-        route_str = f"{route_key.origin} → {route_key.destination} ({date_range.label})"
+        route_str = f"`{route_key.origin}` → `{route_key.destination}` ({date_range.label})"
 
         lines = [
             f"Today: {date.today().isoformat()}",

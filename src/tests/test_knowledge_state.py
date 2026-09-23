@@ -121,6 +121,20 @@ def test_to_prompt_context_shows_count_when_over_top_n():
     assert "5 of 7" in result or "showing 5 of 7" in result
 
 
+def test_to_prompt_context_marks_exact_destination_and_itinerary_keys():
+    ks = KnowledgeState()
+    ks.update_research(
+        "Tokyo, Japan",
+        DestinationResearch(name="Tokyo, Japan", country="Japan", depth="full", summary="A city."),
+    )
+    ks.update_itinerary(frozenset(["Tokyo, Japan"]), Itinerary(destinations=["Tokyo, Japan"]))
+
+    result = ks.to_prompt_context(artifact_mode=True)
+
+    assert "`Tokyo, Japan`" in result
+    assert "ITINERARIES" in result
+
+
 def test_to_prompt_context_jaccard_winner_shown_with_top_n_1():
     """With top_n=1 and equal recency, only the Jaccard-winning candidate appears."""
     ks = KnowledgeState()

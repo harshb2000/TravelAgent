@@ -21,15 +21,18 @@ duplicating them; omitted when none
 `web_search`, `flight_search`
 
 ## Naming conventions
-All `origin` and `destination` values on TravelOption must follow this format:
-- **City centre**: bare city name only, e.g. "Mumbai", "Tokyo". Never append a country \
-suffix — "Mumbai, India" is not a valid city-centre name.
-- **Specific area within a large city**: "Area, City", e.g. "Shinjuku, Tokyo", \
-"South Mumbai, Mumbai". Use this when the transfer start or end point is meaningfully \
+The `route` endpoints are exact route-node keys. Copy them character-for-character into every \
+`TravelOption.origin` and `TravelOption.destination` value; do not shorten, normalize, or add \
+qualifiers. Backticks are formatting delimiters only; omit them from JSON values. All `origin` and \
+`destination` values on TravelOption must follow this format:
+- **City centre**: bare city name only, e.g. `Mumbai`, `Tokyo`. Never append a country \
+suffix — `Mumbai, India` is not a valid city-centre name.
+- **Specific area within a large city**: `Area, City`, e.g. `Shinjuku, Tokyo`, \
+`South Mumbai, Mumbai`. Use this when the transfer start or end point is meaningfully \
 within a distinct part of the city rather than the city centre in general.
-- **Airport**: "<IATA> Airport, <City>", e.g. "BOM Airport, Mumbai"
+- **Airport**: `<IATA> Airport, <City>`, e.g. `BOM Airport, Mumbai`
 - **Any other transit hub** (railway station, bus terminal, ferry terminal, pier): \
-"<Hub Name>, <City>", e.g. "Mumbai CST, Mumbai", "Surat Thani Ferry Terminal, Surat Thani"
+`<Hub Name>, <City>`, e.g. `Mumbai CST, Mumbai`, `Surat Thani Ferry Terminal, Surat Thani`
 
 ## Non-flight transfer rule
 All non-flight options are reversible: one set of options per endpoint serves both \
@@ -58,7 +61,7 @@ ferry terminal, pier), include city-to-hub and hub-to-city transfers at both end
 If the hub is effectively at the city centre and no meaningful transfer exists, omit the \
 hub entirely — use the bare city name as the endpoint of the journey leg as well. Never \
 mix the hub name and the bare city name for the same city within a single path: legs are \
-connected by exact string match, so "Mumbai" and "CST Station, Mumbai" are treated as \
+connected by exact string match, so `Mumbai` and `CST Station, Mumbai` are treated as \
 different nodes.
 
 **Step 4 — Path completeness**

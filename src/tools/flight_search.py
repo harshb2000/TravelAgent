@@ -97,7 +97,7 @@ class FlightSearchTool(BaseTool):
             "destination_airports": {
                 "type": "array",
                 "items": {"type": "string"},
-                "description": "Destination IATA codes, e.g. [\"NRT\", \"HND\"] for Tokyo",
+                "description": "Destination IATA codes, e.g. [\"NRT\", \"HND\"] for `Tokyo`.",
             },
             "departure_date": {
                 "type": "string",
