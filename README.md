@@ -127,7 +127,9 @@ Unit tests check that the code runs. Evaluation checks that the agent *decides* 
 | **Verdict** | Pass / fail | Pass / fail + critique |
 | **Runs** | CI-friendly — deterministic, no judge cost | On demand — before release, after a prompt change |
 
-> **TODO (evaluation chart):** a model × reasoning-effort comparison across quality, cost, and latency, run across all suites — the basis for a concrete "model X had the best quality, but model Y had the best quality/cost/latency tradeoff → production config Z" conclusion. Current runs are per-specialist, single-model pass/fail checks; a full comparison run is queued.
+![Comparative evaluation results for model reliability and passed-run efficiency](resources/evaluation_comparison.png)
+
+`gpt-5.6-terra` performs best on these measures, reaching 100% component and end-to-end completion with the shortest median completion time (534.6s) and fewest mean web searches (14.33). `qwen3.8:27b` reaches 80% end-to-end completion, while `gpt-5.6-luna` is faster and more search-efficient on passed runs but reaches 40% end-to-end completion.
 
 > **TODO (test coverage table):** a table or diagram breaking down test count by kind (unit / assertion-eval / LLM-as-judge) per specialist and the orchestrator — what's covered, what isn't yet.
 

@@ -1,0 +1,128 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="2000" height="820" viewBox="0 0 2000 820" role="img" aria-labelledby="title desc">
+  <title id="title">Model evaluation comparison</title>
+  <desc id="desc">Two side-by-side charts compare reliability and passed-run efficiency for qwen3.8:27b, gpt-5.6-luna, and gpt-5.6-terra.</desc>
+  <defs>
+    <pattern id="flaky-hatch" width="12" height="12" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+      <rect width="12" height="12" fill="#b89a3f"/>
+      <line x1="0" y1="0" x2="0" y2="12" stroke="#f5edd0" stroke-width="2" opacity="0.8"/>
+    </pattern>
+    <style>
+      text { font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill: #f4f4f5; }
+      .panel-title { font-size: 34px; font-weight: 600; }
+      .subtitle { font-size: 18px; fill: #a1a1aa; }
+      .axis-title { font-size: 18px; font-weight: 500; }
+      .tick { font-size: 16px; fill: #a1a1aa; }
+      .legend { font-size: 17px; }
+      .model { font-size: 19px; font-weight: 600; }
+      .value { font-size: 17px; font-weight: 600; }
+      .detail { font-size: 15px; fill: #a1a1aa; }
+      .flaky { font-size: 16px; font-weight: 600; fill: #e7c84f; }
+      .grid { stroke: #343438; stroke-width: 1.5; }
+      .frame { stroke: #45454a; stroke-width: 1.5; fill: none; }
+    </style>
+  </defs>
+
+  <rect width="2000" height="820" fill="#171717"/>
+
+  <!-- Left panel: reliability -->
+  <text x="70" y="60" class="panel-title">Reliability</text>
+  <text x="70" y="94" class="subtitle">Component pass rate includes flaky passes; E2E completion is shown alongside it.</text>
+
+  <rect x="70" y="128" width="22" height="22" fill="#3567b7"/>
+  <text x="103" y="146" class="legend">Component pass rate</text>
+  <rect x="325" y="128" width="22" height="22" fill="url(#flaky-hatch)"/>
+  <text x="358" y="146" class="legend">Flaky subset</text>
+  <rect x="520" y="128" width="22" height="22" fill="#cf79aa"/>
+  <text x="553" y="146" class="legend">E2E completion rate</text>
+
+  <text x="70" y="198" class="axis-title">Rate (%)</text>
+  <rect x="135" y="220" width="800" height="470" class="frame"/>
+  <line x1="135" y1="690" x2="935" y2="690" class="grid"/>
+  <line x1="135" y1="572.5" x2="935" y2="572.5" class="grid"/>
+  <line x1="135" y1="455" x2="935" y2="455" class="grid"/>
+  <line x1="135" y1="337.5" x2="935" y2="337.5" class="grid"/>
+  <line x1="135" y1="220" x2="935" y2="220" class="grid"/>
+  <text x="116" y="696" text-anchor="end" class="tick">0%</text>
+  <text x="116" y="578.5" text-anchor="end" class="tick">25%</text>
+  <text x="116" y="461" text-anchor="end" class="tick">50%</text>
+  <text x="116" y="343.5" text-anchor="end" class="tick">75%</text>
+  <text x="116" y="226" text-anchor="end" class="tick">100%</text>
+
+  <!-- Qwen: 90 stable + 6 flaky = 96; E2E 80 -->
+  <rect x="209" y="267" width="74" height="423" fill="#3567b7"/>
+  <rect x="209" y="238.8" width="74" height="28.2" fill="url(#flaky-hatch)"/>
+  <rect x="300" y="314" width="74" height="376" fill="#cf79aa"/>
+  <text x="246" y="226" text-anchor="middle" class="flaky">6% flaky</text>
+  <text x="246" y="258" text-anchor="middle" class="value">96%</text>
+  <text x="337" y="304" text-anchor="middle" class="value">80%</text>
+  <text x="291" y="730" text-anchor="middle" class="model">qwen3.8:27b</text>
+
+  <!-- Luna: 93 stable + 6 flaky = 99; E2E 40 -->
+  <rect x="455" y="252.9" width="74" height="437.1" fill="#3567b7"/>
+  <rect x="455" y="224.7" width="74" height="28.2" fill="url(#flaky-hatch)"/>
+  <rect x="546" y="502" width="74" height="188" fill="#cf79aa"/>
+  <text x="492" y="202" text-anchor="middle" class="flaky">6% flaky</text>
+  <text x="492" y="246" text-anchor="middle" class="value">99%</text>
+  <text x="583" y="492" text-anchor="middle" class="value">40%</text>
+  <text x="537" y="730" text-anchor="middle" class="model">gpt-5.6-luna</text>
+
+  <!-- Terra: 95 stable + 5 flaky = 100; E2E 100 -->
+  <rect x="701" y="243.5" width="74" height="446.5" fill="#3567b7"/>
+  <rect x="701" y="220" width="74" height="23.5" fill="url(#flaky-hatch)"/>
+  <rect x="792" y="220" width="74" height="470" fill="#cf79aa"/>
+  <text x="738" y="184" text-anchor="middle" class="flaky">5% flaky</text>
+  <text x="738" y="214" text-anchor="middle" class="value">100%</text>
+  <text x="829" y="214" text-anchor="middle" class="value">100%</text>
+  <text x="783" y="730" text-anchor="middle" class="model">gpt-5.6-terra</text>
+
+  <!-- Divider -->
+  <line x1="1000" y1="44" x2="1000" y2="760" stroke="#343438" stroke-width="2"/>
+
+  <!-- Right panel: efficiency -->
+  <text x="1060" y="60" class="panel-title">Passed-run efficiency</text>
+  <text x="1060" y="94" class="subtitle">Median completion time versus mean web searches. Lower-left is more efficient.</text>
+  <text x="1060" y="198" class="axis-title">Mean web searches issued</text>
+  <rect x="1130" y="220" width="790" height="470" class="frame"/>
+
+  <!-- Horizontal grid and y ticks: range 12–28 -->
+  <line x1="1130" y1="690" x2="1920" y2="690" class="grid"/>
+  <line x1="1130" y1="572.5" x2="1920" y2="572.5" class="grid"/>
+  <line x1="1130" y1="455" x2="1920" y2="455" class="grid"/>
+  <line x1="1130" y1="337.5" x2="1920" y2="337.5" class="grid"/>
+  <line x1="1130" y1="220" x2="1920" y2="220" class="grid"/>
+  <text x="1112" y="696" text-anchor="end" class="tick">12</text>
+  <text x="1112" y="578.5" text-anchor="end" class="tick">16</text>
+  <text x="1112" y="461" text-anchor="end" class="tick">20</text>
+  <text x="1112" y="343.5" text-anchor="end" class="tick">24</text>
+  <text x="1112" y="226" text-anchor="end" class="tick">28</text>
+
+  <!-- Vertical grid and x ticks: range 500–750 seconds -->
+  <line x1="1130" y1="220" x2="1130" y2="690" class="grid"/>
+  <line x1="1288" y1="220" x2="1288" y2="690" class="grid"/>
+  <line x1="1446" y1="220" x2="1446" y2="690" class="grid"/>
+  <line x1="1604" y1="220" x2="1604" y2="690" class="grid"/>
+  <line x1="1762" y1="220" x2="1762" y2="690" class="grid"/>
+  <line x1="1920" y1="220" x2="1920" y2="690" class="grid"/>
+  <text x="1130" y="718" text-anchor="middle" class="tick">500s</text>
+  <text x="1288" y="718" text-anchor="middle" class="tick">550s</text>
+  <text x="1446" y="718" text-anchor="middle" class="tick">600s</text>
+  <text x="1604" y="718" text-anchor="middle" class="tick">650s</text>
+  <text x="1762" y="718" text-anchor="middle" class="tick">700s</text>
+  <text x="1920" y="718" text-anchor="middle" class="tick">750s</text>
+  <text x="1525" y="758" text-anchor="middle" class="axis-title">Median completion time (seconds)</text>
+
+  <!-- Efficiency points -->
+  <circle cx="1788.7" cy="300.8" r="11" fill="#4d83d1" stroke="#b7cdf0" stroke-width="3"/>
+  <text x="1768" y="279" text-anchor="end" class="model">qwen3.8:27b</text>
+  <text x="1768" y="303" text-anchor="end" class="detail">708.5s · 25.25 searches</text>
+
+  <circle cx="1438.2" cy="572.5" r="11" fill="#4d83d1" stroke="#b7cdf0" stroke-width="3"/>
+  <text x="1460" y="550" class="model">gpt-5.6-luna</text>
+  <text x="1460" y="574" class="detail">597.5s · 16.00 searches</text>
+
+  <circle cx="1239.2" cy="621.6" r="11" fill="#4d83d1" stroke="#b7cdf0" stroke-width="3"/>
+  <text x="1262" y="625" class="model">gpt-5.6-terra</text>
+  <text x="1262" y="649" class="detail">534.6s · 14.33 searches</text>
+
+  <text x="1000" y="797" text-anchor="middle" class="subtitle">Completion-time and search metrics are calculated on passed end-to-end cases only.</text>
+</svg>

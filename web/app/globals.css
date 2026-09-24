@@ -3,6 +3,7 @@
 @tailwind utilities;
 
 :root { color-scheme: light; }
+html, body { @apply h-full overflow-hidden; }
 body { @apply m-0 bg-slate-50 text-slate-900 antialiased dark:bg-slate-950 dark:text-slate-100; }
 .markdown { @apply leading-7; }
 .markdown h1 { @apply mb-4 text-2xl font-bold; }

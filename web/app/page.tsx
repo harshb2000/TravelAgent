@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Check, ChevronDown, ChevronRight, Circle, FileText, LoaderCircle, Moon, Send, Sun } from "lucide-react";
 import ReactMarkdown from "react-markdown";
@@ -106,6 +106,8 @@ export default function Home() {
   const [selected, setSelected] = useState<string | null>(null);
   const [dark, setDark] = useState(true);
   const [progressCollapsed, setProgressCollapsed] = useState(false);
+  const chatScrollRef = useRef<HTMLDivElement>(null);
+  const progressScrollRef = useRef<HTMLDivElement>(null);
   const progress = useProgress(sessionId);
   const queryClient = useQueryClient();
   useEffect(() => {
@@ -116,6 +118,12 @@ export default function Home() {
   useEffect(() => {
     document.documentElement.classList.toggle("dark", dark);
   }, [dark]);
+  useEffect(() => {
+    if (chatScrollRef.current) chatScrollRef.current.scrollTop = chatScrollRef.current.scrollHeight;
+  }, [messages]);
+  useEffect(() => {
+    if (!progressCollapsed && progressScrollRef.current) progressScrollRef.current.scrollTop = progressScrollRef.current.scrollHeight;
+  }, [progress, progressCollapsed]);
 
   const artifacts = useQuery({
     queryKey: ["artifacts", sessionId],
@@ -134,7 +142,12 @@ export default function Home() {
       queryClient.invalidateQueries({ queryKey: ["artifacts", sessionId] });
     },
   });
-  const grouped = useMemo(() => progress.filter((item) => item.level === 1).map((parent) => ({ parent, children: progress.filter((item) => item.parent_id === parent.entry_id) })), [progress]);
+  const timeline = useMemo(() => {
+    const ordered = [...progress].sort((a, b) => Number(a.entry_id.slice(1)) - Number(b.entry_id.slice(1)));
+    return ordered
+      .filter((item) => item.level === 1 || !item.parent_id)
+      .map((item) => ({ item, children: ordered.filter((child) => child.parent_id === item.entry_id) }));
+  }, [progress]);
 
   function submit(event: FormEvent) {
     event.preventDefault();
@@ -145,7 +158,7 @@ export default function Home() {
     chat.mutate(message);
   }
 
-  return <main className="flex h-screen min-h-[600px] flex-col bg-slate-50 dark:bg-slate-950">
+  return <main className="flex h-dvh overflow-hidden flex-col bg-slate-50 dark:bg-slate-950">
     <header className="flex h-16 shrink-0 items-center justify-between border-b bg-white px-5 dark:border-slate-800 dark:bg-slate-900">
       <div><h1 className="font-semibold">TravelAgent</h1><p className="text-xs text-slate-500 dark:text-slate-400">Temporary session {sessionId.slice(0, 8) || "starting…"}</p></div>
       <div className="flex items-center gap-3">
@@ -154,9 +167,9 @@ export default function Home() {
       </div>
     </header>
 
-    <div className="grid min-h-0 flex-1 md:grid-cols-[minmax(0,1fr)_360px]">
-      <section className="flex min-h-0 flex-col">
-        <div className="flex-1 overflow-y-auto p-5 md:p-8">
+    <div className="grid min-h-0 flex-1 grid-rows-[minmax(0,1fr)_minmax(0,18rem)] overflow-hidden md:grid-cols-[minmax(0,1fr)_360px] md:grid-rows-1">
+      <section className="flex min-h-0 flex-col overflow-hidden">
+        <div ref={chatScrollRef} data-testid="chat-scroll" className="flex-1 overflow-y-auto p-5 md:p-8">
           {messages.length === 0 && <div className="mx-auto mt-20 max-w-xl text-center"><h2 className="text-3xl font-semibold tracking-tight">Where should we go?</h2><p className="mt-3 text-slate-500 dark:text-slate-400">Share your destination, dates, budget, or just the kind of trip you want.</p></div>}
           <div className="mx-auto max-w-3xl space-y-5">
             {messages.map((message, index) => <article key={index} className={message.role === "user" ? "ml-auto max-w-[85%] rounded-2xl bg-sky-600 px-4 py-3 text-white" : "markdown max-w-none rounded-2xl border bg-white px-5 py-3 shadow-sm dark:border-slate-800 dark:bg-slate-900"}>
@@ -165,16 +178,17 @@ export default function Home() {
             {chat.isError && <p role="alert" className="text-sm text-red-600">{chat.error.message}</p>}
           </div>
         </div>
-        <div className="shrink-0 border-t bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
+        <div data-testid="chat-footer" className="shrink-0 border-t bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
           <div className="mx-auto max-w-3xl">
             {(chat.isPending || progress.length > 0) && <div className="mb-3 rounded-xl border dark:border-slate-700" aria-label="Agent progress">
               <button type="button" aria-expanded={!progressCollapsed} aria-controls="trip-progress" onClick={() => setProgressCollapsed((value) => !value)} className="flex w-full items-center justify-between px-3 py-2 text-left">
                 <span className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">{chat.isPending ? "Working on your trip" : "Trip progress"}</span>
                 {progressCollapsed ? <ChevronRight className="h-4 w-4 text-slate-400" /> : <ChevronDown className="h-4 w-4 text-slate-400" />}
               </button>
-              {!progressCollapsed && <div id="trip-progress" className="max-h-56 overflow-y-auto border-t px-3 py-2 dark:border-slate-700">
-                {grouped.map(({ parent, children }) => <ProgressGroup key={parent.entry_id} parent={parent} childItems={children} />)}
-                {progress.filter((item) => item.level === 2 && !item.parent_id).map((item) => <ProgressRow key={item.entry_id} item={item} />)}
+              {!progressCollapsed && <div ref={progressScrollRef} id="trip-progress" className="max-h-32 overflow-y-auto border-t px-3 py-2 dark:border-slate-700">
+                {timeline.map(({ item, children }) => item.level === 1
+                  ? <ProgressGroup key={item.entry_id} parent={item} childItems={children} />
+                  : <ProgressRow key={item.entry_id} item={item} />)}
                 {progress.length === 0 && <p className="text-sm text-slate-500 dark:text-slate-400">Starting…</p>}
               </div>}
             </div>}
@@ -187,7 +201,7 @@ export default function Home() {
         </div>
       </section>
 
-      <aside className="min-h-0 overflow-y-auto border-l bg-white p-5 dark:border-slate-800 dark:bg-slate-900 max-md:max-h-72 max-md:border-l-0 max-md:border-t" aria-label="Artifacts">
+      <aside className="min-h-0 overflow-y-auto border-l bg-white p-5 dark:border-slate-800 dark:bg-slate-900 max-md:border-l-0 max-md:border-t" aria-label="Artifacts">
         <h2 className="mb-4 font-semibold">Artifacts</h2>
         {!artifacts.data?.length && <p className="text-sm text-slate-500 dark:text-slate-400">Generated plans and reports will appear here.</p>}
         <div className="space-y-2">{artifacts.data?.map((artifact) => <button key={artifact.id} onClick={() => setSelected(artifact.id)} className={`flex w-full items-center gap-2 rounded-lg border p-3 text-left text-sm dark:border-slate-700 ${selected === artifact.id ? "border-sky-500 bg-sky-50 dark:bg-sky-950" : "hover:bg-slate-50 dark:hover:bg-slate-800"}`}><FileText className="h-4 w-4" />{artifact.name}</button>)}</div>

@@ -1,6 +1,7 @@
 import { expect, test } from "@playwright/test";
 
 test("real API keeps a temporary multi-turn session", async ({ page }) => {
+  await page.route("http://127.0.0.1:8000/api/**", (route) => route.continue({ url: route.request().url().replace(":8000", ":8001") }));
   await page.goto("/");
   const message = page.getByRole("textbox", { name: "Message", exact: true });
 
